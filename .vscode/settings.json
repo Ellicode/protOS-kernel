@@ -1,0 +1,13 @@
+{
+	"C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
+		"modernize-*",
+		"cert-*",
+		"readability-magic-numbers",
+		"readability-identifier-length",
+		"bugprone-easily-swappable-parameters",
+		"readability-math-missing-parentheses",
+		"bugprone-narrowing-conversions",
+		"bugprone-reserved-identifier"
+	],
+	"chat.disableAIFeatures": true
+}
