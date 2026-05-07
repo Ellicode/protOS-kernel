@@ -1,6 +1,77 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// MEMORY RELATED FUNCTIONS ================================================
+
+void* memmove(void* dstptr, const void* srcptr, size_t size) {
+	unsigned char* dst = (unsigned char*) dstptr;
+	const unsigned char* src = (const unsigned char*) srcptr;
+	if (dst < src) {
+		for (size_t i = 0; i < size; i++) {
+			dst[i] = src[i];
+        }
+	} else {
+		for (size_t i = size; i != 0; i--) {
+			dst[i-1] = src[i-1];
+        }
+	}
+	return dstptr;
+}
+
+int memcmp(const void* aptr, const void* bptr, size_t size) {
+	const unsigned char* a = (const unsigned char*) aptr;
+	const unsigned char* b = (const unsigned char*) bptr;
+	for (size_t i = 0; i < size; i++) {
+		if (a[i] < b[i]) {
+			return -1;
+        } else if (b[i] < a[i]) {
+			return 1;
+        }
+	}
+	return 0;
+}
+
+void* memset(void* bufptr, int value, size_t size) {
+	unsigned char* buf = (unsigned char*) bufptr;
+	for (size_t i = 0; i < size; i++) {
+		buf[i] = (unsigned char) value;
+    }
+	return bufptr;
+}
+
+
+void* memcpy(void* restrict dstptr, const void* restrict srcptr, size_t size) {
+	unsigned char* dst = (unsigned char*) dstptr;
+	const unsigned char* src = (const unsigned char*) srcptr;
+	for (size_t i = 0; i < size; i++) {
+		dst[i] = src[i];
+    }
+	return dstptr;
+}
+
+size_t strlen(const char* str) {
+	size_t len = 0;
+	while (str[len]) {
+		len++;
+    }
+	return len;
+}
+
+void strcat(char *dest, const char *src)
+{
+    int dest_len = strlen(dest);
+    int i = 0;
+    while (src[i] != '\0')
+    {
+        dest[dest_len + i] = src[i];
+        i++;
+    }
+    dest[dest_len + i] = '\0';
+}
+
+// STRING CONVERSION FUNCTIONS =============================================
+
+
 char *int_to_string(int64_t num)
 {
     static char str[12]; // Enough to hold -2147483648 and null terminator
@@ -62,26 +133,4 @@ char *hex_to_string(uint64_t value)
 
     str[2 + i] = '\0';
     return str;
-}
-
-uint32_t str_len(const char *str)
-{
-    int len = 0;
-    while (str[len] != '\0')
-    {
-        len++;
-    }
-    return len;
-}
-
-void str_cat(char *dest, const char *src)
-{
-    int dest_len = str_len(dest);
-    int i = 0;
-    while (src[i] != '\0')
-    {
-        dest[dest_len + i] = src[i];
-        i++;
-    }
-    dest[dest_len + i] = '\0';
 }

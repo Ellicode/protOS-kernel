@@ -176,21 +176,21 @@ void print_f(const char *format, ...)
             {
                 int value = va_arg(args, int);
                 char *str = int_to_string(value);
-                str_cat(buffer, str);
-                buffer_index = str_len(buffer);
+                strcat(buffer, str);
+                buffer_index = strlen(buffer);
             }
             else if (format[i] == 'x')
             {
                 unsigned long value = va_arg(args, unsigned long);
                 char *str = hex_to_string((uint64_t)value);
-                str_cat(buffer, str);
-                buffer_index = str_len(buffer);
+                strcat(buffer, str);
+                buffer_index = strlen(buffer);
             }
             else if (format[i] == 's')
             {
                 char *str = va_arg(args, char *);
-                str_cat(buffer, str);
-                buffer_index = str_len(buffer);
+                strcat(buffer, str);
+                buffer_index = strlen(buffer);
             }
         }
         else

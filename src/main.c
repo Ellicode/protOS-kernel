@@ -32,7 +32,14 @@ static void hcf(void) {
     }
 }
 
-void k_main () {
+void k_main() {
+    print("\nDovahkiin, dragonborn by ok zin los sworn to dein evil Mahfaeraak ahst vaal!\nand fin Norok fodro rout when nust hear zinddo zaan, dragonborn, fah hin kogaan Mu draal!\n");
+    print("\n:3\n");
+
+    hcf();
+}
+
+void k_early_main() {
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
         hcf();
@@ -48,8 +55,5 @@ void k_main () {
 
     k_init(framebuffer);
 
-    print("\nDovahkiin, dragonborn by ok zin los sworn to dein evil Mahfaeraak ahst vaal!\nand fin Norok fodro rout when nust hear zinddo zaan, dragonborn, fah hin kogaan Mu draal!\n");
-    print("\n:3\n");
-
-    hcf();
+    k_main();
 }

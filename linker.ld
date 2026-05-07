@@ -1,8 +1,8 @@
 /* Tell the linker that we want an x86_64 ELF64 output file */
 OUTPUT_FORMAT(elf64-x86-64)
 
-/* We want the symbol k_main to be our entry point */
-ENTRY(k_main)
+/* We want the symbol k_early_main to be our entry point */
+ENTRY(k_early_main)
 
 /* Define the program headers we want so the bootloader gives us the right */
 /* MMU permissions; this also allows us to exert more control over the linking */

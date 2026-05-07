@@ -5,9 +5,8 @@ set(CMAKE_C_STANDARD 17)
 project(kernel
         VERSION 0.1.0
         DESCRIPTION "A kernel for protOS"
-        LANGUAGES C
+        LANGUAGES C ASM
 )
-
 
 set(KERNEL_SOURCES
         src/main.c
@@ -33,6 +32,10 @@ set(KERNEL_SOURCES
 
         src/boot.c
         include/boot.h
+
+        src/gdt.c
+        src/set_gdt.asm
+        include/gdt.h
 )
 
 add_executable(kernel ${KERNEL_SOURCES})
@@ -54,6 +57,7 @@ target_link_options(kernel PRIVATE
         -pie
         -nostdlib
         -nostartfiles
+        -no-pie
         -nodefaultlibs
         "-Wl,-T,${CMAKE_SOURCE_DIR}/linker.ld"
         -Wl,--build-id=none

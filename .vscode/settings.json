@@ -7,7 +7,9 @@
 		"bugprone-easily-swappable-parameters",
 		"readability-math-missing-parentheses",
 		"bugprone-narrowing-conversions",
-		"bugprone-reserved-identifier"
+		"bugprone-reserved-identifier",
+		"readability-else-after-return",
+		"clang-diagnostic-incompatible-library-redeclaration"
 	],
 	"chat.disableAIFeatures": true
 }
