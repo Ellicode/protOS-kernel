@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// MEMORY RELATED FUNCTIONS ================================================
+// MEMORY RELATED FUNCTIONS ====================================================================
 
 void* memmove(void* dstptr, const void* srcptr, size_t size) {
 	unsigned char* dst = (unsigned char*) dstptr;
@@ -69,8 +69,7 @@ void strcat(char *dest, const char *src)
     dest[dest_len + i] = '\0';
 }
 
-// STRING CONVERSION FUNCTIONS =============================================
-
+// STRING CONVERSION FUNCTIONS =================================================================
 
 char *int_to_string(int64_t num)
 {

@@ -26,5 +26,7 @@
 
 void pic_init();
 void eoi(uint8_t irq);
+void unmask_irq(uint8_t irq);
+void mask_irq(uint8_t irq);
 
 #endif // PIC_H

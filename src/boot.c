@@ -1,10 +1,11 @@
+#include "debug/logger.h"
 #include "debug/serial.h"
 #include "graphics/vga.h"
 #include "graphics/tty.h"
-#include "gdt.h"
 #include "interrupts/idt.h"
 #include "interrupts/pic.h"
-#include "debug/logger.h"
+#include "pit.h"
+#include "gdt.h"
 
 #include "boot.h"
 
@@ -35,6 +36,10 @@ int k_init(struct limine_framebuffer *fb) {
     // 5) INITIALIZE PIC =============================================================
     pic_init();
     k_success("Initialized PIC.\n", "proto.kernel.k_init");
+
+    // 6) INITIALIZE PIT =============================================================
+    pit_init(1000);
+    k_success("Initialized PIT.\n", "proto.kernel.k_init");
 
     __asm__ volatile("sti");
     k_success("Interrupts enabled.\n", "proto.kernel.k_init");
