@@ -15,8 +15,8 @@ void cursor_set(uint32_t x, uint32_t y)
     {
         return;
     }
-    g_tty_cursor_x = x < 0 ? 0 : x;
-    g_tty_cursor_y = y < 0 ? 0 : y;
+    g_tty_cursor_x = x;
+    g_tty_cursor_y = y;
 }
 
 static void scroll_up(void)
@@ -172,25 +172,79 @@ void print_f(const char *format, ...)
         if (format[i] == '%')
         {
             i++;
+
+            char pad = ' ';
+            int width = 0;
+
+            if (format[i] == '0')
+            {
+                pad = '0';
+                i++;
+            }
+
+            while (format[i] >= '0' && format[i] <= '9')
+            {
+                width = width * 10 + (format[i] - '0');
+                i++;
+            }
+
             if (format[i] == 'd')
             {
                 int value = va_arg(args, int);
                 char *str = int_to_string(value);
-                strcat(buffer, str);
-                buffer_index = strlen(buffer);
+
+                int len = strlen(str);
+                while (len < width)
+                {
+                    buffer[buffer_index++] = pad;
+                    len++;
+                }
+
+                while (*str)
+                {
+                    buffer[buffer_index++] = *str++;
+                }
+                buffer[buffer_index] = '\0';
             }
             else if (format[i] == 'x')
             {
-                unsigned long value = va_arg(args, unsigned long);
-                char *str = hex_to_string((uint64_t)value);
-                strcat(buffer, str);
-                buffer_index = strlen(buffer);
+                uint64_t value = va_arg(args, uint64_t);
+                char *str = hex_to_string(value);
+
+                int len = strlen(str);
+                while (len < width)
+                {
+                    buffer[buffer_index++] = pad;
+                    len++;
+                }
+
+                while (*str)
+                {
+                    buffer[buffer_index++] = *str++;
+                }
+                buffer[buffer_index] = '\0';
             }
             else if (format[i] == 's')
             {
                 char *str = va_arg(args, char *);
-                strcat(buffer, str);
-                buffer_index = strlen(buffer);
+
+                int len = strlen(str);
+                while (len < width)
+                {
+                    buffer[buffer_index++] = pad;
+                    len++;
+                }
+
+                while (*str)
+                {
+                    buffer[buffer_index++] = *str++;
+                }
+                buffer[buffer_index] = '\0';
+            }
+            else if (format[i] == '%')
+            {
+                buffer[buffer_index++] = '%';
+                buffer[buffer_index] = '\0';
             }
         }
         else
@@ -199,7 +253,7 @@ void print_f(const char *format, ...)
             buffer[buffer_index] = '\0';
         }
     }
-    va_end(args);
 
+    va_end(args);
     print(buffer);
 }

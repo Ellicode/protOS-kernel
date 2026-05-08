@@ -86,7 +86,7 @@ qemu-system-x86_64 \
     -net none \
     -serial stdio \
     -vga std \
-    -d int,guest_errors \
+    # -d int,guest_errors \
     -no-reboot \
     -no-shutdown \
     $EXTRA_QEMU_ARGS

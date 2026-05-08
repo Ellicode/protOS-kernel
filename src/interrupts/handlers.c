@@ -4,18 +4,54 @@
 
 #include "interrupts/handlers.h"
 
+void* isr_exception_handlers[ISR_EXCEPTION_COUNT] = {
+    [ISR_EXC_DIVISION_ERROR]        = isr_call_0,
+    [ISR_EXC_INVALID_OPCODE]        = isr_call_6,
+    [ISR_EXC_DEVICE_UNAVAILABLE]    = isr_call_7,
+    [ISR_EXC_DOUBLE_FAULT]          = isr_call_8,
+    [ISR_EXC_INVALID_TSS]           = isr_call_10,
+    [ISR_EXC_SEG_NOT_PRESENT]       = isr_call_11,
+    [ISR_EXC_STACK_SEG_FULT]        = isr_call_12,
+    [ISR_EXC_GP_FAULT]              = isr_call_13,
+    [ISR_EXC_PAGE_FAULT]            = isr_call_14
+};
+
+void* isr_irq_handlers[ISR_IRQ_COUNT] = {
+    [ISR_IRQ_PIT]                   = isr_call_32,
+    [ISR_IRQ_KEYBOARD]              = isr_call_33
+};
+
+char* panic_messages[ISR_EXCEPTION_COUNT] = {
+    [ISR_EXC_DIVISION_ERROR]        = "Division Error",
+    [ISR_EXC_INVALID_OPCODE]        = "Invalid Opcode",
+    [ISR_EXC_DEVICE_UNAVAILABLE]    = "Device Unavailable",
+    [ISR_EXC_DOUBLE_FAULT]          = "Double Fault",
+    [ISR_EXC_INVALID_TSS]           = "Invalid TSS",
+    [ISR_EXC_SEG_NOT_PRESENT]       = "Segment not Present",
+    [ISR_EXC_STACK_SEG_FULT]        = "Stack-Segment Fault",
+    [ISR_EXC_GP_FAULT]              = "General Protection Fault",
+    [ISR_EXC_PAGE_FAULT]            = "Page fault"
+};
+
 void _panic_print(idt_frame_t* frame) {
     __asm__ ("cli");
+
+    char* p_msg = panic_messages[frame->vector];
 
     print_f("[");
     set_color(PROTO_RED);
     print_f("PANIC");
     set_color(PROTO_WHITE);
-    print_f("] (vec%d) %x", frame->vector, frame->error_code);
-
+    print_f("] VEC: %18d, ERR: %18x, %s.\n", frame->vector, frame->error_code, p_msg);
+    print_f("        R8 : %18x, R9 : %18x, R10: %18x, R11: %18x\n", frame->r8, frame->r9, frame->r10, frame->r11);
+    print_f("        R12: %18x, R13: %18x, R14: %18x, R15: %18x\n", frame->r12, frame->r13, frame->r14, frame->r15);
+    print_f("        RBP: %18x, RDI: %18x, RSI: %18x, RDX: %18x\n", frame->rbp, frame->rdi, frame->rsi, frame->rdx);
+    print_f("        RCX: %18x, RBX: %18x, RAX: %18x\n", frame->rcx, frame->rbx, frame->rax);
+    print_f("        RIP: %18x, CS : %18x, RF : %18x\n", frame->rip, frame->cs, frame->rflags);
+    print_f("        Something really bad has happened 3:");
     for (;;) {
         __asm__ ("hlt");
-    }   
+    }
 }
 
 void isr_handler(idt_frame_t* frame) {
@@ -29,21 +65,3 @@ void isr_handler(idt_frame_t* frame) {
         eoi((uint8_t)(frame->vector - 32));
     }
 }
-
-void* isr_exception_handlers[ISR_EXCEPTION_COUNT] = {
-    [ISR_EXC_DIVISION_ERROR]        = isr_call_0,
-    [ISR_EXC_INVALID_OPCODE]        = isr_call_6,
-    [ISR_EXC_DEVICE_UNAVAILABLE]    = isr_call_7,
-    [ISR_EXC_DOUBLE_FAULT]          = isr_call_8,
-    [ISR_EXC_INVALID_TSS]           = isr_call_10,
-    [ISR_EXC_SEG_NOT_PRESENT]       = isr_call_11,
-    [ISR_EXC_STACK_SEG_FULT]        = isr_call_12,
-    [ISR_EXC_GP_FAULT]              = isr_call_13,
-    [ISR_EXC_PAGE_FAULT]            = isr_call_14
-};
-
-
-void* isr_irq_handlers[ISR_IRQ_COUNT] = {
-    [ISR_IRQ_PIT]                   = isr_call_32,
-    [ISR_IRQ_KEYBOARD]              = isr_call_33
-};

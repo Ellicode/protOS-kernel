@@ -42,6 +42,29 @@ static void _tss_generate() {
     tss.iopb = sizeof(TSSEntry);
 }
 
+void _gdt_post_init() {
+    __asm__ volatile (
+        "pushq %[cs]\n\t"
+        "lea 1f(%%rip), %%rax\n\t"
+        "pushq %%rax\n\t"
+        "lretq\n\t"
+        "1:\n\t"
+        "mov %[ds], %%ax\n\t"
+        "mov %%ax, %%ds\n\t"
+        "mov %%ax, %%es\n\t"
+        "mov %%ax, %%ss\n\t"
+        "xor %%ax, %%ax\n\t"
+        "mov %%ax, %%fs\n\t"
+        "mov %%ax, %%gs\n\t"
+        :
+        : [cs] "i"(GDT_OFFSET_KERNEL_CODE),
+        [ds] "i"(GDT_OFFSET_KERNEL_DATA)
+        : "rax", "memory"
+    );
+
+    __asm__ volatile ("ltr %0" :: "r"((uint16_t)GDT_OFFSET_TSS));
+}
+
 void gdt_init() {
     // Generate null descriptor
     gdt[0] = _gdt_generate_descriptor(0, 0, GDT_NULL_ENTRY, 0, 0, 0);
@@ -66,7 +89,7 @@ void gdt_init() {
     uint64_t higher = (uint64_t)addr >> 32;
     uint64_t limit = sizeof(tss) - 1;
 
-    gdt[5] = _gdt_generate_descriptor(lower, limit, (GDTEntryAccessByte) {
+    gdt[5] = _gdt_generate_descriptor(lower, limit, (GDTEntryAccessByte) {{
         GDT_ACCESSED,
         GDT_OFF,
         GDT_OFF,
@@ -74,7 +97,7 @@ void gdt_init() {
         GDT_ENTRY_SEG_SYSTEM,
         GDT_ENTRY_DPL_KERNEL,
         GDT_ENTRY_PRESENT
-    }, 0, 0, 0);
+    }}, 0, 0, 0);
     gdt[6] = higher;
 
     k_debug("gdt_entry (", "proto.kernel.gdt_init");
@@ -87,8 +110,6 @@ void gdt_init() {
     k_debug("gdt base: ", "proto.kernel.gdt_init");
     print_f("%x, limit: %x\n", gdtr.base, gdtr.limit);
 
-    __asm__ volatile ("cli");
-
     __asm__ volatile (
         "lgdt %0"
         :
@@ -96,24 +117,5 @@ void gdt_init() {
         : "memory"
     );
 
-    __asm__ volatile (
-        "pushq %[cs]\n\t"
-        "lea 1f(%%rip), %%rax\n\t"
-        "pushq %%rax\n\t"
-        "lretq\n\t"
-        "1:\n\t"
-        "mov %[ds], %%ax\n\t"
-        "mov %%ax, %%ds\n\t"
-        "mov %%ax, %%es\n\t"
-        "mov %%ax, %%ss\n\t"
-        "xor %%ax, %%ax\n\t"
-        "mov %%ax, %%fs\n\t"
-        "mov %%ax, %%gs\n\t"
-        :
-        : [cs] "i"(GDT_OFFSET_KERNEL_CODE),
-        [ds] "i"(GDT_OFFSET_KERNEL_DATA)
-        : "rax", "memory"
-    );
-
-    __asm__ volatile ("ltr %0" :: "r"((uint16_t)GDT_OFFSET_TSS));
+    _gdt_post_init();
 }

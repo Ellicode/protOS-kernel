@@ -9,7 +9,8 @@
 		"bugprone-narrowing-conversions",
 		"bugprone-reserved-identifier",
 		"readability-else-after-return",
-		"clang-diagnostic-incompatible-library-redeclaration"
+		"clang-diagnostic-incompatible-library-redeclaration",
+		"readability-function-cognitive-complexity"
 	],
 	"chat.disableAIFeatures": true
 }

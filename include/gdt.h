@@ -53,22 +53,22 @@ typedef union {
 typedef uint8_t access_byte_t;
 typedef union {
     struct {
-        uint16_t limit_low;
-        uint16_t base_low;
-        uint8_t base_mid;
-        access_byte_t access_byte : 8; /// from GDTEntryAccessByte
-        uint16_t limit_high       : 4;
-        uint16_t _reserved        : 1;
-        uint16_t longa            : 1;
-        uint16_t db               : 1;
-        uint16_t granuality       : 1;
-        uint8_t base_high;
+        uint16_t      limit_low;
+        uint16_t      base_low;
+        uint8_t       base_mid;
+        access_byte_t access_byte : 8;
+        uint16_t      limit_high  : 4;
+        uint16_t      _reserved   : 1;
+        uint16_t      longa       : 1;
+        uint16_t      db          : 1;
+        uint16_t      granuality  : 1;
+        uint8_t       base_high;
     } __attribute__((packed));
     uint64_t value;
 } GDTEntry;
 typedef uint64_t gdt_entry_t;
 
-#define GDT_R0_CODE ((GDTEntryAccessByte) { \
+#define GDT_R0_CODE ((GDTEntryAccessByte) {{ \
     GDT_ACCESSED, \
     GDT_READ_ALLOWED, \
     GDT_OFF, \
@@ -76,9 +76,9 @@ typedef uint64_t gdt_entry_t;
     GDT_ENTRY_SEG_CODE_DATA, \
     GDT_ENTRY_DPL_KERNEL, \
     GDT_ENTRY_PRESENT \
-})
+}})
 
-#define GDT_R0_DATA ((GDTEntryAccessByte) { \
+#define GDT_R0_DATA ((GDTEntryAccessByte) {{ \
     GDT_ACCESSED, \
     GDT_WRITE_ALLOWED, \
     GDT_OFF, \
@@ -86,9 +86,9 @@ typedef uint64_t gdt_entry_t;
     GDT_ENTRY_SEG_CODE_DATA, \
     GDT_ENTRY_DPL_KERNEL, \
     GDT_ENTRY_PRESENT \
-})
+}})
 
-#define GDT_R3_CODE ((GDTEntryAccessByte) { \
+#define GDT_R3_CODE ((GDTEntryAccessByte) {{ \
     GDT_ACCESSED, \
     GDT_READ_ALLOWED, \
     GDT_OFF, \
@@ -96,9 +96,9 @@ typedef uint64_t gdt_entry_t;
     GDT_ENTRY_SEG_CODE_DATA, \
     GDT_ENTRY_DPL_USER, \
     GDT_ENTRY_PRESENT \
-})
+}})
 
-#define GDT_R3_DATA ((GDTEntryAccessByte) { \
+#define GDT_R3_DATA ((GDTEntryAccessByte) {{ \
     GDT_ACCESSED, \
     GDT_WRITE_ALLOWED, \
     GDT_OFF, \
@@ -106,7 +106,7 @@ typedef uint64_t gdt_entry_t;
     GDT_ENTRY_SEG_CODE_DATA, \
     GDT_ENTRY_DPL_USER, \
     GDT_ENTRY_PRESENT \
-})
+}})
 
 #define GDT_NULL_ENTRY (GDTEntryAccessByte) { 0 }
 

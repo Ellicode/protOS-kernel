@@ -49,6 +49,9 @@ set(KERNEL_SOURCES
 
         src/interrupts/handlers.c
         include/interrupts/handlers.h
+
+        src/pit.c
+        include/pit.h
 )
 
 add_executable(kernel ${KERNEL_SOURCES})

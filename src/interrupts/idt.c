@@ -32,12 +32,12 @@ void idt_init() {
     idtr.base = (uintptr_t)idt;
     idtr.limit = sizeof(idt) - 1;
 
-    IDTEntryAttributes attr = (IDTEntryAttributes){
+    IDTEntryAttributes attr = (IDTEntryAttributes){{
         IDT_GATE_TYPE_INTERRUPT,
         0,
         GDT_ENTRY_DPL_KERNEL,
         GDT_ENTRY_PRESENT
-    };
+    }};
 
     for (uint64_t i = 0; i < ISR_EXCEPTION_COUNT; i++) {
         if (isr_exception_handlers[i] == 0) { continue; }

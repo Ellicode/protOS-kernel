@@ -3,8 +3,8 @@
 #ifndef HANDLERS_H
 #define HANDLERS_H
 
-#define ISR_EXCEPTION_COUNT 32
-#define ISR_IRQ_COUNT       16
+#define ISR_EXCEPTION_COUNT          32
+#define ISR_IRQ_COUNT                16
 
 enum {
     ISR_EXC_DIVISION_ERROR          = 1,

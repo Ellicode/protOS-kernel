@@ -16,7 +16,8 @@ enum ProtoColors {
     PROTO_BLUE    = 0x51A2FF,
     PROTO_MAGENTA = 0xED6AFF,
     PROTO_CYAN    = 0x00D3F2,
-    PROTO_WHITE   = 0xFFFFFF
+    PROTO_WHITE   = 0xFFFFFF,
+    PROTO_BG      = 0x000000,
 };
 
 #define ANSI_RED     "\x1b[31m"
