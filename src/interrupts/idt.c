@@ -39,18 +39,15 @@ void idt_init() {
         GDT_ENTRY_PRESENT
     };
 
-    idt[0]  = _idt_generate_descriptor(isr_call_0, attr);
-    idt[6]  = _idt_generate_descriptor(isr_call_6, attr);
-    idt[7]  = _idt_generate_descriptor(isr_call_7, attr);
-    idt[8]  = _idt_generate_descriptor(isr_call_8, attr);
-    idt[10] = _idt_generate_descriptor(isr_call_10, attr);
-    idt[11] = _idt_generate_descriptor(isr_call_11, attr);
-    idt[12] = _idt_generate_descriptor(isr_call_12, attr);
-    idt[13] = _idt_generate_descriptor(isr_call_13, attr);
-    idt[14] = _idt_generate_descriptor(isr_call_14, attr);
+    for (uint64_t i = 0; i < ISR_EXCEPTION_COUNT; i++) {
+        if (isr_exception_handlers[i] == 0) { continue; }
+        idt[i] = _idt_generate_descriptor(isr_exception_handlers[i], attr);
+    }
 
-    idt[32] = _idt_generate_descriptor(isr_call_32, attr);
-    idt[33] = _idt_generate_descriptor(isr_call_33, attr);
+    for (uint64_t i = 0; i < ISR_IRQ_COUNT; i++) {
+        if (isr_irq_handlers[i] == 0) { continue; }
+        idt[ISR_EXCEPTION_COUNT + i] = _idt_generate_descriptor(isr_irq_handlers[i], attr);
+    }
 
     __asm__ volatile ("lidt %0" : : "m"(idtr));
 }
