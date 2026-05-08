@@ -34,27 +34,32 @@ set(KERNEL_SOURCES
         include/boot.h
 
         src/gdt.c
-        src/set_gdt.asm
         include/gdt.h
+
+        src/idt.c
+        include/idt.h
+
+        src/pic.c
+        include/pic.h
 )
 
 add_executable(kernel ${KERNEL_SOURCES})
 
+set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
+
 target_compile_options(kernel PRIVATE
-        -m64
-        -ffreestanding
-        -fpie
-        -fno-stack-protector
-        -mno-red-zone
-        -Wall
-        -Wextra
+    $<$<COMPILE_LANGUAGE:C>:-m64>
+    $<$<COMPILE_LANGUAGE:C>:-ffreestanding>
+    $<$<COMPILE_LANGUAGE:C>:-fno-stack-protector>
+    $<$<COMPILE_LANGUAGE:C>:-mno-red-zone>
+    $<$<COMPILE_LANGUAGE:C>:-Wall>
+    $<$<COMPILE_LANGUAGE:C>:-Wextra>
 )
 
 target_include_directories(kernel PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 target_link_options(kernel PRIVATE
         -m64
-        -pie
         -nostdlib
         -nostartfiles
         -no-pie

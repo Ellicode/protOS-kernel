@@ -2,6 +2,8 @@
 #include "graphics/vga.h"
 #include "graphics/tty.h"
 #include "gdt.h"
+#include "idt.h"
+#include "pic.h"
 #include "debug/logger.h"
 
 #include "boot.h"
@@ -25,6 +27,16 @@ int k_init(struct limine_framebuffer *fb) {
     // 3) INITIALIZE GDT =============================================================
     gdt_init();
     k_success("Initialized GDT.\n", "proto.kernel.k_init");
+
+    // 4) INITIALIZE IDT =============================================================
+    idt_init();
+    k_success("Initialized IDT.\n", "proto.kernel.k_init");
+
+    // 4) INITIALIZE PIC =============================================================
+    // pic_init();
+    // k_success("Initialized PIC.\n", "proto.kernel.k_init");
+
+
 
     // DONE! =========================================================================
     k_info("Boot script ended without errors.\n", "proto.kernel.k_init");

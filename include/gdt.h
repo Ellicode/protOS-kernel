@@ -40,51 +40,56 @@ enum {
 
 typedef union {
     struct {
-        uint8_t    accessed      : 1;
-        uint8_t    read_write    : 1;
-        uint8_t    direction     : 1;
-        uint8_t    executable    : 1;
-        gdt_type_t type          : 1;
-        gdt_dpl_t  dpl           : 2;
-        uint8_t    present       : 1;
+        uint8_t    accessed       : 1;
+        uint8_t    read_write     : 1;
+        uint8_t    direction      : 1;
+        uint8_t    executable     : 1;
+        gdt_type_t type           : 1;
+        gdt_dpl_t  dpl            : 2;
+        uint8_t    present        : 1;
     } __attribute__((packed));
     uint8_t value;
 } GDTEntryAccessByte;
-
+typedef uint8_t access_byte_t;
 typedef union {
     struct {
-        uint8_t    reserved      : 1;
-        uint8_t    long_mode     : 1;
-        gdt_size_t size          : 1;
-        gdt_gran_t granularity   : 1;
+        uint16_t limit_low;
+        uint16_t base_low;
+        uint8_t base_mid;
+        access_byte_t access_byte : 8; /// from GDTEntryAccessByte
+        uint16_t limit_high       : 4;
+        uint16_t _reserved        : 1;
+        uint16_t longa            : 1;
+        uint16_t db               : 1;
+        uint16_t granuality       : 1;
+        uint8_t base_high;
     } __attribute__((packed));
-    uint8_t value;
-} GDTEntryFlags;
-
+    uint64_t value;
+} GDTEntry;
 typedef uint64_t gdt_entry_t;
 
 #define GDT_R0_CODE ((GDTEntryAccessByte) { \
-    GDT_OFF,                 /* accessed (bit 0) */ \
-    GDT_READ_ALLOWED,        /* read/write (bit 1) */ \
-    GDT_OFF,                 /* direction (bit 2) */ \
-    GDT_ENTRY_EXECUTABLE,    /* executable (bit 3) */ \
-    GDT_ENTRY_SEG_CODE_DATA, /* type (bit 4) */ \
-    GDT_ENTRY_DPL_KERNEL,    /* dpl (bits 5–6) */ \
-    GDT_ENTRY_PRESENT        /* present (bit 7) */ \
+    GDT_ACCESSED, \
+    GDT_READ_ALLOWED, \
+    GDT_OFF, \
+    GDT_ENTRY_EXECUTABLE, \
+    GDT_ENTRY_SEG_CODE_DATA, \
+    GDT_ENTRY_DPL_KERNEL, \
+    GDT_ENTRY_PRESENT \
 })
 
 #define GDT_R0_DATA ((GDTEntryAccessByte) { \
-    GDT_OFF,                 /* accessed */ \
-    GDT_WRITE_ALLOWED,       /* read/write */ \
-    GDT_OFF,                 /* direction */ \
-    GDT_OFF,                 /* executable */ \
+    GDT_ACCESSED, \
+    GDT_WRITE_ALLOWED, \
+    GDT_OFF, \
+    GDT_OFF, \
     GDT_ENTRY_SEG_CODE_DATA, \
     GDT_ENTRY_DPL_KERNEL, \
     GDT_ENTRY_PRESENT \
 })
 
 #define GDT_R3_CODE ((GDTEntryAccessByte) { \
-    GDT_OFF, \
+    GDT_ACCESSED, \
     GDT_READ_ALLOWED, \
     GDT_OFF, \
     GDT_ENTRY_EXECUTABLE, \
@@ -94,7 +99,7 @@ typedef uint64_t gdt_entry_t;
 })
 
 #define GDT_R3_DATA ((GDTEntryAccessByte) { \
-    GDT_OFF, \
+    GDT_ACCESSED, \
     GDT_WRITE_ALLOWED, \
     GDT_OFF, \
     GDT_OFF, \
@@ -104,7 +109,6 @@ typedef uint64_t gdt_entry_t;
 })
 
 #define GDT_NULL_ENTRY (GDTEntryAccessByte) { 0 }
-#define GDT_NULL_FLAGS (GDTEntryFlags) { 0 }
 
 #define GDT_ENTRY_BASE  0x00000
 #define GDT_ENTRY_LIMIT 0xFFFFF
@@ -112,16 +116,17 @@ typedef uint64_t gdt_entry_t;
 typedef struct {
     uint16_t limit;
     uint64_t base;
-} __attribute__((packed)) LGDTDescriptor;
+} __attribute__((packed)) GDTR;
 
-typedef LGDTDescriptor lgdt_descriptor_t;
+typedef GDTR gdtr_t;
 
-typedef struct
-{
+typedef struct {
+    uint32_t reserved0;
+
     uint64_t rsp0;
     uint64_t rsp1;
     uint64_t rsp2;
-    uint64_t _reserved_1;
+
     uint64_t ist1;
     uint64_t ist2;
     uint64_t ist3;
@@ -129,14 +134,16 @@ typedef struct
     uint64_t ist5;
     uint64_t ist6;
     uint64_t ist7;
-    uint64_t _reserved_2;
-    uint16_t _reserved_3;
+
+    uint64_t reserved1;
+
+    uint16_t reserved2;
     uint16_t iopb;
 } __attribute__((packed)) TSSEntry;
-
 typedef TSSEntry tss_entry_t;
 
+#define GDT_OFFSET_KERNEL_CODE (1*8) // The index of the descriptor * the size of a gdt descriptor (8 * 8 = 64 bit)
+
 void gdt_init();
-extern void setGDT(uint16_t limit, uint64_t base);
 
 #endif // GDT_H

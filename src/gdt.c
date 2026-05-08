@@ -4,29 +4,38 @@
 #include "gdt.h"
 
 gdt_entry_t gdt[7];
-lgdt_descriptor_t gdtr;
+gdtr_t gdtr;
 tss_entry_t tss __attribute__((aligned(0x1000))) = {0};
 
 static gdt_entry_t _gdt_generate_descriptor(
-    uint32_t base, 
-    uint32_t limit,
+    uint64_t base, 
+    uint64_t limit,
     GDTEntryAccessByte access,
-    GDTEntryFlags flags
+    uint8_t longa,
+    uint8_t db,
+    uint8_t gran
 ) {
-    gdt_entry_t descriptor = 0x00000000;
-    
-    descriptor |= ((gdt_entry_t)(base & 0xFF000000) << 32);
-    descriptor |= ((gdt_entry_t)(base & 0x00FFFFFF) << 16);    
-    descriptor |= ((gdt_entry_t)(limit & 0x0000FFFF));
-    descriptor |= ((gdt_entry_t)(limit & 0x000F0000) << 32);
+    GDTEntry descriptor = (GDTEntry) { 0 };
 
-    descriptor |= ((gdt_entry_t)access.value << 40);
-    descriptor |= ((gdt_entry_t)(flags.value & 0x0F) << 52);
+    descriptor.base_low  = base & 0xFFFF;
+    descriptor.base_mid  = (base >> 16) & 0xFF;
+    descriptor.base_high = (base >> 24) & 0xFF;
 
-    k_debug("gdt_entry (", "proto.kernel._gdt_generate_descriptor");
-    print_f("%x): base=%x, limit=%x, ring=%d, exe=%d, r/w=%d\n", descriptor, base, limit, access.dpl, access.executable, access.read_write);
+    descriptor.limit_low  = limit & 0xFFFF;
+    descriptor.limit_high = (limit >> 16) & 0x0F;
 
-    return descriptor;
+    descriptor.access_byte = access.value;
+
+    descriptor._reserved  = 0;
+    descriptor.longa      = longa; // set 1 ONLY for 64-bit code segment
+    descriptor.db         = db; // 0 in long mode, 1 in legacy
+    descriptor.granuality = gran;
+
+
+    k_debug("gdt_entry (", "proto.kernel.gdt_init");
+    print_f("%x): base=%x, limit=%x, ring=%d, exe=%d, r/w=%d\n", descriptor.value, base, limit, access.dpl, access.executable, access.read_write);
+
+    return descriptor.value;
 }
 
 static void _tss_generate() {
@@ -35,45 +44,52 @@ static void _tss_generate() {
 
 void gdt_init() {
     // Generate null descriptor
-    gdt[0] = _gdt_generate_descriptor(0, 0, GDT_NULL_ENTRY, GDT_NULL_FLAGS);
+    gdt[0] = _gdt_generate_descriptor(0, 0, GDT_NULL_ENTRY, 0, 0, 0);
 
     // Generate kernel code segment
-    gdt[1] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R0_CODE, GDT_NULL_FLAGS);
+    gdt[1] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R0_CODE, 1, 0, 1);
 
     // Generate kernel data segment
-    gdt[2] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R0_DATA, GDT_NULL_FLAGS);
+    gdt[2] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R0_DATA, 0, 1, 1);
 
     // Generate user code segment
-    gdt[3] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R3_CODE, GDT_NULL_FLAGS);
+    gdt[3] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R3_CODE, 1, 0, 1);
 
     // Generate user data segment
-    gdt[4] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R3_DATA, GDT_NULL_FLAGS);
+    gdt[4] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R3_DATA, 0, 1, 1);
 
     // Generate TSS segment
     _tss_generate();
 
     intptr_t addr = (intptr_t)&tss;
-    uint32_t lower = (uint32_t)addr;
-    uint32_t higher = (uint32_t)(addr >> 32);
+    uint64_t lower  = (uint64_t)addr & 0xFFFFFFFF;
+    uint64_t higher = (uint64_t)addr >> 32;
     uint64_t limit = sizeof(tss) - 1;
 
     gdt[5] = _gdt_generate_descriptor(lower, limit, (GDTEntryAccessByte) {
-        GDT_ENTRY_PRESENT,
-        GDT_ENTRY_DPL_KERNEL,
+        GDT_ACCESSED,
+        GDT_OFF,
+        GDT_OFF,
+        GDT_ENTRY_EXECUTABLE,
         GDT_ENTRY_SEG_SYSTEM,
-        GDT_OFF,
-        GDT_OFF,
-        GDT_OFF,
-        GDT_OFF
-    }, GDT_NULL_FLAGS);
+        GDT_ENTRY_DPL_KERNEL,
+        GDT_ENTRY_PRESENT
+    }, 0, 0, 0);
     gdt[6] = higher;
+
+    k_debug("gdt_entry (", "proto.kernel.gdt_init");
+    print_f("%x): higher half tss\n", higher);
 
     // Generate GDTR to send to asm
     gdtr.base = (uint64_t)gdt;
     gdtr.limit = sizeof(gdt) - 1;
 
-    __asm__ __volatile__ (
+    k_debug("gdt base: ", "proto.kernel.gdt_init");
+    print_f("%x, limit: %x\n", gdtr.base, gdtr.limit);
+
+    __asm__ volatile (
         "lgdt %0"
         ::"m"(gdtr)
     );
+    __asm__ volatile ("ltr %0" :: "r"((uint16_t)0x28)); // 5 * 8 = 0x28
 }

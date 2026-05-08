@@ -32,10 +32,18 @@ static void hcf(void) {
     }
 }
 
+static void panic(void) {
+    int x = 0;
+    int y = 10 / x;
+}
+
+// =============================================================================================
+
 void k_main() {
     print("\nDovahkiin, dragonborn by ok zin los sworn to dein evil Mahfaeraak ahst vaal!\nand fin Norok fodro rout when nust hear zinddo zaan, dragonborn, fah hin kogaan Mu draal!\n");
     print("\n:3\n");
 
+    panic();
     hcf();
 }
 

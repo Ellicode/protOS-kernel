@@ -12,6 +12,11 @@ static inline unsigned char inb(unsigned short port) {
     return ret;
 }
 
+static inline void io_wait(void) {
+    /* Port 0x80 is used for 'checkpoints' during POST. */
+    /* The Linux kernel uses this port for I/O delay.  */
+    asm volatile ( "outb %%al, $0x80" : : "a"(0) );
+}
 
 // SOURCE CODE FROM THE OSDEV WIKI:
 // https://osdev.wiki/wiki/Serial_Ports
