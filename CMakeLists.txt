@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 17)
 project(kernel
         VERSION 0.1.0
         DESCRIPTION "A kernel for protOS"
-        LANGUAGES C ASM
+        LANGUAGES C ASM_NASM
 )
 
 set(KERNEL_SOURCES
@@ -14,6 +14,9 @@ set(KERNEL_SOURCES
 
         src/string.c
         include/string.h
+
+        src/io.c
+        include/io.h
 
         src/debug/logger.c
         include/debug/logger.h
@@ -36,11 +39,16 @@ set(KERNEL_SOURCES
         src/gdt.c
         include/gdt.h
 
-        src/idt.c
-        include/idt.h
+        src/interrupts/idt.c
+        include/interrupts/idt.h
 
-        src/pic.c
-        include/pic.h
+        src/interrupts/interrupt-stub.asm
+
+        src/interrupts/pic.c
+        include/interrupts/pic.h
+
+        src/interrupts/handlers.c
+        include/interrupts/handlers.h
 )
 
 add_executable(kernel ${KERNEL_SOURCES})

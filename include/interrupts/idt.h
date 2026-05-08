@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#include "gdt.h"
+#include "../gdt.h"
 
 #ifndef IDT_H
 #define IDT_H
@@ -57,8 +57,8 @@ typedef struct {
     uint64_t vector;
     uint64_t error_code;
     // Pushed by CPU automatically
-    uint64_t rip, cs, rflags, rsp, ss;
-} IDTFrame;
+    uint64_t rip, cs, rflags;
+} __attribute__((packed)) IDTFrame;
 typedef IDTFrame idt_frame_t;
 
 void idt_init();

@@ -142,7 +142,11 @@ typedef struct {
 } __attribute__((packed)) TSSEntry;
 typedef TSSEntry tss_entry_t;
 
-#define GDT_OFFSET_KERNEL_CODE (1*8) // The index of the descriptor * the size of a gdt descriptor (8 * 8 = 64 bit)
+#define GDT_OFFSET_KERNEL_CODE (1*8)
+#define GDT_OFFSET_KERNEL_DATA (2*8)
+#define GDT_OFFSET_USER_CODE   (3*8)
+#define GDT_OFFSET_USER_DATA   (4*8)
+#define GDT_OFFSET_TSS         (5*8)
 
 void gdt_init();
 

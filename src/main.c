@@ -43,7 +43,7 @@ void k_main() {
     print("\nDovahkiin, dragonborn by ok zin los sworn to dein evil Mahfaeraak ahst vaal!\nand fin Norok fodro rout when nust hear zinddo zaan, dragonborn, fah hin kogaan Mu draal!\n");
     print("\n:3\n");
 
-    panic();
+    // panic();
     hcf();
 }
 

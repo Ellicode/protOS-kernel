@@ -2,8 +2,8 @@
 #include "graphics/vga.h"
 #include "graphics/tty.h"
 #include "gdt.h"
-#include "idt.h"
-#include "pic.h"
+#include "interrupts/idt.h"
+#include "interrupts/pic.h"
 #include "debug/logger.h"
 
 #include "boot.h"
@@ -32,11 +32,12 @@ int k_init(struct limine_framebuffer *fb) {
     idt_init();
     k_success("Initialized IDT.\n", "proto.kernel.k_init");
 
-    // 4) INITIALIZE PIC =============================================================
-    // pic_init();
-    // k_success("Initialized PIC.\n", "proto.kernel.k_init");
+    // 5) INITIALIZE PIC =============================================================
+    pic_init();
+    k_success("Initialized PIC.\n", "proto.kernel.k_init");
 
-
+    __asm__ volatile("sti");
+    k_success("Interrupts enabled.\n", "proto.kernel.k_init");
 
     // DONE! =========================================================================
     k_info("Boot script ended without errors.\n", "proto.kernel.k_init");

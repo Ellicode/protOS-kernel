@@ -87,9 +87,33 @@ void gdt_init() {
     k_debug("gdt base: ", "proto.kernel.gdt_init");
     print_f("%x, limit: %x\n", gdtr.base, gdtr.limit);
 
+    __asm__ volatile ("cli");
+
     __asm__ volatile (
         "lgdt %0"
-        ::"m"(gdtr)
+        :
+        : "m"(gdtr)
+        : "memory"
     );
-    __asm__ volatile ("ltr %0" :: "r"((uint16_t)0x28)); // 5 * 8 = 0x28
+
+    __asm__ volatile (
+        "pushq %[cs]\n\t"
+        "lea 1f(%%rip), %%rax\n\t"
+        "pushq %%rax\n\t"
+        "lretq\n\t"
+        "1:\n\t"
+        "mov %[ds], %%ax\n\t"
+        "mov %%ax, %%ds\n\t"
+        "mov %%ax, %%es\n\t"
+        "mov %%ax, %%ss\n\t"
+        "xor %%ax, %%ax\n\t"
+        "mov %%ax, %%fs\n\t"
+        "mov %%ax, %%gs\n\t"
+        :
+        : [cs] "i"(GDT_OFFSET_KERNEL_CODE),
+        [ds] "i"(GDT_OFFSET_KERNEL_DATA)
+        : "rax", "memory"
+    );
+
+    __asm__ volatile ("ltr %0" :: "r"((uint16_t)GDT_OFFSET_TSS));
 }

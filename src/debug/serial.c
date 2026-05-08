@@ -1,22 +1,5 @@
 #include "debug/serial.h"
-
-static inline void outb(unsigned short port, unsigned char value) {
-    asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
-}
-
-static inline unsigned char inb(unsigned short port) {
-    unsigned char ret;
-    asm volatile ("inb %1, %0"
-                   : "=a"(ret)
-                   : "Nd"(port));
-    return ret;
-}
-
-static inline void io_wait(void) {
-    /* Port 0x80 is used for 'checkpoints' during POST. */
-    /* The Linux kernel uses this port for I/O delay.  */
-    asm volatile ( "outb %%al, $0x80" : : "a"(0) );
-}
+#include "io.h"
 
 // SOURCE CODE FROM THE OSDEV WIKI:
 // https://osdev.wiki/wiki/Serial_Ports
