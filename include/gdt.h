@@ -56,12 +56,12 @@ typedef union {
         uint16_t      limit_low;
         uint16_t      base_low;
         uint8_t       base_mid;
-        access_byte_t access_byte : 8;
-        uint16_t      limit_high  : 4;
-        uint16_t      _reserved   : 1;
-        uint16_t      longa       : 1;
-        uint16_t      db          : 1;
-        uint16_t      granuality  : 1;
+        access_byte_t access_byte;
+        uint8_t       limit_high  : 4;
+        uint8_t       _reserved   : 1;
+        uint8_t       longa       : 1;
+        uint8_t       db          : 1;
+        uint8_t       granuality  : 1;
         uint8_t       base_high;
     } __attribute__((packed));
     uint64_t value;

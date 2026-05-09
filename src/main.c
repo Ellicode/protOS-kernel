@@ -4,6 +4,7 @@
 
 #include "limine/limine.h"
 #include "graphics/tty.h"
+#include "globals.h"
 #include "boot.h"
 
 // LIMINE REQUESTS ==============================================================================
@@ -42,10 +43,14 @@ void k_main() {
     print("\nDovahkiin, dragonborn by ok zin los sworn to dein evil Mahfaeraak ahst vaal!\nand fin Norok fodro rout when nust hear zinddo zaan, dragonborn, fah hin kogaan Mu draal!\n");
     print("\n:3\n\n");
 
-    // __asm__ volatile ("int $0x20");
-
     // panic();
-    hcf();
+    for (;;) {
+        // if (g_pit_ticks == 1000) {
+        //     print_f("1000 ticks reached\n");
+        //     g_pit_ticks = 0;
+        // }
+        __asm__ ("hlt");
+    }
 }
 
 void k_early_main() {

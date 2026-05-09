@@ -1,6 +1,9 @@
 #include "debug/logger.h"
 #include "graphics/tty.h"
 #include "interrupts/pic.h"
+#include "drivers/ps2.h"
+#include "io.h"
+#include "globals.h"
 
 #include "interrupts/handlers.h"
 
@@ -34,8 +37,6 @@ char* panic_messages[ISR_EXCEPTION_COUNT] = {
 };
 
 void _panic_print(idt_frame_t* frame) {
-    __asm__ ("cli");
-
     char* p_msg = panic_messages[frame->vector];
 
     print_f("[");
@@ -55,11 +56,15 @@ void _panic_print(idt_frame_t* frame) {
 }
 
 void isr_handler(idt_frame_t* frame) {
-    k_debug("BEEP! Interrupt recieved!", "proto.kernel.isr_handler");
-    print_f(" %d, error=%x, rip=%x\n", frame->vector, frame->error_code, frame->rip);
-
     if (frame->vector < ISR_EXCEPTION_COUNT) {
         _panic_print(frame);
+    } else if (frame->vector == 32) {
+        g_pit_ticks++;
+    } else if (frame->vector == 33) {
+        ps2_isr();
+    } else {
+        k_debug("BEEP! Interrupt recieved!", "proto.kernel.isr_handler");
+        print_f(" %d, error=%x, rip=%x\n", frame->vector, frame->error_code, frame->rip);
     }
     
     if (frame->vector >= 32 && frame->vector < 48) {

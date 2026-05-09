@@ -14,4 +14,6 @@ void pit_init(uint64_t frequency) {
     io_wait();
     outb(PIT_CHANNEL0_PORT, divisor >> 8);
     io_wait();
+
+    unmask_irq(0);
 }

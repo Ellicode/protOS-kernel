@@ -81,14 +81,16 @@ fi
 
 qemu-system-x86_64 \
     -m $ALLOCATED_MEMORY \
+    -machine q35 \
+    -cpu qemu64 \
     -drive if=pflash,format=raw,readonly=on,file=$LOCAL_OVMF_CODE_PATH \
     -drive if=ide,format=raw,file=fat:rw:ignore-scripts/esp \
     -net none \
     -serial stdio \
     -vga std \
-    # -d int,guest_errors \
-    -no-reboot \
-    -no-shutdown \
+    # -d int \
+    # -no-reboot \
+    # -no-shutdown \
     $EXTRA_QEMU_ARGS
 
 echo -e "\n"

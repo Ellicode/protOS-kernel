@@ -78,6 +78,15 @@ static void cursor_advance(void)
     }
 }
 
+static void cursor_retreat(void)
+{
+    if (g_vga_active_framebuffer == NULL)
+    {
+        return;
+    }
+    g_tty_cursor_x -= FONT_WIDTH + FONT_KERNING;
+}
+
 void draw_char(uint32_t x, uint32_t y, const char c, color_t color)
 {
     if (g_vga_active_framebuffer == NULL)
@@ -98,21 +107,19 @@ void draw_char(uint32_t x, uint32_t y, const char c, color_t color)
 
 void draw_text(uint32_t x, uint32_t y, const char *text, color_t color)
 {
-    if (g_vga_active_framebuffer == NULL)
-    {
+    if (g_vga_active_framebuffer == NULL) {
         return;
     }
 
     cursor_set(x, y);
 
-    for (size_t i = 0; text[i] != '\0'; i++)
-    {
-        if (text[i] == '\n')
-        {
+    for (size_t i = 0; text[i] != '\0'; i++) {
+        if (text[i] == '\n') {
             cursor_newline();
-        }
-        else
-        {
+        } else if (text[i] == '\b') {
+            cursor_retreat();  // you'll need to implement this
+            draw_rect(g_tty_cursor_x, g_tty_cursor_y, FONT_WIDTH, FONT_HEIGHT, 0x000000);
+        } else {
             draw_char(g_tty_cursor_x, g_tty_cursor_y, text[i], color);
             cursor_advance();
         }

@@ -4,7 +4,19 @@
 #define HANDLERS_H
 
 #define ISR_EXCEPTION_COUNT          32
-#define ISR_IRQ_COUNT                16
+#define ISR_IRQ_COUNT                2
+
+typedef struct {
+    // Saved registers (in push order, reversed)
+    uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
+    uint64_t rbp, rdi, rsi, rdx, rcx, rbx, rax;
+    // Pushed by stub
+    uint64_t vector;
+    uint64_t error_code;
+    // Pushed by CPU automatically
+    uint64_t rip, cs, rflags, rsp, ss;
+} __attribute__((packed)) IDTFrame;
+typedef IDTFrame idt_frame_t;
 
 enum {
     ISR_EXC_DIVISION_ERROR          = 1,

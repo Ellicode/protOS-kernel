@@ -45,26 +45,8 @@ int k_init(struct limine_framebuffer *fb, struct limine_memmap_response *memmap)
     // 7) INITIALIZE PS2 KEYBOARD ====================================================
     ps2_init();
     k_success("Initialized PS2 Keyboard.\n", "proto.kernel.k_init");
-
     __asm__ volatile("sti");
     k_success("Interrupts enabled.\n", "proto.kernel.k_init");
-
-    print_f("|------------------------------------------------|\n");
-    print_f("|  Physical Base     | Region size        | Type |\n");
-    print_f("|------------------------------------------------|\n");
-    for (uint64_t i = 0; i < memmap->entry_count; i++) {
-        struct limine_memmap_entry *entry = memmap->entries[i];
-        if (entry->type == LIMINE_MEMMAP_USABLE) {
-            set_color(PROTO_BLUE);
-        } else if (entry->type == LIMINE_MEMMAP_ACPI_RECLAIMABLE || entry->type == LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE) {
-            set_color(PROTO_CYAN);
-        } else {
-            set_color(PROTO_GREY);
-        }
-        print_f("| %18x | %18x | %4d |\n", entry->base, entry->length, entry->type);
-        set_color(PROTO_WHITE);
-    }
-    print_f("|------------------------------------------------|\n");
 
     // DONE! =========================================================================
     k_info("Boot script ended without errors.\n", "proto.kernel.k_init");

@@ -53,6 +53,9 @@ set(KERNEL_SOURCES
         src/pit.c
         include/pit.h
 
+        src/memory.c
+        include/memory.h
+
         src/drivers/ps2.c
         include/drivers/ps2.h
 )

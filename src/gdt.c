@@ -7,7 +7,7 @@ gdt_entry_t gdt[7];
 gdtr_t gdtr;
 tss_entry_t tss __attribute__((aligned(0x1000))) = {0};
 
-static gdt_entry_t _gdt_generate_descriptor(
+gdt_entry_t _gdt_generate_descriptor(
     uint64_t base, 
     uint64_t limit,
     GDTEntryAccessByte access,
@@ -15,10 +15,11 @@ static gdt_entry_t _gdt_generate_descriptor(
     uint8_t db,
     uint8_t gran
 ) {
+    uint64_t x = 0x80008000ULL;
     GDTEntry descriptor = (GDTEntry) { 0 };
 
     descriptor.base_low  = base & 0xFFFF;
-    descriptor.base_mid  = (base >> 16) & 0xFF;
+    descriptor.base_mid = (base >> 16) & 0xFF;
     descriptor.base_high = (base >> 24) & 0xFF;
 
     descriptor.limit_low  = limit & 0xFFFF;
@@ -33,7 +34,8 @@ static gdt_entry_t _gdt_generate_descriptor(
 
 
     k_debug("gdt_entry (", "proto.kernel.gdt_init");
-    print_f("%x): base=%x, limit=%x, ring=%d, exe=%d, r/w=%d\n", descriptor.value, base, limit, access.dpl, access.executable, access.read_write);
+    print_f("%x): base=%x, limit=%x, ring=%d, exe=%d, r/w=%d\n", 
+        descriptor.value, base, limit, access.dpl, access.executable, access.read_write);
 
     return descriptor.value;
 }
@@ -84,7 +86,7 @@ void gdt_init() {
     // Generate TSS segment
     _tss_generate();
 
-    intptr_t addr = (intptr_t)&tss;
+    intptr_t addr = (uintptr_t)&tss;
     uint64_t lower  = (uint64_t)addr & 0xFFFFFFFF;
     uint64_t higher = (uint64_t)addr >> 32;
     uint64_t limit = sizeof(tss) - 1;
@@ -93,7 +95,7 @@ void gdt_init() {
         GDT_ACCESSED,
         GDT_OFF,
         GDT_OFF,
-        GDT_ENTRY_EXECUTABLE,
+        GDT_OFF,
         GDT_ENTRY_SEG_SYSTEM,
         GDT_ENTRY_DPL_KERNEL,
         GDT_ENTRY_PRESENT
