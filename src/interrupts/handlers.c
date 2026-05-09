@@ -55,12 +55,13 @@ void _panic_print(idt_frame_t* frame) {
 }
 
 void isr_handler(idt_frame_t* frame) {
+    k_debug("BEEP! Interrupt recieved!", "proto.kernel.isr_handler");
+    print_f(" %d, error=%x, rip=%x\n", frame->vector, frame->error_code, frame->rip);
+
     if (frame->vector < ISR_EXCEPTION_COUNT) {
         _panic_print(frame);
-    } else {
-        print_f("Interrupt %d, error=%x, rip=%x\n", frame->vector, frame->error_code, frame->rip);
     }
-
+    
     if (frame->vector >= 32 && frame->vector < 48) {
         eoi((uint8_t)(frame->vector - 32));
     }

@@ -1,6 +1,7 @@
 #include "io.h"
 #include "debug/logger.h"
 #include "graphics/tty.h"
+#include "interrupts/handlers.h"
 
 #include "interrupts/pic.h"
 
@@ -11,7 +12,7 @@ void eoi(uint8_t irq) {
 	outb(PIC1_COMMAND,PIC_EOI);
 }
 
-void mask_irq(uint8_t irq) {
+void mask_irq(irq_t irq) {
     uint16_t port;
     uint8_t value;
 
@@ -25,7 +26,7 @@ void mask_irq(uint8_t irq) {
     outb(port, value);        
 }
 
-void unmask_irq(uint8_t irq) {
+void unmask_irq(irq_t irq) {
     uint16_t port;
     uint8_t value;
 
@@ -73,10 +74,13 @@ void _pic_disable(void) {
 void pic_init() {
     _pic_enable(0x20, 0x28);
     
-    uint8_t unmasked_irqs[] = { 0, 1 };
+    uint8_t unmasked_irqs[] = {
+        ISR_IRQ_PIT, 
+        ISR_IRQ_KEYBOARD
+    };
     uint8_t length = sizeof(unmasked_irqs) / sizeof(unmasked_irqs[0]); // Calculate array size
 
-    for (uint8_t irq; irq < length; irq++) {
+    for (uint8_t irq = 0; irq < length; irq++) {
         unmask_irq(unmasked_irqs[irq]);
         k_debug("Unmasked IRQ (vector=", "proto.kernel.pic_init");
         print_f("%d)\n", unmasked_irqs[irq]);

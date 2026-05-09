@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build and run",
+			"type": "shell",
+			"command": "./scripts/build-and-run.sh",
+			"group": { "kind": "build", "isDefault": true }
+		},
+		{
+			"label": "Clean",
+			"type": "shell",
+			"command": "./scripts/clean.sh",
+			"group": { "kind": "none", "isDefault": true }
+		}
+	]
+}

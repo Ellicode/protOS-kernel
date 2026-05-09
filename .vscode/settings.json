@@ -11,6 +11,6 @@
 		"readability-else-after-return",
 		"clang-diagnostic-incompatible-library-redeclaration",
 		"readability-function-cognitive-complexity"
-	],
+	]
 	"chat.disableAIFeatures": true
 }

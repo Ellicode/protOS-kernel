@@ -10,7 +10,8 @@ idtr_t idtr;
 
 static idt_entry_t _idt_generate_descriptor(
     void* isr,
-    IDTEntryAttributes attributes
+    IDTEntryAttributes attributes,
+    uint8_t vector
 ) {
     idt_entry_t descriptor = {};
     
@@ -23,7 +24,7 @@ static idt_entry_t _idt_generate_descriptor(
     descriptor._reserved      = 0;
 
     k_debug("idt_entry", "proto.kernel.idt_init");
-    print_f(": attr=%x\n", attributes.value);
+    print_f(": vec=%d, attr=%x\n", vector, attributes.value);
 
     return descriptor;
 }
@@ -41,12 +42,13 @@ void idt_init() {
 
     for (uint64_t i = 0; i < ISR_EXCEPTION_COUNT; i++) {
         if (isr_exception_handlers[i] == 0) { continue; }
-        idt[i] = _idt_generate_descriptor(isr_exception_handlers[i], attr);
+        idt[i] = _idt_generate_descriptor(isr_exception_handlers[i], attr, i);
     }
 
     for (uint64_t i = 0; i < ISR_IRQ_COUNT; i++) {
         if (isr_irq_handlers[i] == 0) { continue; }
-        idt[ISR_EXCEPTION_COUNT + i] = _idt_generate_descriptor(isr_irq_handlers[i], attr);
+        uint8_t vec = ISR_EXCEPTION_COUNT + i;
+        idt[vec] = _idt_generate_descriptor(isr_irq_handlers[i], attr, vec);
     }
 
     __asm__ volatile ("lidt %0" : : "m"(idtr));

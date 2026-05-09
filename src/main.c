@@ -33,7 +33,7 @@ static void hcf(void) {
 }
 
 static void panic(void) {
-    __asm__ volatile("ud2"); // Trigger invalid opcode error
+    __asm__ volatile ("ud2"); // Trigger invalid opcode error
 }
 
 // =============================================================================================
@@ -41,6 +41,8 @@ static void panic(void) {
 void k_main() {
     print("\nDovahkiin, dragonborn by ok zin los sworn to dein evil Mahfaeraak ahst vaal!\nand fin Norok fodro rout when nust hear zinddo zaan, dragonborn, fah hin kogaan Mu draal!\n");
     print("\n:3\n\n");
+
+    // __asm__ volatile ("int $0x20");
 
     // panic();
     hcf();
@@ -59,8 +61,9 @@ void k_early_main() {
     }
 
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
+    struct limine_memmap_response *memmap = memmap_request.response;
 
-    k_init(framebuffer);
+    k_init(framebuffer, memmap);
 
     k_main();
 }

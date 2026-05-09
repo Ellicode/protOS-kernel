@@ -17,6 +17,7 @@ enum ProtoColors {
     PROTO_MAGENTA = 0xED6AFF,
     PROTO_CYAN    = 0x00D3F2,
     PROTO_WHITE   = 0xFFFFFF,
+    PROTO_GREY    = 0x777777,
     PROTO_BG      = 0x000000,
 };
 

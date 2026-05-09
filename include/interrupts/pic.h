@@ -24,6 +24,8 @@
 #define ICW4_BUF_MASTER	       0x0C     /* Buffered mode/master */
 #define ICW4_SFNM	           0x10     /* Special fully nested (not) */
 
+typedef uint8_t irq_t;
+
 void pic_init();
 void eoi(uint8_t irq);
 void unmask_irq(uint8_t irq);
