@@ -5,12 +5,19 @@
 #include "interrupts/idt.h"
 #include "interrupts/pic.h"
 #include "drivers/ps2.h"
+#include "memory/memory.h"
+#include "memory/pmm.h"
+#include "memory/paging.h"
 #include "pit.h"
 #include "gdt.h"
 
 #include "boot.h"
 
-int k_init(struct limine_framebuffer *fb, struct limine_memmap_response *memmap) {
+int k_init(
+    struct limine_framebuffer *fb, 
+    struct limine_memmap_response *memmap,
+    struct limine_hhdm_response *hhdm
+) {
     // Triple line break to avoid overlapping issues with the QEMU logs :3
     print("\n\n\n");
     k_info("Starting boot sequence...\n", "proto.kernel.k_init");
@@ -45,10 +52,22 @@ int k_init(struct limine_framebuffer *fb, struct limine_memmap_response *memmap)
     // 7) INITIALIZE PS2 KEYBOARD ====================================================
     ps2_init();
     k_success("Initialized PS2 Keyboard.\n", "proto.kernel.k_init");
+    
     __asm__ volatile("sti");
     k_success("Interrupts enabled.\n", "proto.kernel.k_init");
 
+    memmap_dump(memmap);
+
+    if (pmm_init(memmap, hhdm) != 0) {
+        k_error("Couldn't initialize pmm.\n", "proto.kernel.k_init");
+        return 1;
+    }
+    k_success("Initialized PMM.\n", "proto.kernel.k_init");
+
+    paging_init(memmap, hhdm);
+    k_success("Initialized Paging.\n", "proto.kernel.k_init");
+
     // DONE! =========================================================================
-    k_info("Boot script ended without errors.\n", "proto.kernel.k_init");
+    k_info("Boot script ended.\n", "proto.kernel.k_init");
     return 0;
 }

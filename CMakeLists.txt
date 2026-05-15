@@ -18,18 +18,6 @@ set(KERNEL_SOURCES
         src/io.c
         include/io.h
 
-        src/debug/logger.c
-        include/debug/logger.h
-
-        src/debug/serial.c
-        include/debug/serial.h
-
-        src/graphics/tty.c
-        include/graphics/tty.h
-
-        src/graphics/vga.c
-        include/graphics/vga.h
-
         src/globals.c
         include/globals.h
 
@@ -38,6 +26,27 @@ set(KERNEL_SOURCES
 
         src/gdt.c
         include/gdt.h
+
+        src/pit.c
+        include/pit.h
+
+        # DEBUG ================================================================
+
+        src/debug/logger.c
+        include/debug/logger.h
+
+        src/debug/serial.c
+        include/debug/serial.h
+
+        # GRAPHICS =============================================================
+
+        src/graphics/tty.c
+        include/graphics/tty.h
+
+        src/graphics/vga.c
+        include/graphics/vga.h
+
+        # INTERRUPTS ===========================================================
 
         src/interrupts/idt.c
         include/interrupts/idt.h
@@ -50,14 +59,21 @@ set(KERNEL_SOURCES
         src/interrupts/handlers.c
         include/interrupts/handlers.h
 
-        src/pit.c
-        include/pit.h
-
-        src/memory.c
-        include/memory.h
+        # DRIVERS ===============================================================
 
         src/drivers/ps2.c
         include/drivers/ps2.h
+
+        # MEMORY ================================================================
+
+        src/memory/pmm.c
+        include/memory/pmm.h
+
+        src/memory/paging.c
+        include/memory/paging.h
+
+        src/memory/memory.c
+        include/memory/memory.h
 )
 
 add_executable(kernel ${KERNEL_SOURCES})

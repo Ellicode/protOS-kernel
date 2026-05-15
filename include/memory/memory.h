@@ -5,4 +5,4 @@
 
 void memmap_dump(struct limine_memmap_response *memmap);
 
-#endif // MEMORY_H
+#endif

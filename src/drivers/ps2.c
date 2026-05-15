@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include "io.h"
+#include "globals.h"
 #include "graphics/tty.h"
 #include "interrupts/pic.h"
 #include "debug/logger.h"
@@ -13,36 +14,38 @@ uint8_t shift_pressed  = 0;
 uint8_t alt_gr_pressed = 0;
 
 void ps2_isr() {
-    uint8_t scancode = inb(PS2_DATA_PORT);
-    uint8_t key = scancode & 0x7F;
+    if (g_kbd_enable == 1) {
+        uint8_t scancode = inb(PS2_DATA_PORT);
+        uint8_t key = scancode & 0x7F;
 
-    if (scancode == 0x2A || scancode == 0x36) {
-        shift_pressed = 1;
-    } else if (scancode == 0xAA || scancode == 0xB6) {
-        shift_pressed = 0;
-    }
-
-    if (scancode == 0x38) {
-        alt_gr_pressed = 1;
-    } else if (scancode == 0xB8) {
-        alt_gr_pressed = 0;
-    }
-    
-    if (scancode & 0x80) {
-        // Handle release
-    } else {
-        unsigned char ascii;
-        if (shift_pressed) {
-            ascii = ascii_shift[key];
-        } else {
-            ascii = ascii_no_shift[key];
+        if (scancode == 0x2A || scancode == 0x36) {
+            shift_pressed = 1;
+        } else if (scancode == 0xAA || scancode == 0xB6) {
+            shift_pressed = 0;
         }
 
-        char str[2];
-        str[0] = (char)ascii; // Cast to signed char
-        str[1] = '\0';     // Null terminator
+        if (scancode == 0x38) {
+            alt_gr_pressed = 1;
+        } else if (scancode == 0xB8) {
+            alt_gr_pressed = 0;
+        }
+        
+        if (scancode & 0x80) {
+            // Handle release
+        } else {
+            unsigned char ascii;
+            if (shift_pressed) {
+                ascii = ascii_shift[key];
+            } else {
+                ascii = ascii_no_shift[key];
+            }
 
-        print(str);
+            char str[2];
+            str[0] = (char)ascii; // Cast to signed char
+            str[1] = '\0';     // Null terminator
+
+            print(str);
+        }
     }
 }
 

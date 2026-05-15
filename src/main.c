@@ -67,8 +67,9 @@ void k_early_main() {
 
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
     struct limine_memmap_response *memmap = memmap_request.response;
+    struct limine_hhdm_response *hhdm = hhdm_request.response;
 
-    k_init(framebuffer, memmap);
+    k_init(framebuffer, memmap, hhdm);
 
     k_main();
 }

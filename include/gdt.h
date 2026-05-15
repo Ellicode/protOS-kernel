@@ -4,38 +4,38 @@
 #define GDT_H
 
 enum {
-    GDT_ENTRY_DPL_KERNEL = 0,
-    GDT_ENTRY_DPL_USER = 3
+    GDT_ENTRY_DPL_KERNEL        = 0,
+    GDT_ENTRY_DPL_USER          = 3
 };
 typedef uint8_t gdt_dpl_t;
 
 enum {
-    GDT_ENTRY_SEG_SYSTEM = 0,
-    GDT_ENTRY_SEG_CODE_DATA = 1
+    GDT_ENTRY_SEG_SYSTEM        = 0,
+    GDT_ENTRY_SEG_CODE_DATA     = 1
 };
 typedef uint8_t gdt_type_t;
 
 enum {
-    GDT_ENTRY_GRANULARITY_BYTE = 0,
+    GDT_ENTRY_GRANULARITY_BYTE  = 0,
     GDT_ENTRY_GRANULARITY_PAGES = 1
 };
 typedef uint8_t gdt_gran_t;
 
 enum {
-    GDT_ENTRY_SIZE_16 = 0,
-    GDT_ENTRY_SIZE_32 = 1
+    GDT_ENTRY_SIZE_16           = 0,
+    GDT_ENTRY_SIZE_32           = 1
 };
 typedef uint8_t gdt_size_t;
 
 enum {
-    GDT_ENTRY_PRESENT = 1,
-    GDT_ENTRY_EXECUTABLE = 1,
-    GDT_ENTRY_EXPAND_DOWN = 1,
-    GDT_READ_ALLOWED = 1,
-    GDT_WRITE_ALLOWED = 1,
-    GDT_ACCESSED = 1,
+    GDT_ENTRY_PRESENT           = 1,
+    GDT_ENTRY_EXECUTABLE        = 1,
+    GDT_ENTRY_EXPAND_DOWN       = 1,
+    GDT_READ_ALLOWED            = 1,
+    GDT_WRITE_ALLOWED           = 1,
+    GDT_ACCESSED                = 1,
 
-    GDT_OFF = 0,
+    GDT_OFF                     = 0,
 };
 
 typedef union {
@@ -51,6 +51,7 @@ typedef union {
     uint8_t value;
 } GDTEntryAccessByte;
 typedef uint8_t access_byte_t;
+
 typedef union {
     struct {
         uint16_t      limit_low;

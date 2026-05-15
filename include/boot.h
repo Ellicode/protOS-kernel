@@ -3,6 +3,6 @@
 #ifndef BOOT_H
 #define BOOT_H
 
-int k_init(struct limine_framebuffer *fb, struct limine_memmap_response *memmap);
+int k_init(struct limine_framebuffer *fb, struct limine_memmap_response *memmap, struct limine_hhdm_response *hhdm);
 
 #endif
