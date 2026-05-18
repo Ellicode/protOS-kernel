@@ -6,6 +6,7 @@
 #include "interrupts/pic.h"
 #include "drivers/ps2.h"
 #include "memory/memory.h"
+#include "memory/freelist_pmm.h"
 #include "memory/pmm.h"
 #include "memory/paging.h"
 #include "pit.h"
@@ -39,25 +40,23 @@ int k_init(
     graphics_init(fb);
     k_success("Initialized graphics.\n", "proto.kernel.k_init");
 
-    // 3) INITIALIZE PMM =============================================================
+    // 3) INITIALIZE GDT =============================================================
+    gdt_init();
+    k_success("Initialized GDT.\n", "proto.kernel.k_init");
 
-    if (pmm_init() != 0) {
+    // 4) INITIALIZE IDT =============================================================
+    idt_init();
+    k_success("Initialized IDT.\n", "proto.kernel.k_init");
+
+    // 5) INITIALIZE PAGING ==========================================================
+    if (fpmm_init() == 1) {
         k_error("Couldn't initialize PMM.\n", "proto.kernel.k_init");
         return 1;
     }
     k_success("Initialized PMM.\n", "proto.kernel.k_init");
     
-    // 3) INITIALIZE PAGING ==========================================================
     paging_init();
     k_success("Initialized Paging.\n", "proto.kernel.k_init");
-
-    // 4) INITIALIZE GDT =============================================================
-    gdt_init();
-    k_success("Initialized GDT.\n", "proto.kernel.k_init");
-
-    // 5) INITIALIZE IDT =============================================================
-    idt_init();
-    k_success("Initialized IDT.\n", "proto.kernel.k_init");
 
     // 6) INITIALIZE PIC =============================================================
     pic_init();

@@ -1,6 +1,6 @@
 #include "graphics/tty.h"
 #include "debug/logger.h"
-#include "interrupts/handlers.h"
+#include "interrupts/interrupts.h"
 
 #include "interrupts/idt.h"
 

@@ -1,7 +1,7 @@
 #include "io.h"
 #include "debug/logger.h"
 #include "graphics/tty.h"
-#include "interrupts/handlers.h"
+#include "interrupts/interrupts.h"
 
 #include "interrupts/pic.h"
 

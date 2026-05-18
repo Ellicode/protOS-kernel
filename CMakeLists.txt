@@ -56,8 +56,8 @@ set(KERNEL_SOURCES
         src/interrupts/pic.c
         include/interrupts/pic.h
 
-        src/interrupts/handlers.c
-        include/interrupts/handlers.h
+        src/interrupts/interrupts.c
+        include/interrupts/interrupts.h
 
         # DRIVERS ===============================================================
 
@@ -74,6 +74,9 @@ set(KERNEL_SOURCES
 
         src/memory/memory.c
         include/memory/memory.h
+
+        src/memory/freelist_pmm.c
+        include/memory/freelist_pmm.h
 )
 
 add_executable(kernel ${KERNEL_SOURCES})

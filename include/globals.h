@@ -23,4 +23,7 @@ extern struct limine_executable_address_response *g_lim_kaddr;
 extern char g_kernel_start;
 extern char g_kernel_end;
 
+extern void* (*m_pmm_alloc_p)(void);
+extern void (*m_pmm_free_p)(void *);
+
 #endif // GLOBALS_H

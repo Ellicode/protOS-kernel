@@ -1,4 +1,4 @@
-#include "memory/pmm.h"
+#include "memory/freelist_pmm.h"
 #include "graphics/tty.h"
 #include "debug/logger.h"
 #include "globals.h"
@@ -25,7 +25,7 @@ uint64_t* _get_or_create(pt_entry_t* entry) {
         return (uint64_t*)(phys + g_lim_hhdm->offset);
     }
 
-    uint64_t phys = (uint64_t)pmm_alloc(PAGE_SIZE);
+    uint64_t phys = (uint64_t)m_pmm_alloc_p();
     uint64_t* table_virt = (uint64_t*)(phys + g_lim_hhdm->offset);
 
     memset(table_virt, 0, PAGE_SIZE);
@@ -102,7 +102,7 @@ void _tables_dump(pt_entry_t* pml4) {
 }
 
 void paging_init() {
-    uint64_t phys = (uint64_t)pmm_alloc(PAGE_SIZE);
+    uint64_t phys = (uint64_t)m_pmm_alloc_p();
     pt_entry_t* pml4 = (pt_entry_t*)(phys + g_lim_hhdm->offset);
 
     k_debug("pml4_phys=", "proto.kernel.paging_init");
@@ -157,7 +157,7 @@ void paging_init() {
         struct limine_memmap_entry *entry = g_lim_memmap->entries[i];
 
         if (entry->type == LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE) {
-            pmm_free((void *)entry->base, entry->length);
+            m_pmm_free_p((void *) entry->base);
 
             space_reclaimed += entry->length;
         }

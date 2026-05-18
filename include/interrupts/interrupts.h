@@ -1,7 +1,7 @@
 #include "interrupts/idt.h"
 
-#ifndef HANDLERS_H
-#define HANDLERS_H
+#ifndef INTERRUPTS_H
+#define INTERRUPTS_H
 
 #define ISR_EXCEPTION_COUNT          32
 #define ISR_IRQ_COUNT                2
@@ -52,5 +52,10 @@ extern void isr_call_32();
 extern void isr_call_33();
 
 void isr_handler(idt_frame_t* frame);
+
+int interrupts_enabled();
+void enable_interrupts();
+void disable_interrupts();
+void restore_interrupts(int irqs);
 
 #endif

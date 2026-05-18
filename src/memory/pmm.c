@@ -58,6 +58,83 @@ void pmm_map(pmm_entry_t* pmm, uint64_t base, uint64_t size, pmm_entry_t entry) 
     };
 }
 
+void *pmm_allocate(size_t size) {
+    size_t page_count = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+
+    uint64_t run_start = UINT64_MAX;
+    size_t run_len = 0;
+
+    for (uint64_t idx = 1; idx < pmm_size; idx++) {
+        if (pmm[idx] == PMM_USABLE) {
+            if (run_start == UINT64_MAX) {
+                run_start = idx;
+                run_len = 1;
+            } else {
+                run_len++;
+            }
+            if (run_len == page_count) {
+                for (uint64_t i = run_start; i <= idx; i++) {
+                    pmm[i] = PMM_USED;
+                }
+
+                return (void *)(run_start * PAGE_SIZE);
+            }
+        } else {
+            run_start = UINT64_MAX;
+            run_len = 0;
+        }
+    }
+
+    k_error("out of memory!\n", "proto.kernel.pmm_alloc");
+    return NULL;
+}
+
+void *pmm_allocate_page() {
+    for (uint64_t idx = 1; idx < pmm_size; idx++) {
+        if (pmm[idx] == PMM_USABLE) {
+            return (void *)(idx * PAGE_SIZE);
+        }
+    }
+    
+    k_error("out of memory!\n", "proto.kernel.pmm_alloc");
+    return NULL;
+}
+
+void pmm_free(void *ptr, size_t size) {
+    if ((uint64_t)ptr % PAGE_SIZE != 0) {
+        k_warning("unaligned pointer", "proto.kernel.pmm_free");
+        return;
+    }
+
+    uint64_t base_idx = (uint64_t)ptr / PAGE_SIZE;
+    size_t page_count = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+
+    for (uint64_t i = 0; i < page_count; i++) {
+        if (i+base_idx >= pmm_size) {
+            k_warning("out of bounds! ", "proto.kernel.pmm_free");
+            print_f("base_idx=%d, size=%d, i=%d\n", base_idx, size, i);
+
+            break;
+        }
+        if (pmm[i+base_idx] == PMM_USED) {
+            pmm[i+base_idx] = PMM_USABLE;
+        }
+    }
+}
+
+void pmm_free_page(void *ptr) {
+    uint64_t pmm_idx = (uint64_t)ptr / PAGE_SIZE;
+
+    if (pmm_idx >= pmm_size) {
+        k_warning("out of bounds! ", "proto.kernel.pmm_free");
+        print_f("pmm_idx=%d");
+    }   
+
+    if (pmm[pmm_idx] == PMM_USED) {
+        pmm[pmm_idx] = PMM_USABLE;
+    }
+}
+
 int pmm_init() {
     void *pmm_phys = NULL;
     if (get_pmm(&pmm_phys) != 0) {
@@ -86,62 +163,8 @@ int pmm_init() {
     // mark PMM array itself as used AFTER, so the loop above can't undo it
     pmm_map(pmm, (uint64_t)pmm_phys, pmm_size * sizeof(pmm_entry_t), PMM_USED);
 
+    m_pmm_alloc_p = pmm_allocate_page;
+    m_pmm_free_p = pmm_free_page;
+
     return 0;
-}
-
-void *pmm_alloc(size_t size) {
-    size_t page_count = (size + PAGE_SIZE - 1) / PAGE_SIZE;
-
-    uint64_t run_start = UINT64_MAX;
-    size_t run_len = 0;
-
-    for (uint64_t idx = 1; idx < pmm_size; idx++) {
-        if (pmm[idx] == PMM_USABLE) {
-            if (run_start == UINT64_MAX) {
-                run_start = idx;
-                run_len = 1;
-            } else {
-                run_len++;
-            }
-            if (run_len == page_count) {
-                for (uint64_t i = run_start; i <= idx; i++) {
-                    pmm[i] = PMM_USED;
-                }
-                // k_debug("allocated ", "proto.kernel.pmm_alloc");
-                // print_f("%d pages at %x!\n", page_count, run_start * PAGE_SIZE);
-                return (void *)(run_start * PAGE_SIZE);
-            }
-        } else {
-            run_start = UINT64_MAX;
-            run_len = 0;
-        }
-    }
-
-    k_error("out of memory!\n", "proto.kernel.pmm_alloc");
-    return NULL;
-}
-
-void pmm_free(void *ptr, size_t size) {
-    if ((uint64_t)ptr % PAGE_SIZE != 0) {
-        k_warning("pmm_free: unaligned pointer", "proto.kernel.pmm_free");
-        return;
-    }
-
-    uint64_t base_idx = (uint64_t)ptr / PAGE_SIZE;
-    size_t page_count = (size + PAGE_SIZE - 1) / PAGE_SIZE;
-
-    for (uint64_t i = 0; i < page_count; i++) {
-        if (i+base_idx >= pmm_size) {
-            k_warning("out of bounds! ", "proto.kernel.pmm_free");
-            print_f("base_idx=%d, size=%d, i=%d\n", base_idx, size, i);
-
-            break;
-        }
-        if (pmm[i+base_idx] == PMM_USED) {
-            pmm[i+base_idx] = PMM_USABLE;
-        }
-    }
-
-    // k_debug("freed ", "proto.kernel.pmm_free");
-    // print_f("%d pages at %x!\n", page_count, (uint64_t)ptr);
 }

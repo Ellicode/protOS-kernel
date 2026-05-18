@@ -9,7 +9,7 @@ error_exit() {
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-ALLOCATED_MEMORY=512M
+ALLOCATED_MEMORY=256M
 EXTRA_QEMU_ARGS="" # You can add extra arguments for QEMU here if needed
 LOCAL_OVMF_CODE_PATH="ignore-scripts/ovmf/OVMF_CODE.fd"
 REMOTE_OVMF_CODE_PATH="/usr/share/edk2/x64/OVMF_CODE.4m.fd"

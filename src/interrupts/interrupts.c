@@ -5,7 +5,7 @@
 #include "io.h"
 #include "globals.h"
 
-#include "interrupts/handlers.h"
+#include "interrupts/interrupts.h"
 
 void* isr_exception_handlers[ISR_EXCEPTION_COUNT] = {
     [ISR_EXC_DIVISION_ERROR]        = isr_call_0,
@@ -69,5 +69,31 @@ void isr_handler(idt_frame_t* frame) {
     
     if (frame->vector >= 32 && frame->vector < 48) {
         eoi((uint8_t)(frame->vector - 32));
+    }
+}
+
+int interrupts_enabled() {
+    uint64_t rflags;
+    asm volatile (
+        "pushfq;"
+        "pop %0;"
+        : "=r" (rflags)
+    );
+    return (rflags >> 9) & 1;
+}
+
+void enable_interrupts() {
+    asm volatile ("sti");
+}
+
+void disable_interrupts() {
+    asm volatile ("cli");
+}
+
+void restore_interrupts(int irqs) {
+    if (irqs) {
+        enable_interrupts();
+    } else {
+        disable_interrupts();
     }
 }
