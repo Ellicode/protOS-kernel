@@ -1,0 +1,40 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "(gdb) Launch",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/kernel",
+			"cwd": "${workspaceFolder}",
+			"MIMode": "gdb",
+			"miDebuggerPath": "gdb",
+			// "miDebuggerServerAddress": "localhost:1234",
+			"preLaunchTask": "CMake: build",
+			"stopAtEntry": true,
+			"externalConsole": false,
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				},
+				{
+					"description": "Substitute source code path",
+					"text": "-interpreter-exec console \"set substitute-path /src/main64 ${workspaceFolder}/main64\""
+				},
+				{
+					"description": "Set disassembly flavor to Intel",
+					"text": "-interpreter-exec console \"set disassembly-flavor intel\""
+				},
+				{
+					"description": "Load kernel symbols at virtual address",
+					"text": "-interpreter-exec console \"add-symbol-file ${workspaceFolder}/build/kernel 0xFFFF800000100000\""
+				}
+			]
+		}
+	]
+}

@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 
 #ifndef PMM_H
 #define PMM_H
@@ -10,6 +11,8 @@ enum {
     PMM_USED   = 0,
 };
 
-int pmm_init(struct limine_memmap_response *memmap, struct limine_hhdm_response *hhdm);
+int pmm_init();
+void *pmm_alloc(size_t size);
+void pmm_free(void *ptr, size_t size);
 
 #endif // PMM_H

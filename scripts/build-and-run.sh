@@ -9,7 +9,7 @@ error_exit() {
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-ALLOCATED_MEMORY=256M
+ALLOCATED_MEMORY=512M
 EXTRA_QEMU_ARGS="" # You can add extra arguments for QEMU here if needed
 LOCAL_OVMF_CODE_PATH="ignore-scripts/ovmf/OVMF_CODE.fd"
 REMOTE_OVMF_CODE_PATH="/usr/share/edk2/x64/OVMF_CODE.4m.fd"
@@ -48,7 +48,7 @@ A_UNDERLINE='\033[4m'
 echo -e "${B_BLUE} INFO ${A_RESET} Starting build process..."
 
 # CLEAN THIS SHIT BEFORE BUILDING BC IT FUCKING CRASHES EVERY TIME
-rm -r build/
+# rm -r build/
 
 cd "$PROJECT_ROOT" || error_exit "${B_RED} ERR! ${A_RESET} Failed to change directory"
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug

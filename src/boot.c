@@ -10,17 +10,23 @@
 #include "memory/paging.h"
 #include "pit.h"
 #include "gdt.h"
+#include "globals.h"
 
 #include "boot.h"
 
 int k_init(
     struct limine_framebuffer *fb, 
     struct limine_memmap_response *memmap,
-    struct limine_hhdm_response *hhdm
+    struct limine_hhdm_response *hhdm,
+    struct limine_executable_address_response *kaddr
 ) {
     // Triple line break to avoid overlapping issues with the QEMU logs :3
     print("\n\n\n");
     k_info("Starting boot sequence...\n", "proto.kernel.k_init");
+    
+    g_lim_memmap = memmap;
+    g_lim_hhdm = hhdm;
+    g_lim_kaddr = kaddr;
 
     // 1) INITIALIZE SERIAL OUTPUT ===================================================
     if (serial_init() != 0) {
@@ -33,41 +39,42 @@ int k_init(
     graphics_init(fb);
     k_success("Initialized graphics.\n", "proto.kernel.k_init");
 
-    // 3) INITIALIZE GDT =============================================================
+    // 3) INITIALIZE PMM =============================================================
+
+    if (pmm_init() != 0) {
+        k_error("Couldn't initialize PMM.\n", "proto.kernel.k_init");
+        return 1;
+    }
+    k_success("Initialized PMM.\n", "proto.kernel.k_init");
+    
+    // 3) INITIALIZE PAGING ==========================================================
+    paging_init();
+    k_success("Initialized Paging.\n", "proto.kernel.k_init");
+
+    // 4) INITIALIZE GDT =============================================================
     gdt_init();
     k_success("Initialized GDT.\n", "proto.kernel.k_init");
 
-    // 4) INITIALIZE IDT =============================================================
+    // 5) INITIALIZE IDT =============================================================
     idt_init();
     k_success("Initialized IDT.\n", "proto.kernel.k_init");
 
-    // 5) INITIALIZE PIC =============================================================
+    // 6) INITIALIZE PIC =============================================================
     pic_init();
     k_success("Initialized PIC.\n", "proto.kernel.k_init");
 
-    // 6) INITIALIZE PIT =============================================================
+    // 7) INITIALIZE PIT =============================================================
     pit_init(100);
     k_success("Initialized PIT.\n", "proto.kernel.k_init");
 
-    // 7) INITIALIZE PS2 KEYBOARD ====================================================
+    // 8) INITIALIZE PS2 KEYBOARD ====================================================
     ps2_init();
     k_success("Initialized PS2 Keyboard.\n", "proto.kernel.k_init");
     
     __asm__ volatile("sti");
     k_success("Interrupts enabled.\n", "proto.kernel.k_init");
 
-    memmap_dump(memmap);
-
-    if (pmm_init(memmap, hhdm) != 0) {
-        k_error("Couldn't initialize pmm.\n", "proto.kernel.k_init");
-        return 1;
-    }
-    k_success("Initialized PMM.\n", "proto.kernel.k_init");
-
-    paging_init(memmap, hhdm);
-    k_success("Initialized Paging.\n", "proto.kernel.k_init");
-
     // DONE! =========================================================================
-    k_info("Boot script ended.\n", "proto.kernel.k_init");
+    k_info("Boot sequence ended.\n", "proto.kernel.k_init");
     return 0;
 }

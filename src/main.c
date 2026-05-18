@@ -22,6 +22,11 @@ __attribute__((used, section(".limine_requests"))) static volatile struct limine
     .id = LIMINE_HHDM_REQUEST_ID,
     .revision = 0};
 
+__attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_address_request address_request = {
+    .id = LIMINE_EXECUTABLE_ADDRESS_REQUEST_ID,
+    .revision = 0};
+
+
 __attribute__((used, section(".limine_requests_start"))) static volatile uint64_t limine_requests_start_marker[] = LIMINE_REQUESTS_START_MARKER;
 __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
 
@@ -45,8 +50,8 @@ void k_main() {
 
     // panic();
     for (;;) {
-        // if (g_pit_ticks == 1000) {
-        //     print_f("1000 ticks reached\n");
+        // if (g_pit_ticks == 100) {
+        //     print_f("Tick!\n");
         //     g_pit_ticks = 0;
         // }
         __asm__ ("hlt");
@@ -68,8 +73,9 @@ void k_early_main() {
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
     struct limine_memmap_response *memmap = memmap_request.response;
     struct limine_hhdm_response *hhdm = hhdm_request.response;
+    struct limine_executable_address_response *kaddr = address_request.response;
 
-    k_init(framebuffer, memmap, hhdm);
-
-    k_main();
+    if (k_init(framebuffer, memmap, hhdm, kaddr) == 0) {
+        k_main();
+    }
 }

@@ -16,5 +16,11 @@ extern uint64_t g_pit_ticks;
 extern uint8_t g_kbd_enable;
 
 extern struct limine_framebuffer *g_vga_active_framebuffer;
+extern struct limine_hhdm_response *g_lim_hhdm;
+extern struct limine_memmap_response *g_lim_memmap;
+extern struct limine_executable_address_response *g_lim_kaddr;
+
+extern char g_kernel_start;
+extern char g_kernel_end;
 
 #endif // GLOBALS_H

@@ -1,5 +1,4 @@
-#include <stddef.h>
-#include <stdint.h>
+#include "string.h"
 
 // MEMORY RELATED FUNCTIONS ====================================================================
 
