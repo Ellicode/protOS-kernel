@@ -21,11 +21,11 @@
 #include <stdint.h>
 
 #include "interrupts/interrupts.h"
+#include "utils/utils.h"
+#include "memory/vmm.h"
 
-#include "memory/paging.h"
-
-#define ALIGN_UP(x, align) ((((uint64_t) (x)) + ((align) - 1)) & ~((uint64_t) ((align) - 1)))
-#define ALIGN_DOWN(x, align) (((uint64_t) (x)) & ~((uint64_t) ((align) - 1)))
+#ifndef FREELIST_PMM_H
+#define FREELIST_PMM_H
 
 typedef struct {
     uint32_t next;
@@ -63,9 +63,8 @@ extern freelist_pmm_node_t* freelist_pmm_head;
 extern uint64_t freelist_pmm_fill_entry;
 extern uint64_t freelist_pmm_fill_offset;
 
-typedef uint64_t (*pmm_alloc_page_t)(void);
-typedef void (*pmm_free_page_t)(uint64_t);
-
 void* fpmm_allocate_page();
 void  fpmm_free_page(void* ptr);
 int   fpmm_init();
+
+#endif // FREELIST_PMM_H

@@ -37,7 +37,7 @@
 
 #include "debug/logger.h"
 #include "limine/limine.h"
-#include "memory/paging.h"
+#include "memory/vmm.h"
 #include "globals.h"
 
 #include "memory/freelist_pmm.h"

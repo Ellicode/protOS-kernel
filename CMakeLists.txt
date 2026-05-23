@@ -2,6 +2,8 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_C_STANDARD 17)
 
+add_compile_definitions(PROTO_DEBUG=1)
+
 project(kernel
         VERSION 0.1.0
         DESCRIPTION "A kernel for protOS"
@@ -29,6 +31,8 @@ set(KERNEL_SOURCES
 
         src/pit.c
         include/pit.h
+
+        include/utils/utils.h
 
         # DEBUG ================================================================
 
@@ -69,14 +73,17 @@ set(KERNEL_SOURCES
         src/memory/pmm.c
         include/memory/pmm.h
 
-        src/memory/paging.c
-        include/memory/paging.h
+        src/memory/vmm.c
+        include/memory/vmm.h
 
         src/memory/memory.c
         include/memory/memory.h
 
         src/memory/freelist_pmm.c
         include/memory/freelist_pmm.h
+
+        src/memory/heap.c
+        include/memory/heap.h
 )
 
 add_executable(kernel ${KERNEL_SOURCES})
@@ -90,6 +97,7 @@ target_compile_options(kernel PRIVATE
     $<$<COMPILE_LANGUAGE:C>:-mno-red-zone>
     $<$<COMPILE_LANGUAGE:C>:-Wall>
     $<$<COMPILE_LANGUAGE:C>:-Wextra>
+    $<$<COMPILE_LANGUAGE:C>:-g>
 )
 
 target_include_directories(kernel PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")

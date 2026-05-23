@@ -44,7 +44,9 @@ void unmask_irq(irq_t irq) {
     io_wait();
 
     k_debug("Unmasked IRQ (vector=", "proto.kernel.pic_init");
-    print_f("%d)\n", irq);
+    #if (PROTO_DEBUG == 1)
+        print_f("%d)\n", irq);
+    #endif
 }
 
 void _pic_enable(uint8_t offset_1, uint8_t offset_2) {

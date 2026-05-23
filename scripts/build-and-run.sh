@@ -2,6 +2,14 @@
 
 set -e
 
+DEBUG_MODE=0
+for arg in "$@"; do
+    case $arg in
+        --debug) DEBUG_MODE=1 ;;
+    esac
+done
+
+
 error_exit() {
     echo -e "$1"
     exit 1
@@ -11,10 +19,6 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 ALLOCATED_MEMORY=256M
 EXTRA_QEMU_ARGS="" # You can add extra arguments for QEMU here if needed
-LOCAL_OVMF_CODE_PATH="ignore-scripts/ovmf/OVMF_CODE.fd"
-REMOTE_OVMF_CODE_PATH="/usr/share/edk2/x64/OVMF_CODE.4m.fd"
-BOOT_DIRECTORY="ignore-scripts/esp/"
-BUILD_FILE_NAME="kernel"
 
 # Foreground colors
 T_BLACK='\033[0;30m'
@@ -44,6 +48,19 @@ A_BOLD='\033[1m'
 A_DIM='\033[2m'
 A_ITALIC='\033[3m'
 A_UNDERLINE='\033[4m'
+
+
+# Build QEMU debug args
+if [ $DEBUG_MODE -eq 1 ]; then
+    echo -e "${B_MAGENTA} DBG  ${A_RESET} Debug mode is on"
+    EXTRA_QEMU_ARGS="$EXTRA_QEMU_ARGS -s -S"
+fi
+
+LOCAL_OVMF_CODE_PATH="ignore-scripts/ovmf/OVMF_CODE.fd"
+REMOTE_OVMF_CODE_PATH="/usr/share/edk2/x64/OVMF_CODE.4m.fd"
+BOOT_DIRECTORY="ignore-scripts/esp/"
+BUILD_FILE_NAME="kernel"
+
 
 echo -e "${B_BLUE} INFO ${A_RESET} Starting build process..."
 
@@ -82,6 +99,10 @@ else
     esac
 fi
 
+if [ $DEBUG_MODE -eq 1 ]; then
+    echo "QEMU: waiting for GDB on port 1234"
+fi
+
 qemu-system-x86_64 \
     -m $ALLOCATED_MEMORY \
     -machine q35 \
@@ -93,7 +114,6 @@ qemu-system-x86_64 \
     -vga std \
     -no-reboot \
     -no-shutdown \
-    # -d int \
     $EXTRA_QEMU_ARGS
 
 echo -e "\n"

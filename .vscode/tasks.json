@@ -2,6 +2,20 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "Launch QEMU Debug",
+			"type": "shell",
+			"command": "${workspaceFolder}/scripts/build-and-run.sh --debug %",
+			"isBackground": true,
+			"problemMatcher": {
+				"pattern": { "regexp": "^$" },
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "Starting build process",
+					"endsPattern": "QEMU: waiting for GDB on port 1234"
+				}
+			}
+		},
+		{
 			"label": "Build and run",
 			"type": "shell",
 			"command": "./scripts/build-and-run.sh",

@@ -1,6 +1,6 @@
 #include "debug/logger.h"
 #include "graphics/tty.h"
-#include "memory/paging.h"
+#include "memory/vmm.h"
 #include "limine/limine.h"
 #include "globals.h"
 #include "string.h"
@@ -25,7 +25,9 @@ int get_pmm(void **out) {
     uint64_t pmm_bytes_needed = pmm_size * sizeof(pmm_entry_t);
 
     k_debug("pmm_size=", "proto.kernel.get_pmm");
-    print_f("%d pages, needs %dKB\n", pmm_size, pmm_bytes_needed / 1024);
+    #if (PROTO_DEBUG == 1)
+        print_f("%d pages, needs %dKB\n", pmm_size, pmm_bytes_needed / 1024);
+    #endif
 
     for (size_t idx = 0; idx < g_lim_memmap->entry_count; idx++) {
         struct limine_memmap_entry *entry = g_lim_memmap->entries[idx];
@@ -58,7 +60,7 @@ void pmm_map(pmm_entry_t* pmm, uint64_t base, uint64_t size, pmm_entry_t entry) 
     };
 }
 
-void *pmm_allocate(size_t size) {
+void *pmm_alloc(size_t size) {
     size_t page_count = (size + PAGE_SIZE - 1) / PAGE_SIZE;
 
     uint64_t run_start = UINT64_MAX;
@@ -148,7 +150,9 @@ int pmm_init() {
     memset(pmm, 0, pmm_size * sizeof(pmm_entry_t));
 
     k_debug("pmm info: ", "proto.kernel.pmm_init");
-    print_f("pmm_phys=%x, pmm_virt=%x\n", (uint64_t)pmm_phys, (uint64_t)pmm);
+    #if (PROTO_DEBUG == 1)
+        print_f("pmm_phys=%x, pmm_virt=%x\n", (uint64_t)pmm_phys, (uint64_t)pmm);
+    #endif
 
     // mark everything according to memmap
     for (size_t idx = 0; idx < g_lim_memmap->entry_count; idx++) {

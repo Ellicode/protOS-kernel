@@ -1,9 +1,10 @@
 #include <stdint.h>
+#include <stddef.h>
 
 #include "limine/limine.h"
 
-#ifndef PAGING_H
-#define PAGING_H
+#ifndef VMM_H
+#define VMM_H
 
 typedef union {
     struct {
@@ -51,6 +52,8 @@ typedef uint64_t virtual_address_t;
 #define F_GLOBAL    (1ULL << 8)
 #define F_NX        (1ULL << 63)
 
-void paging_init();
+void vmm_init();
+void vmm_map_range(uint64_t virt_start, size_t size);
+uint64_t vmm_virt_to_phys(uint64_t virt);
 
-#endif // PAGING_H
+#endif // VMM_H

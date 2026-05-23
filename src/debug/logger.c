@@ -33,9 +33,11 @@ void k_warning(const char *message, const char *scope) {
 }
 
 void k_debug(const char *message, const char *scope) {
-    print_f("[");
-    set_color(PROTO_MAGENTA);
-    print_f("DEBUG");
-    set_color(PROTO_WHITE);
-    print_f("] (%s) %s", scope, message);
+    #if (PROTO_DEBUG == 1)
+        print_f("[");
+        set_color(PROTO_MAGENTA);
+        print_f("DEBUG");
+        set_color(PROTO_WHITE);
+        print_f("] (%s) %s", scope, message);
+    #endif
 }

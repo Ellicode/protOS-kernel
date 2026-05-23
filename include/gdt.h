@@ -118,7 +118,6 @@ typedef struct {
     uint16_t limit;
     uint64_t base;
 } __attribute__((packed)) GDTR;
-
 typedef GDTR gdtr_t;
 
 typedef struct {

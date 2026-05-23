@@ -7,15 +7,17 @@
 
 void memmap_dump(struct limine_memmap_response *memmap) {
     k_debug("        Limine memmap debug dump\n", "proto.kernel.memmap_dump");
-    print_f("        +------------------+------------------+----+\n");
-    print_f("        |BASE              |LENGTH            |TYPE|\n");
-    print_f("        +------------------+------------------+----+\n");
+    #if (PROTO_DEBUG == 1)
+        print_f("        +------------------+------------------+----+\n");
+        print_f("        |BASE              |LENGTH            |TYPE|\n");
+        print_f("        +------------------+------------------+----+\n");
 
-    for (size_t idx = 0; idx < memmap->entry_count; idx++) {
-        struct limine_memmap_entry *entry = memmap->entries[idx];
+        for (size_t idx = 0; idx < memmap->entry_count; idx++) {
+            struct limine_memmap_entry *entry = memmap->entries[idx];
 
-        print_f("        |%18x|%18x|%4d|\n", entry->base, entry->length, entry->type);
-    }
-    print_f("        +------------------+------------------+----+\n");
+            print_f("        |%18x|%18x|%4d|\n", entry->base, entry->length, entry->type);
+        }
+        print_f("        +------------------+------------------+----+\n");
+    #endif
 }
 

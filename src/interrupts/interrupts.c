@@ -64,7 +64,9 @@ void isr_handler(idt_frame_t* frame) {
         ps2_isr();
     } else {
         k_debug("BEEP! Interrupt recieved!", "proto.kernel.isr_handler");
-        print_f(" %d, error=%x, rip=%x\n", frame->vector, frame->error_code, frame->rip);
+        #if (PROTO_DEBUG == 1)
+            print_f(" %d, error=%x, rip=%x\n", frame->vector, frame->error_code, frame->rip);
+        #endif
     }
     
     if (frame->vector >= 32 && frame->vector < 48) {

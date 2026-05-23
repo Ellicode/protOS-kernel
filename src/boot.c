@@ -8,7 +8,8 @@
 #include "memory/memory.h"
 #include "memory/freelist_pmm.h"
 #include "memory/pmm.h"
-#include "memory/paging.h"
+#include "memory/vmm.h"
+#include "memory/heap.h"
 #include "pit.h"
 #include "gdt.h"
 #include "globals.h"
@@ -55,8 +56,11 @@ int k_init(
     }
     k_success("Initialized PMM.\n", "proto.kernel.k_init");
     
-    paging_init();
+    vmm_init();
     k_success("Initialized Paging.\n", "proto.kernel.k_init");
+
+    heap_init();
+    k_success("Initialized Heap.\n", "proto.kernel.k_init");
 
     // 6) INITIALIZE PIC =============================================================
     pic_init();

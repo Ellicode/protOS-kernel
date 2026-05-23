@@ -15,7 +15,6 @@ gdt_entry_t _gdt_generate_descriptor(
     uint8_t db,
     uint8_t gran
 ) {
-    uint64_t x = 0x80008000ULL;
     GDTEntry descriptor = (GDTEntry) { 0 };
 
     descriptor.base_low  = base & 0xFFFF;
@@ -34,8 +33,10 @@ gdt_entry_t _gdt_generate_descriptor(
 
 
     k_debug("gdt_entry (", "proto.kernel.gdt_init");
-    print_f("%x): base=%x, limit=%x, ring=%d, exe=%d, r/w=%d\n", 
-        descriptor.value, base, limit, access.dpl, access.executable, access.read_write);
+    #if (PROTO_DEBUG == 1)
+        print_f("%x): base=%x, limit=%x, ring=%d, exe=%d, r/w=%d\n", 
+            descriptor.value, base, limit, access.dpl, access.executable, access.read_write);
+    #endif
 
     return descriptor.value;
 }
@@ -103,14 +104,18 @@ void gdt_init() {
     gdt[6] = higher;
 
     k_debug("gdt_entry (", "proto.kernel.gdt_init");
-    print_f("%x): higher half tss\n", higher);
+    #if (PROTO_DEBUG == 1)
+        print_f("%x): higher half tss\n", higher);
+    #endif
 
     // Generate GDTR to send to asm
     gdtr.base = (uint64_t)gdt;
     gdtr.limit = sizeof(gdt) - 1;
 
     k_debug("gdt base: ", "proto.kernel.gdt_init");
-    print_f("%x, limit: %x\n", gdtr.base, gdtr.limit);
+    #if (PROTO_DEBUG == 1)
+        print_f("%x, limit: %x\n", gdtr.base, gdtr.limit);
+    #endif
 
     __asm__ volatile (
         "lgdt %0"
