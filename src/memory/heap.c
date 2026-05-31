@@ -88,7 +88,12 @@ void *k_alloc(size_t size) {
 
             node->size   = size;
             node->flags &= ~H_FREE;
-            return (void *)((uint8_t*)node + sizeof(HeapItem));
+
+            void *ptr = (void *)((uint8_t*)node + sizeof(HeapItem));
+
+            memset(ptr, 0, size);
+
+            return ptr;
         }
 
         node = node->next;

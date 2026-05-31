@@ -22,55 +22,44 @@ isr_call_%1:
 
 global isr_common_stub
 isr_common_stub:
-    ; This is the main stub everyone
-    ; jumps to.
-
-    ; Push registers
-    push rax
-    push rbx
-    push rcx
-    push rdx
+    push r15
+    push r14
+    push r13
+    push r12
+    push r11
+    push r10
+    push r9
+    push r8
+    push rbp
     push rsi
     push rdi
-    push rbp
-    push r8
-    push r9
-    push r10
-    push r11
-    push r12
-    push r13
-    push r14
-    push r15
+    push rdx
+    push rcx
+    push rbx
+    push rax
 
-    ; move the registers_t struct on 
-    ; the stack to arguments which
-    ; our ISR handler will use
-    mov rdi, rsp
+    mov rdi, rsp        ; pass pointer to frame as first argument
+    call isr_handler    ; isr_handler(idt_frame_t* frame)
 
-    ; call the C handler
-    call isr_handler
-
-    ; pop registers from the stack
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop r11
-    pop r10
-    pop r9
-    pop r8
-    pop rbp
+    pop rax
+    pop rbx
+    pop rcx
+    pop rdx
     pop rdi
     pop rsi
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
+    pop rbp
+    pop r8
+    pop r9
+    pop r10
+    pop r11
+    pop r12
+    pop r13
+    pop r14
+    pop r15
 
-    ; remove error code and num
-    add rsp, 16
+    add rsp, 16         ; skip vector and error_code
     iretq
-
+    
 ; Map ISR macros to functions
 ; Each ISR can be referenced from C code as:
 ;  --------------------------------------------------------------

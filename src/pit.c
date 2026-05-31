@@ -1,7 +1,6 @@
 #include "io.h"
 #include "globals.h"
 #include "interrupts/pic.h"
-
 #include "pit.h"
 
 void pit_init(uint64_t frequency) {

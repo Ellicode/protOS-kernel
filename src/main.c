@@ -2,10 +2,13 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "debug/logger.h"
 #include "limine/limine.h"
 #include "graphics/tty.h"
 #include "globals.h"
 #include "boot.h"
+
+#include "threads/scheduler.h"
 
 // LIMINE REQUESTS ==============================================================================
 
@@ -44,16 +47,29 @@ static void panic(void) {
 
 // =============================================================================================
 
-void k_main() {
-    print("\nDovahkiin, dragonborn by ok zin los sworn to dein evil Mahfaeraak ahst vaal!\nand fin Norok fodro rout when nust hear zinddo zaan, dragonborn, fah hin kogaan Mu draal!\n");
-    print("\n:3\n\n");
+void thread_1() {
+    while (1) {
+        set_color(PROTO_BLUE);
+        print("1");
+        set_color(PROTO_WHITE);
+    }
+}
+void thread_2() {
+    while (1) {
+        set_color(PROTO_RED);
+        print("2");
+        set_color(PROTO_WHITE);
+    }
+}
 
+void k_main() {
+    thread_t *t1 = create_kernel_thread(thread_1);
+    thread_t *t2 = create_kernel_thread(thread_2);
+
+    __asm__ volatile("sti");  // enable interrupts only after threads are ready
+    
     // panic();
     for (;;) {
-        // if (g_pit_ticks == 100) {
-        //     print_f("Tick!\n");
-        //     g_pit_ticks = 0;
-        // }
         __asm__ ("hlt");
     }
 }
@@ -77,5 +93,7 @@ void k_early_main() {
 
     if (k_init(framebuffer, memmap, hhdm, kaddr) == 0) {
         k_main();
+    } else {
+        k_error("k_init returned non-zero status code", "proto.kernel.k_early_main");
     }
 }

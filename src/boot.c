@@ -10,6 +10,7 @@
 #include "memory/pmm.h"
 #include "memory/vmm.h"
 #include "memory/heap.h"
+#include "threads/scheduler.h"
 #include "pit.h"
 #include "gdt.h"
 #include "globals.h"
@@ -73,9 +74,12 @@ int k_init(
     // 8) INITIALIZE PS2 KEYBOARD ====================================================
     ps2_init();
     k_success("Initialized PS2 Keyboard.\n", "proto.kernel.k_init");
-    
-    __asm__ volatile("sti");
-    k_success("Interrupts enabled.\n", "proto.kernel.k_init");
+
+    scheduler_init();
+    k_success("Initialized Scheduler\n", "proto.kernel.k_init");
+
+    // __asm__ volatile("sti");
+    // k_success("Interrupts enabled.\n", "proto.kernel.k_init");
 
     // DONE! =========================================================================
     k_info("Boot sequence ended.\n", "proto.kernel.k_init");

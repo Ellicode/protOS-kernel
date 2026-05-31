@@ -84,6 +84,11 @@ set(KERNEL_SOURCES
 
         src/memory/heap.c
         include/memory/heap.h
+
+        # THREADS & PROCESSES ===================================================
+
+        src/threads/scheduler.c
+        include/threads/scheduler.h
 )
 
 add_executable(kernel ${KERNEL_SOURCES})

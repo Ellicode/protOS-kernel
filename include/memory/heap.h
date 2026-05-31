@@ -17,6 +17,8 @@ typedef struct HeapItem {
 } __attribute__((packed)) HeapItem;
 typedef HeapItem heap_item_t;
 
+extern heap_item_t *heap_base;
+
 void heap_init();
 void *k_alloc(size_t size);
 void k_free(void *ptr);

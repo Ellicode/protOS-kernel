@@ -65,7 +65,7 @@ BUILD_FILE_NAME="kernel"
 echo -e "${B_BLUE} INFO ${A_RESET} Starting build process..."
 
 # CLEAN THIS SHIT BEFORE BUILDING BC IT FUCKING CRASHES EVERY TIME
-# rm -r build/
+rm -r build/
 
 cd "$PROJECT_ROOT" || error_exit "${B_RED} ERR! ${A_RESET} Failed to change directory"
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
@@ -114,6 +114,7 @@ qemu-system-x86_64 \
     -vga std \
     -no-reboot \
     -no-shutdown \
-    $EXTRA_QEMU_ARGS
+    $EXTRA_QEMU_ARGS \
+    # -d int
 
 echo -e "\n"

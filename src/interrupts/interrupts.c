@@ -4,6 +4,7 @@
 #include "drivers/ps2.h"
 #include "io.h"
 #include "globals.h"
+#include "threads/scheduler.h"
 
 #include "interrupts/interrupts.h"
 
@@ -38,6 +39,8 @@ char* panic_messages[ISR_EXCEPTION_COUNT] = {
 
 void _panic_print(idt_frame_t* frame) {
     char* p_msg = panic_messages[frame->vector];
+    uint64_t cr2;
+    asm __volatile__ ("movq %%cr2, %0": "=R"(cr2)); 
 
     print_f("[");
     set_color(PROTO_RED);
@@ -47,8 +50,8 @@ void _panic_print(idt_frame_t* frame) {
     print_f("        R8 : %18x, R9 : %18x, R10: %18x, R11: %18x\n", frame->r8, frame->r9, frame->r10, frame->r11);
     print_f("        R12: %18x, R13: %18x, R14: %18x, R15: %18x\n", frame->r12, frame->r13, frame->r14, frame->r15);
     print_f("        RBP: %18x, RDI: %18x, RSI: %18x, RDX: %18x\n", frame->rbp, frame->rdi, frame->rsi, frame->rdx);
-    print_f("        RCX: %18x, RBX: %18x, RAX: %18x\n", frame->rcx, frame->rbx, frame->rax);
-    print_f("        RIP: %18x, CS : %18x, RF : %18x\n", frame->rip, frame->cs, frame->rflags);
+    print_f("        RCX: %18x, RBX: %18x, RAX: %18x, CR2: %18x\n", frame->rcx, frame->rbx, frame->rax, cr2);
+    print_f("        RIP: %18x, CS : %18x, RF : %18x, RSP: %18x\n", frame->rip, frame->cs, frame->rflags, frame->rsp);
     print_f("        Something really bad has happened 3:");
     for (;;) {
         __asm__ ("hlt");
@@ -60,6 +63,7 @@ void isr_handler(idt_frame_t* frame) {
         _panic_print(frame);
     } else if (frame->vector == 32) {
         g_pit_ticks++;
+        scheduler_tick(frame);
     } else if (frame->vector == 33) {
         ps2_isr();
     } else {
