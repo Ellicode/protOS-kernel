@@ -1,5 +1,5 @@
 #include "debug/logger.h"
-#include "graphics/tty.h"
+#include "graphics/console.h"
 #include "memory/vmm.h"
 #include "limine/limine.h"
 #include "globals.h"

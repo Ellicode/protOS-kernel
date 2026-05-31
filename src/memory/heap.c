@@ -1,3 +1,4 @@
+#include "utils/ticket_lock.h"
 #include "memory/vmm.h"
 #include "debug/logger.h"
 #include "globals.h"
@@ -6,31 +7,23 @@
 #include "memory/heap.h"
 
 heap_item_t *heap_base = NULL;
-
-uint64_t    heap_size = HEAP_MIN_SIZE;
+uint64_t     heap_size = HEAP_MIN_SIZE;
+ticketlock_t heap_lock = {0};
 
 void heap_dump() {
     #if (PROTO_DEBUG == 1)
-    k_debug("Heap dump:\n", "proto.kernel.heap_dump");
-    k_debug("heap_size: ", "proto.kernel.heap_dump");
-    print_f("%dMB\n", heap_size / (uint64_t)(1024 * 1024));
-
-    heap_item_t *node = heap_base;
-    uint64_t heap_used = 0;
-    while (node != NULL)
-    {
-        if (!(node->flags & H_FREE)) {
-            heap_used += node->size;
+        k_debug("Heap dump: ", "proto.kernel.heap_dump");
+        heap_item_t *node = heap_base;
+        uint64_t heap_used = 0;
+        while (node != NULL)
+        {
+            if (!(node->flags & H_FREE)) {
+                heap_used += node->size;
+            }
+            node = node->next;
         }
-        node = node->next;
-    }
 
-    k_debug("heap_used: ", "proto.kernel.heap_dump");
-    print_f("%dMB (%d / 100)\n", heap_used / (uint64_t)(1024 * 1024), (heap_used / heap_size)*100);
-
-    k_debug("heap_used (bytes): ", "proto.kernel.heap_dump");
-    print_f("%d\n", heap_used);
-
+        print_f("used=%dMB/%dMB (%d%% used, %d bytes)\n", heap_used / (uint64_t)(1024 * 1024), heap_size / (uint64_t)(1024 * 1024), (heap_used / heap_size)*100, heap_used);
     #endif
 }
 
@@ -66,6 +59,8 @@ void *k_alloc(size_t size) {
         return NULL;
     }
 
+    int lock1r = ticketlock_lock(&heap_lock);
+
     heap_item_t *node = heap_base;
     
     while (node != NULL) {
@@ -91,6 +86,7 @@ void *k_alloc(size_t size) {
 
             void *ptr = (void *)((uint8_t*)node + sizeof(HeapItem));
 
+            ticketlock_unlock(&heap_lock, lock1r);
             memset(ptr, 0, size);
 
             return ptr;
@@ -118,6 +114,7 @@ void *k_alloc(size_t size) {
         heap_size += grow_size;
     }
 
+    ticketlock_unlock(&heap_lock, lock1r);
     return NULL;
 }
 
@@ -126,10 +123,13 @@ void k_free(void *ptr) {
         return;
     }
 
+    int lock1r = ticketlock_lock(&heap_lock);
+
     heap_item_t *block = (heap_item_t*)((uint8_t*)ptr - sizeof(HeapItem));
 
     if (block->flags & H_FREE) {
         k_error("k_free: double free detected", "proto.kernel.k_free");
+        ticketlock_unlock(&heap_lock, lock1r);
         return;
     }
 
@@ -154,4 +154,6 @@ void k_free(void *ptr) {
             block->next->prev = block->prev;
         }
     }
+
+    ticketlock_unlock(&heap_lock, lock1r);
 }

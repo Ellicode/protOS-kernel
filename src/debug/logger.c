@@ -1,4 +1,4 @@
-#include "graphics/tty.h"
+#include "graphics/console.h"
 
 void k_error(const char *message, const char *scope) {
     print_f("[");

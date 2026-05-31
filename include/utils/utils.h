@@ -11,4 +11,14 @@
 #define PAGE_ALIGN(x) ALIGN_UP(x, PAGE_SIZE)
 #define PAGE_ROUND(x) ROUND_UP(x, PAGE_SIZE)
 
+static inline void hcf(void) {
+    for (;;) {
+        __asm__ ("hlt");
+    }
+}
+
+static void panic_test(void) {
+    __asm__ volatile ("ud2"); // Trigger invalid opcode error
+}
+
 #endif // UTILS_H

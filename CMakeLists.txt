@@ -33,6 +33,8 @@ set(KERNEL_SOURCES
         include/pit.h
 
         include/utils/utils.h
+        include/utils/linked_lists.h
+        include/utils/ticket_lock.h
 
         # DEBUG ================================================================
 
@@ -44,8 +46,8 @@ set(KERNEL_SOURCES
 
         # GRAPHICS =============================================================
 
-        src/graphics/tty.c
-        include/graphics/tty.h
+        src/graphics/console.c
+        include/graphics/console.h
 
         src/graphics/vga.c
         include/graphics/vga.h

@@ -2,7 +2,7 @@
 
 #include "io.h"
 #include "globals.h"
-#include "graphics/tty.h"
+#include "graphics/console.h"
 #include "interrupts/pic.h"
 #include "debug/logger.h"
 

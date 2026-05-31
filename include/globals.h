@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#include "graphics/tty.h"
+#include "graphics/console.h"
 #include "graphics/vga.h"
 
 #ifndef GLOBALS_H

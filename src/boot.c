@@ -1,7 +1,7 @@
 #include "debug/logger.h"
 #include "debug/serial.h"
 #include "graphics/vga.h"
-#include "graphics/tty.h"
+#include "graphics/console.h"
 #include "interrupts/idt.h"
 #include "interrupts/pic.h"
 #include "drivers/ps2.h"
@@ -78,8 +78,10 @@ int k_init(
     scheduler_init();
     k_success("Initialized Scheduler\n", "proto.kernel.k_init");
 
-    // __asm__ volatile("sti");
-    // k_success("Interrupts enabled.\n", "proto.kernel.k_init");
+    enable_interrupts();
+    k_success("Interrupts enabled.\n", "proto.kernel.k_init");
+
+    heap_dump();
 
     // DONE! =========================================================================
     k_info("Boot sequence ended.\n", "proto.kernel.k_init");

@@ -1,4 +1,4 @@
-#include "graphics/tty.h"
+#include "graphics/console.h"
 #include "debug/logger.h"
 
 #include "gdt.h"

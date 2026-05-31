@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "graphics/tty.h"
+#include "graphics/console.h"
 #include "debug/logger.h"
 
 #include "memory/memory.h"

@@ -1,6 +1,6 @@
 #include "io.h"
 #include "debug/logger.h"
-#include "graphics/tty.h"
+#include "graphics/console.h"
 #include "interrupts/interrupts.h"
 
 #include "interrupts/pic.h"

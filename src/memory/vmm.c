@@ -1,5 +1,6 @@
+#include "utils/ticket_lock.h"  
 #include "memory/freelist_pmm.h"
-#include "graphics/tty.h"
+#include "graphics/console.h"
 #include "debug/logger.h"
 #include "globals.h"
 #include "string.h"
@@ -7,6 +8,7 @@
 #include "memory/vmm.h"
 
 pt_entry_t* pml4;
+ticketlock_t vmm_lock = {0};
 
 void _load_cr3(uint64_t pml4_physical) {
     __asm__ volatile ("mov %0, %%cr3" : : "r" (pml4_physical) : "memory");
@@ -112,6 +114,8 @@ void vmm_map_range(uint64_t virt_start, size_t size) {
     if (pml4 == NULL) {
         k_error("Tried to map before initializing paging", "proto.kernel.vmm_alloc");
     }
+
+    int lock1r = ticketlock_lock(&vmm_lock);
     
     virt_start = PAGE_ALIGN(virt_start);  // ensure page alignment
     size_t num_pages = PAGE_ROUND(size) / PAGE_SIZE;
@@ -121,11 +125,14 @@ void vmm_map_range(uint64_t virt_start, size_t size) {
 
         if (page == 0) {
             k_error("out of memory!", "proto.kernel.vmm_map_range");
+            ticketlock_unlock(&vmm_lock, lock1r);
             return;
         }
 
         map_page(virt_start + idx*PAGE_SIZE, page, F_WRITE, pml4);
     }
+
+    ticketlock_unlock(&vmm_lock, lock1r);
 }
 
 void vmm_init() {

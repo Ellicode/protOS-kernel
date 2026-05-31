@@ -35,6 +35,7 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "utils/ticket_lock.h"
 #include "debug/logger.h"
 #include "limine/limine.h"
 #include "memory/vmm.h"

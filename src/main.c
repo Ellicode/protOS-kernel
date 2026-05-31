@@ -4,7 +4,8 @@
 
 #include "debug/logger.h"
 #include "limine/limine.h"
-#include "graphics/tty.h"
+#include "utils/utils.h"
+#include "graphics/console.h"
 #include "globals.h"
 #include "boot.h"
 
@@ -35,40 +36,13 @@ __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t 
 
 // =============================================================================================
 
-static void hcf(void) {
-    for (;;) {
-        __asm__ ("hlt");
-    }
-}
-
-static void panic(void) {
-    __asm__ volatile ("ud2"); // Trigger invalid opcode error
-}
-
-// =============================================================================================
-
-void thread_1() {
-    while (1) {
-        set_color(PROTO_BLUE);
-        print("1");
-        set_color(PROTO_WHITE);
-    }
-}
-void thread_2() {
-    while (1) {
-        set_color(PROTO_RED);
-        print("2");
-        set_color(PROTO_WHITE);
-    }
-}
-
 void k_main() {
-    thread_t *t1 = create_kernel_thread(thread_1);
-    thread_t *t2 = create_kernel_thread(thread_2);
+    k_info("Welcome to ", "proto.kernel.k_init");
+    set_color(PROTO_CYAN);
+    print_f("ProtOS");
+    set_color(PROTO_WHITE);
+    print_f("! System will halt...");
 
-    __asm__ volatile("sti");  // enable interrupts only after threads are ready
-    
-    // panic();
     for (;;) {
         __asm__ ("hlt");
     }
@@ -94,6 +68,6 @@ void k_early_main() {
     if (k_init(framebuffer, memmap, hhdm, kaddr) == 0) {
         k_main();
     } else {
-        k_error("k_init returned non-zero status code", "proto.kernel.k_early_main");
+        k_error("Init script returned non-zero status code. The system will reboot now...", "proto.kernel.k_early_main");
     }
 }

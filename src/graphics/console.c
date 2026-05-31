@@ -2,12 +2,12 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#include "fonts/niji-pixel-bold-16.h"
+#include "fonts/niji-pixel-regular-16.h"
 #include "debug/serial.h"
 #include "string.h"
 #include "globals.h"
 
-#include "graphics/tty.h"
+#include "graphics/console.h"
 
 void cursor_set(uint32_t x, uint32_t y)
 {
@@ -152,11 +152,6 @@ void print(const char *text)
     // Then the actual text for the print
     for (size_t c = 0; text[c] != '\0'; c++){
         serial_write(text[c]);
-    }
-
-    // Finally reset the terminal colors
-    for (size_t c = 0; ANSI_RESET[c] != '\0'; c++) {
-        serial_write(ANSI_RESET[c]);
     }
 }
 

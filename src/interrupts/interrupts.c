@@ -1,5 +1,5 @@
 #include "debug/logger.h"
-#include "graphics/tty.h"
+#include "graphics/console.h"
 #include "interrupts/pic.h"
 #include "drivers/ps2.h"
 #include "io.h"
@@ -46,7 +46,7 @@ void _panic_print(idt_frame_t* frame) {
     set_color(PROTO_RED);
     print_f("PANIC");
     set_color(PROTO_WHITE);
-    print_f("] VEC: %18d, ERR: %18x, %s.\n", frame->vector, frame->error_code, p_msg);
+    print_f("] VEC: %18d, ERR: %18x, %s.\n", frame->vector, frame->error_code, p_msg == 0x0 ? "???" : p_msg);
     print_f("        R8 : %18x, R9 : %18x, R10: %18x, R11: %18x\n", frame->r8, frame->r9, frame->r10, frame->r11);
     print_f("        R12: %18x, R13: %18x, R14: %18x, R15: %18x\n", frame->r12, frame->r13, frame->r14, frame->r15);
     print_f("        RBP: %18x, RDI: %18x, RSI: %18x, RDX: %18x\n", frame->rbp, frame->rdi, frame->rsi, frame->rdx);
@@ -59,21 +59,23 @@ void _panic_print(idt_frame_t* frame) {
 }
 
 void isr_handler(idt_frame_t* frame) {
-    if (frame->vector < ISR_EXCEPTION_COUNT) {
+    uint64_t vec_buffer = frame->vector; // context switches can switch to a different vector
+
+    if (vec_buffer < ISR_EXCEPTION_COUNT) {
         _panic_print(frame);
-    } else if (frame->vector == 32) {
+    } else if (vec_buffer == 32) {
         g_pit_ticks++;
         scheduler_tick(frame);
-    } else if (frame->vector == 33) {
+    } else if (vec_buffer == 33) {
         ps2_isr();
     } else {
-        k_debug("BEEP! Interrupt recieved!", "proto.kernel.isr_handler");
+        k_debug("BEEP! Interrupt received!", "proto.kernel.isr_handler");
         #if (PROTO_DEBUG == 1)
-            print_f(" %d, error=%x, rip=%x\n", frame->vector, frame->error_code, frame->rip);
+            print_f(" %d, error=%x, rip=%x\n", vec_buffer, frame->error_code, frame->rip);
         #endif
     }
-    
-    if (frame->vector >= 32 && frame->vector < 48) {
+
+    if (vec_buffer >= 32 && vec_buffer < 48) {
         eoi((uint8_t)(frame->vector - 32));
     }
 }
@@ -89,11 +91,11 @@ int interrupts_enabled() {
 }
 
 void enable_interrupts() {
-    asm volatile ("sti");
+    asm __volatile__ ("sti");
 }
 
 void disable_interrupts() {
-    asm volatile ("cli");
+    asm __volatile__ ("cli");
 }
 
 void restore_interrupts(int irqs) {
