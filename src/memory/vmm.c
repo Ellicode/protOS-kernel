@@ -110,7 +110,7 @@ void _tables_dump(pt_entry_t* pml4) {
     #endif
 }
 
-void vmm_map_range(uint64_t virt_start, size_t size) {
+void vmm_map_range(uint64_t virt_start, size_t size, uint64_t flags) {
     if (pml4 == NULL) {
         k_error("Tried to map before initializing paging", "proto.kernel.vmm_alloc");
     }
@@ -129,10 +129,19 @@ void vmm_map_range(uint64_t virt_start, size_t size) {
             return;
         }
 
-        map_page(virt_start + idx*PAGE_SIZE, page, F_WRITE, pml4);
+        map_page(virt_start + idx*PAGE_SIZE, page, flags, pml4);
     }
 
     ticketlock_unlock(&vmm_lock, lock1r);
+}
+
+void vmm_flush_tlb() {
+    uint64_t cr3;
+    __asm__ volatile (
+        "mov %%cr3, %0\n"
+        "mov %0, %%cr3\n"
+        : "=r"(cr3) :: "memory"
+    );
 }
 
 void vmm_init() {

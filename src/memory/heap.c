@@ -23,7 +23,8 @@ void heap_dump() {
             node = node->next;
         }
 
-        print_f("used=%dMB/%dMB (%d%% used, %d bytes)\n", heap_used / (uint64_t)(1024 * 1024), heap_size / (uint64_t)(1024 * 1024), (heap_used / heap_size)*100, heap_used);
+        uint64_t percent_used = (heap_used * 1000) / heap_size;
+        print_f("used=%dMB/%dMB (%d.%d%% used, %d bytes)\n", heap_used / (uint64_t)(1024 * 1024), heap_size / (uint64_t)(1024 * 1024), percent_used/10, percent_used%10, heap_used);
     #endif
 }
 
@@ -38,7 +39,7 @@ void heap_test() {
 }
 
 void heap_init() {
-    vmm_map_range(HEAP_VIRTUAL_START, heap_size);
+    vmm_map_range(HEAP_VIRTUAL_START, heap_size, F_WRITE);
     
     heap_base = (heap_item_t*)HEAP_VIRTUAL_START;
     heap_base->size  = HEAP_MIN_SIZE - sizeof(HeapItem);
@@ -102,7 +103,7 @@ void *k_alloc(size_t size) {
         }
 
         uint64_t grow_size = size + sizeof(HeapItem);
-        vmm_map_range(HEAP_VIRTUAL_START + heap_size, grow_size);
+        vmm_map_range(HEAP_VIRTUAL_START + heap_size, grow_size, F_WRITE);
 
         heap_item_t *new_block = (heap_item_t*)(HEAP_VIRTUAL_START + heap_size);
         new_block->size  = grow_size - sizeof(HeapItem);

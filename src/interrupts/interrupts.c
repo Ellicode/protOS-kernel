@@ -4,7 +4,7 @@
 #include "drivers/ps2.h"
 #include "io.h"
 #include "globals.h"
-#include "threads/scheduler.h"
+#include "userspace/scheduler.h"
 
 #include "interrupts/interrupts.h"
 

@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 DEBUG_MODE=0
@@ -8,7 +7,6 @@ for arg in "$@"; do
         --debug) DEBUG_MODE=1 ;;
     esac
 done
-
 
 error_exit() {
     echo -e "$1"
@@ -49,7 +47,6 @@ A_DIM='\033[2m'
 A_ITALIC='\033[3m'
 A_UNDERLINE='\033[4m'
 
-
 # Build QEMU debug args
 if [ $DEBUG_MODE -eq 1 ]; then
     echo -e "${B_MAGENTA} DBG  ${A_RESET} Debug mode is on"
@@ -59,13 +56,12 @@ fi
 LOCAL_OVMF_CODE_PATH="ignore-scripts/ovmf/OVMF_CODE.fd"
 REMOTE_OVMF_CODE_PATH="/usr/share/edk2/x64/OVMF_CODE.4m.fd"
 BOOT_DIRECTORY="ignore-scripts/esp/"
-BUILD_FILE_NAME="kernel"
-
+BUILD_FILE_NAME="kernel.elf"
 
 echo -e "${B_BLUE} INFO ${A_RESET} Starting build process..."
 
 # CLEAN THIS SHIT BEFORE BUILDING BC IT FUCKING CRASHES EVERY TIME
-rm -r build/
+# rm -r build/
 
 cd "$PROJECT_ROOT" || error_exit "${B_RED} ERR! ${A_RESET} Failed to change directory"
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug

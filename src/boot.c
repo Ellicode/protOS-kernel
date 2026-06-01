@@ -10,7 +10,7 @@
 #include "memory/pmm.h"
 #include "memory/vmm.h"
 #include "memory/heap.h"
-#include "threads/scheduler.h"
+#include "userspace/scheduler.h"
 #include "pit.h"
 #include "gdt.h"
 #include "globals.h"

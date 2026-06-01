@@ -89,11 +89,24 @@ set(KERNEL_SOURCES
 
         # THREADS & PROCESSES ===================================================
 
-        src/threads/scheduler.c
-        include/threads/scheduler.h
+        src/userspace/scheduler.c
+        include/userspace/scheduler.h
+
+        src/userspace/elf.c
+        include/userspace/elf.h
 )
 
+# add_executable(tests_elf_loading tests/elf-loading/main.c)
+# set_target_properties(tests_elf_loading PROPERTIES
+#     OUTPUT_NAME "tests-elf-loading.elf"
+#     SUFFIX ""
+# )
+
 add_executable(kernel ${KERNEL_SOURCES})
+set_target_properties(kernel PROPERTIES
+    OUTPUT_NAME "kernel.elf"
+    SUFFIX ""
+)
 
 set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
 

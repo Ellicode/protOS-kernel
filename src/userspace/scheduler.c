@@ -9,7 +9,7 @@
 #include "string.h"
 #include "gdt.h"
 
-#include "threads/scheduler.h"
+#include "userspace/scheduler.h"
 
 thread_t* threads         = NULL;
 thread_t* current_thread  = NULL;

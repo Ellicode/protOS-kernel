@@ -8,8 +8,8 @@
 #include "graphics/console.h"
 #include "globals.h"
 #include "boot.h"
-
-#include "threads/scheduler.h"
+#include "userspace/scheduler.h"
+#include "userspace/elf.h"
 
 // LIMINE REQUESTS ==============================================================================
 
