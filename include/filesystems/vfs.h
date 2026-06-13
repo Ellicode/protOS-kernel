@@ -9,46 +9,51 @@ enum {
 };
 typedef uint8_t inode_type_t;
 
-typedef struct DirectoryEntry
+// Forward declarations
+typedef struct dentry_t      dentry_t;
+typedef struct superblock_t  superblock_t;
+typedef struct mount_t       mount_t;
+typedef struct inode_t       inode_t;
+typedef struct inode_ops_t   inode_ops_t;
+
+struct dentry_t
 {
-    char                    name[256];
-    struct DirectoryEntry     *parent;
-    struct DirectoryEntry   *children;
-    struct DirectoryEntry       *next;
-    struct Inode               *inode;
-    uint8_t             is_mountpoint;
-    struct Mount               *mount; // NULL if not a mountpoint
-} DirectoryEntry;
-typedef DirectoryEntry dentry_t;
+    char          name[256];
+    dentry_t       *parent;
+    dentry_t     *children;
+    dentry_t         *next;
+    dentry_t         *prev;
+    inode_t         *inode;
+    mount_t         *mount;
+};
 
-typedef struct SuperBlock
+struct superblock_t
 {
-    struct DirectoryEntry       *root;
-} SuperBlock;
-typedef SuperBlock superblock_t;
+    dentry_t        *root;
+};
 
-typedef struct Mount {
-    struct dentry         *mountpoint; 
-    struct superblock             *sb;     
-} Mount;
-typedef Mount mount_t;
-
-typedef struct Inode
+struct mount_t
 {
-    uint32_t                      uid;
-    inode_type_t                 type;
-    uint64_t                     size;
-    uint32_t                    nlink;
+    dentry_t    *mountpoint;
+    superblock_t        *sb;
+};
 
-    struct InodeOps              *ops;
-    void                     *fs_data;
-} Inode;
-typedef Inode inode_t;
+struct inode_t
+{
+    uint64_t          uid;
+    inode_type_t     type;
+    uint64_t         size;
 
-typedef struct InodeOps
+    inode_ops_t      *ops;
+};
+
+struct inode_ops_t
 {
     /* ops here */
-} InodeOps;
-typedef InodeOps inode_ops_t;
+};
+
+#define PATH_DELIM "/\\" // so people can use paths with / AND \ !
+
+void vfs_init();
 
 #endif // VFS_H

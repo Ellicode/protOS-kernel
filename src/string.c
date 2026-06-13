@@ -68,6 +68,70 @@ void strcat(char *dest, const char *src)
     dest[dest_len + i] = '\0';
 }
 
+char strcmp(const char * s1, const char * s2) {
+    for (size_t i = 0; s1[i] != '\0' || s2[i] != '\0'; i++) {
+        if (((char*)s1)[i] != ((char*)s2)[i]) {
+            if (((char*)s1)[i] < ((char*)s2)[i]) {
+                return -1;
+            }
+            else {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+char *strtok(char *src, const char *delim) {
+    static char * last_tok = NULL;
+    if (src != NULL) {
+        last_tok = src;
+    }
+    if (last_tok == NULL) { 
+        return NULL;
+    }
+
+    // nothing more to parse
+    if (*last_tok == '\0') {
+        return NULL;
+    }
+
+    // find the next token
+    for (size_t i = 0; last_tok[i] != '\0'; i++) {
+        for (int j = 0; delim[j] != '\0'; j++) {
+            if (last_tok[i] == delim[j]) {
+                goto fail;
+            }
+        }
+        last_tok += i;
+        break;
+        fail:
+        continue;
+    }
+
+    // end the next token
+    size_t i = 0;
+    for (i = 0; last_tok[i] != '\0'; i++) {
+        for (int j = 0; delim[j] != '\0'; j++) {
+            if (last_tok[i] == delim[j]) {
+                goto found;
+            }
+        }
+    }
+    found:
+    last_tok[i] = '\0';
+
+    char * ret = last_tok;
+    last_tok += i + 1;
+    return ret;
+}
+
+char* strcpy(char* dst, const char* src) {
+    const size_t length = strlen(src);
+    memcpy(dst, src, length + 1);
+    return dst;
+}
+
 // STRING CONVERSION FUNCTIONS =================================================================
 
 char *int_to_string(int64_t num)

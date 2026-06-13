@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#include "fonts/niji-pixel-regular-16.h"
+#include "fonts/niji-pixel-bold-16.h"
 #include "debug/serial.h"
 #include "string.h"
 #include "globals.h"

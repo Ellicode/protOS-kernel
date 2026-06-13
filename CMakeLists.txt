@@ -87,13 +87,18 @@ set(KERNEL_SOURCES
         src/memory/heap.c
         include/memory/heap.h
 
-        # THREADS & PROCESSES ===================================================
+        # USERSPACE =============================================================
 
         src/userspace/scheduler.c
         include/userspace/scheduler.h
 
         src/userspace/elf.c
         include/userspace/elf.h
+
+        # FILESYSTEMS ===========================================================
+
+        src/filesystems/vfs.c
+        include/filesystems/vfs.h
 )
 
 # add_executable(tests_elf_loading tests/elf-loading/main.c)

@@ -2,8 +2,8 @@
 
 #include "vga.h"
 
-#ifndef TTY_H
-#define TTY_H
+#ifndef CONSOLE_H
+#define CONSOLE_H
 
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 16
@@ -38,4 +38,4 @@ void print(const char *text);
 void print_f(const char *format, ...);
 void set_color(color_t color);
 
-#endif // TTY_H
+#endif // CONSOLE_H

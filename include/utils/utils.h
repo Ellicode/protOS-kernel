@@ -17,8 +17,8 @@ static inline void hcf(void) {
     }
 }
 
-static void panic_test(void) {
-    __asm__ volatile ("ud2"); // Trigger invalid opcode error
-}
+// static void panic_test(void) {
+//     __asm__ volatile ("ud2"); // Trigger invalid opcode error
+// }
 
 #endif // UTILS_H
