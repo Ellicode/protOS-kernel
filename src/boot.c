@@ -11,6 +11,7 @@
 #include "memory/vmm.h"
 #include "memory/heap.h"
 #include "userspace/scheduler.h"
+#include "userspace/syscalls.h"
 #include "filesystems/vfs.h"
 #include "pit.h"
 #include "gdt.h"
@@ -97,9 +98,8 @@ int k_init(
     enable_interrupts();
     k_success("Interrupts enabled.\n", "proto.kernel.k_init");
 
-    heap_dump();
-
     vfs_init();
+    k_success("Initialized VFS.\n", "proto.kernel.k_init");
 
     // DONE! =========================================================================
     k_info("Boot sequence ended.\n", "proto.kernel.k_init");

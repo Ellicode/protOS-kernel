@@ -95,6 +95,12 @@ set(KERNEL_SOURCES
         src/userspace/elf.c
         include/userspace/elf.h
 
+        src/userspace/syscalls.c
+        include/userspace/syscalls.h 
+
+        src/userspace/enter-userspace.asm
+        include/userspace/userspace.h 
+
         # FILESYSTEMS ===========================================================
 
         src/filesystems/vfs.c
@@ -103,12 +109,6 @@ set(KERNEL_SOURCES
         src/filesystems/tarfs.c
         include/filesystems/tarfs.h
 )
-
-# add_executable(tests_elf_loading tests/elf-loading/main.c)
-# set_target_properties(tests_elf_loading PROPERTIES
-#     OUTPUT_NAME "tests-elf-loading.elf"
-#     SUFFIX ""
-# )
 
 add_executable(kernel ${KERNEL_SOURCES})
 set_target_properties(kernel PROPERTIES

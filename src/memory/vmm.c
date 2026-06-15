@@ -21,10 +21,12 @@ void _enable_paging() {
     __asm__ volatile ("mov %0, %%cr0" : : "r" (cr0));
 }
 
-uint64_t* _get_or_create(pt_entry_t* entry) {
+uint64_t* _get_or_create(pt_entry_t* entry, uint64_t flags) {
     PageTableEntry entry_c = { .value = *entry };
 
     if (entry_c.present) {
+        // OR in new flags in case this table was created kernel-only before
+        *entry |= (flags & (F_USER | F_WRITE));
         uint64_t phys = entry_c.addr << 12;
         return (uint64_t*)(phys + g_lim_hhdm->offset);
     }
@@ -33,7 +35,7 @@ uint64_t* _get_or_create(pt_entry_t* entry) {
     uint64_t* table_virt = (uint64_t*)(phys + g_lim_hhdm->offset);
 
     memset(table_virt, 0, PAGE_SIZE);
-    *entry = (phys & 0x000FFFFFFFFFF000ULL) | 0b11;
+    *entry = (phys & 0x000FFFFFFFFFF000ULL) | F_PRESENT | F_WRITE | (flags & F_USER);
 
     return table_virt;
 }
@@ -41,23 +43,30 @@ uint64_t* _get_or_create(pt_entry_t* entry) {
 void map_page(uint64_t virt, uint64_t phys, uint64_t flags, pt_entry_t* pml4) {
     VirtualAddress v = { .value = virt };
 
-    uint64_t* pdpt = _get_or_create(&pml4[v.pml4]);
-    uint64_t* pd   = _get_or_create(&pdpt[v.page_dir_ptr]);
-    uint64_t* pt   = _get_or_create(&pd[v.page_dir]);
+    uint64_t* pdpt = _get_or_create(&pml4[v.pml4],          flags);
+    uint64_t* pd   = _get_or_create(&pdpt[v.page_dir_ptr],  flags);
+    uint64_t* pt   = _get_or_create(&pd[v.page_dir],        flags);
 
     pt_entry_t* entry = &pt[v.page_table];
-
-    uint64_t value = 0;
-
-    value |= (phys & 0x000FFFFFFFFFF000ULL);
-    value |= (flags | F_PRESENT);
-
-    *entry = value;
-
+    *entry = (phys & 0x000FFFFFFFFFF000ULL) | flags | F_PRESENT;
 }
 
 uint64_t _kernel_size() {
     return (uint64_t)&g_kernel_end - (uint64_t)&g_kernel_start;
+}
+
+void vmm_get_pte(uint64_t virt) {
+    VirtualAddress v = { .value = 0x401020 };
+    PageTableEntry pml4e = { .value = pml4[v.pml4] };
+    uint64_t* pdpt = (uint64_t*)((pml4e.addr << 12) + g_lim_hhdm->offset);
+    PageTableEntry pdpte = { .value = pdpt[v.page_dir_ptr] };
+    uint64_t* pd = (uint64_t*)((pdpte.addr << 12) + g_lim_hhdm->offset);
+    PageTableEntry pde = { .value = pd[v.page_dir] };
+    uint64_t* pt = (uint64_t*)((pde.addr << 12) + g_lim_hhdm->offset);
+    PageTableEntry pte = { .value = pt[v.page_table] };
+
+    print_f("PML4E: %x\nPDPTE: %x\nPDE:   %x\nPTE:   %x\n",
+        pml4e.value, pdpte.value, pde.value, pte.value);
 }
 
 void _tables_dump(pt_entry_t* pml4) {
@@ -110,7 +119,7 @@ void _tables_dump(pt_entry_t* pml4) {
     #endif
 }
 
-void vmm_map_range(uint64_t virt_start, size_t size, uint64_t flags) {
+void *vmm_map_range(uint64_t virt_start, size_t size, uint64_t flags) {
     if (pml4 == NULL) {
         k_error("Tried to map before initializing paging", "proto.kernel.vmm_alloc");
     }
@@ -126,13 +135,15 @@ void vmm_map_range(uint64_t virt_start, size_t size, uint64_t flags) {
         if (page == 0) {
             k_error("out of memory!", "proto.kernel.vmm_map_range");
             ticketlock_unlock(&vmm_lock, lock1r);
-            return;
+            return NULL;
         }
 
         map_page(virt_start + idx*PAGE_SIZE, page, flags, pml4);
     }
 
     ticketlock_unlock(&vmm_lock, lock1r);
+
+    return (void *)virt_start;
 }
 
 void vmm_flush_tlb() {

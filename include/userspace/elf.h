@@ -36,7 +36,15 @@ typedef ElfProgramHeader elf_program_header_t;
 
 #define EM_X86_64   0x3E
 #define PT_LOAD     1
+#define USER_LOAD_BASE 0x400000
 
-uint64_t load_elf(uint8_t *data, size_t size);
+#define ET_EXEC  2   // wait...
+#define ET_DYN   3
+
+#define PF_X        0x1  // Executable segment
+#define PF_W        0x2  // Writable segment
+#define PF_R        0x4  // Readable segment
+
+void *elf_load(char *data, size_t size);
 
 #endif // ELF_H

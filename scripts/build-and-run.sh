@@ -66,6 +66,9 @@ echo -e "${B_BLUE} INFO ${A_RESET} Starting build process..."
 cd "$PROJECT_ROOT" || error_exit "${B_RED} ERR! ${A_RESET} Failed to change directory"
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
+
+gcc -static -nostdlib -nodefaultlibs -ffreestanding -o build/tests-elf-loading.elf tests/elf-loading/main.c
+
 mkdir -p ignore-scripts
 
 echo -e "${B_GREEN}  OK  ${A_RESET} Build successful. Preparing boot directory..."
@@ -79,8 +82,12 @@ else
     cp build/$BUILD_FILE_NAME $BOOT_DIRECTORY/$BUILD_FILE_NAME
 fi
 
+cp build/tests-elf-loading.elf tests/initramfs/system/programs/executable.elf
+
 mkdir -p ignore-scripts/esp
 
+tar -cf ignore-scripts/esp/boot/initramfs.tar -C tests/initramfs .
+echo -e "${B_GREEN}  OK  ${A_RESET} Initramfs generated successfully"
 
 echo -e "${B_BLUE} INFO ${A_RESET} Build completed. Attempting to launch QEMU..."
 

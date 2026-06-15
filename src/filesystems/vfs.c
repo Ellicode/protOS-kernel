@@ -7,7 +7,22 @@
 #include "filesystems/vfs.h"
 
 superblock_t *rootfs;
-inode_t *root;
+
+int split_path(const char *path, char segments[][256], int max_segs) {
+    int count = 0;
+    const char *p = path;
+    while (*p && count < max_segs) {
+        if (*p == PATH_DELIM[0] || *p == PATH_DELIM[1]) { p++; continue; }
+        int len = 0;
+        while (p[len] && p[len] != PATH_DELIM[0] && p[len] != PATH_DELIM[1]) { len++; }
+        if (len > 0) {
+            strncpy(segments[count++], p, len);
+            segments[count-1][len] = '\0';
+        }
+        p += len;
+    }
+    return count;
+}
 
 inode_t *vfs_lookup(inode_t *cwd, char *path) {
     inode_t *current = cwd;
@@ -15,30 +30,37 @@ inode_t *vfs_lookup(inode_t *cwd, char *path) {
     
     if (starts_with_slash) {
         if (strlen(path) == 1) {
-            return root;
+            return rootfs->root;
         } else {
-            current = root;
+            current = rootfs->root;
         }
     }
 
-    char *token = strtok(path, PATH_DELIM);
-    inode_t *next;
-    while (token != NULL) {
+    char segments[32][256];
+    int seg_count = split_path(path, segments, 32);
+
+    for (int i = 0; i < seg_count; i++) {
+        inode_t *next;
+
+        if (!current->parent_sb) {
+            k_error("No parent superblock\n", "proto.kernel.vfs_lookup");
+            return NULL;
+        }
         if (!current->parent_sb->ops || !current->parent_sb->ops->lookup) {
+            k_error("Operation \"lookup\" not supported on fs\n", "proto.kernel.vfs_lookup");
             return NULL;
         }
 
-        int res = current->parent_sb->ops->lookup(current, token, &next);
+        int res = current->parent_sb->ops->lookup(current, segments[i], &next);
         if (res != 0 || !next) {
-            k_error("Lookup failed mysteriously...", "proto.kernel.vfs_lookup");
+            k_error("Lookup failed with status=", "proto.kernel.vfs_lookup");
+            print_f("%d\n", res);
             return NULL;
         }
 
         current = next;
-        token = strtok(NULL, PATH_DELIM);
-
-        if (next->type != INODE_FOLDER && token != NULL) {
-            k_error("Path element is not a folder", "proto.kernel.vfs_lookup");
+        if (next->type != INODE_FOLDER && i < seg_count - 1) {
+            k_error("Path element is not a folder\n", "proto.kernel.vfs_lookup");
             return NULL;
         }
     }
@@ -46,16 +68,50 @@ inode_t *vfs_lookup(inode_t *cwd, char *path) {
     return current;
 }
 
-void vfs_init() {
-    superblock_t *tarfs_sb = tarfs_init();
+file_descriptor_t *vfs_open(inode_t *cwd, char *path, uint8_t flags) {
+    inode_t *inode = vfs_lookup(cwd, path);
+    if (inode == NULL) {
+        k_error("Cannot open: lookup failed\n", "proto.kernel.vfs_open");
+        return NULL;
+    }
 
     file_descriptor_t *fd = k_alloc(sizeof(file_descriptor_t));
-    char path[] = "hello.txt";
-    tarfs_sb->ops->open(path, 0x00, fd);
-    print_f("fd_size=%d\n", fd->inode->size);
+    if (fd == NULL) {
+        k_error("Cannot allocate file descriptor\n", "proto.kernel.vfs_open");
+        return NULL;
+    }
 
-    char *buff = k_alloc(50);
-    tarfs_sb->ops->read(fd, fd->inode->size, buff);
+    fd->flags = flags;
+    fd->inode = inode;
 
-    print_f("file_data=%s\n",buff);
+    return fd;
+}
+
+int vfs_read(file_descriptor_t *fd, size_t size, void *buffer) {
+    inode_t *inode = fd->inode;
+    if (inode == NULL) {
+        k_error("Cannot read: file descriptor is empty\n", "proto.kernel.vfs_read");
+        return 1;
+    }
+
+    if (!inode->parent_sb->ops || !inode->parent_sb->ops->read) {
+        k_error("Operation \"read\" not supported on fs\n", "proto.kernel.vfs_read");
+        return 1;
+    }
+
+    if (!(fd->flags & FD_READ)) {
+        k_error("Cannot read: operation unauthorized.\n", "proto.kernel.vfs_read");
+        return 1;
+    }
+
+    return inode->parent_sb->ops->read(fd->inode, size, buffer);
+}
+
+int vfs_close(file_descriptor_t *fd) {
+    k_free(fd);
+    return 1;
+}
+
+void vfs_init() {
+    rootfs = tarfs_init();
 }

@@ -7,7 +7,6 @@
 #define ISR_IRQ_COUNT                2
 
 typedef struct {
-    // GPRs — in reverse push order (rax pushed last, so lowest address)
     uint64_t rax;
     uint64_t rbx;
     uint64_t rcx;
@@ -24,11 +23,9 @@ typedef struct {
     uint64_t r14;
     uint64_t r15;
 
-    // Pushed by your macro
     uint64_t vector;
     uint64_t error_code;
 
-    // Pushed automatically by the CPU on interrupt
     uint64_t rip;
     uint64_t cs;
     uint64_t rflags;

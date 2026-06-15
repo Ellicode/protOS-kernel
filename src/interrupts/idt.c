@@ -1,6 +1,7 @@
 #include "graphics/console.h"
 #include "debug/logger.h"
 #include "interrupts/interrupts.h"
+#include "userspace/syscalls.h"
 
 #include "interrupts/idt.h"
 
@@ -52,6 +53,15 @@ void idt_init() {
         uint8_t vec = ISR_EXCEPTION_COUNT + i;
         idt[vec] = _idt_generate_descriptor(isr_irq_handlers[i], attr, vec);
     }
+
+    IDTEntryAttributes attr_user = (IDTEntryAttributes){{
+        IDT_GATE_TYPE_INTERRUPT,
+        0,
+        GDT_ENTRY_DPL_USER,
+        GDT_ENTRY_PRESENT
+    }};
+
+    idt[128] = _idt_generate_descriptor(syscall_handler, attr_user, 128);
 
     __asm__ volatile ("lidt %0" : : "m"(idtr));
 }

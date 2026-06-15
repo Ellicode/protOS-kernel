@@ -29,34 +29,34 @@ ustar_node_t *find_or_create_child(ustar_node_t *parent, char *name, inode_type_
     node->parent = parent;
     node->inode.type = type;
     node->inode.fs_data = node;
+    node->inode.parent_sb = initramfs_superblock;
 
     node->next = parent->child;
     parent->child = node;
     return node;
 }
 
-int split_path(const char *path, char segments[][256], int max_segs) {
-    int count = 0;
-    const char *p = path;
-    while (*p && count < max_segs) {
-        if (*p == '/') { p++; continue; }
-        int len = 0;
-        while (p[len] && p[len] != '/') { len++; }
-        if (len > 0) {
-            strncpy(segments[count++], p, len);
-            segments[count-1][len] = '\0';
-        }
-        p += len;
-    }
-    return count;
-}
-
 
 int tarfs_lookup(inode_t *dir, char *name, inode_t **result) {
     ustar_node_t *node = dir->fs_data;
     ustar_node_t *current = node->child;
+
+    if (strcmp(name,  ".") == 0) { 
+        *result = dir;
+        return 0;
+    }
+    if (strcmp(name,  "..") == 0) { 
+        if (node->parent) {
+            current = node->parent;
+            *result = &current->inode;
+            return 0;
+        } else {
+            *result = NULL;
+            return 1;
+        }
+    }
+
     while (current != NULL && strcmp(current->name, name) != 0) {
-              print_f("  skipping \"%s\"\n", current->name);
         current = current->next;
     }
 
@@ -69,36 +69,8 @@ int tarfs_lookup(inode_t *dir, char *name, inode_t **result) {
     return 0;
 }
 
-
-int tarfs_open(char *path, uint8_t flags, file_descriptor_t *fd) {
-    inode_t *current = &initramfs_root->inode;
-
-    char segments[32][256];
-    int seg_count = split_path(path, segments, 32);
-
-    for (int i = 0; i < seg_count; i++) {
-        inode_t *next;
-        int res = tarfs_lookup(current, segments[i], &next);
-        if (res != 0 || !next) {
-            k_error("Lookup failed\n", "proto.kernel.vfs_lookup");
-            return 1;
-        }
-
-        if (next->type != INODE_FOLDER && i < seg_count - 1) {
-            k_error("Path element is not a folder\n", "proto.kernel.vfs_lookup");
-            return 1;
-        }
-
-        current = next;
-    }
-
-    fd->flags = flags;
-    fd->inode = current;
-    return 0;
-}
-
-int tarfs_read(file_descriptor_t *fd, uint64_t size, char *buffer) {
-    ustar_node_t *node = (ustar_node_t *)fd->inode->fs_data;
+int tarfs_read(inode_t *inode, uint64_t size, char *buffer) {
+    ustar_node_t *node = (ustar_node_t *)inode->fs_data;
     void *data = (void *)node->offset;
     memcpy(buffer, data, size);
 
@@ -107,9 +79,6 @@ int tarfs_read(file_descriptor_t *fd, uint64_t size, char *buffer) {
 
 
 superblock_t *tarfs_init() {
-    k_debug("\"67\" -> ", "proto.kernel.tarfs_init");
-    print_f("%d\n", (int)strtol("67", (char **)NULL, 8));
-
     if (g_lim_modules == NULL || g_lim_modules->module_count == 0) {
         k_error("Could not load limine modules\n", "proto.kernel.tarfs_init");
         return NULL;
@@ -128,8 +97,10 @@ superblock_t *tarfs_init() {
     initramfs_superblock->ops = k_alloc(sizeof(vfs_ops_t));
     initramfs_superblock->fs_type = FS_USTAR;
     initramfs_superblock->ops->lookup = tarfs_lookup;
-    initramfs_superblock->ops->open = tarfs_open;
     initramfs_superblock->ops->read = tarfs_read;
+    initramfs_superblock->root = &initramfs_root->inode;
+
+    initramfs_root->inode.parent_sb = initramfs_superblock;
 
     ustar_header_t *header = (ustar_header_t *)initramfs_start;
     unsigned int offset = 0;
@@ -175,10 +146,7 @@ superblock_t *tarfs_init() {
             inode_type_t type = is_dir ? INODE_FOLDER : INODE_FILE;
             ustar_node_t *node = find_or_create_child(current, segments[seg_count - 1], type);
 
-            if (is_dir) {
-                print_f("(dir ) path=\"%s\"\n", path);
-            } else {
-                print_f("(file) path=\"%s\" size=%d\n", path, file_size);
+            if (!is_dir) {
                 node->offset = (uintptr_t)header + sizeof(ustar_header_t);
                 node->size   = file_size;
                 node->inode.size = file_size;

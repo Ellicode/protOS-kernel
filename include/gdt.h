@@ -142,6 +142,8 @@ typedef struct {
 } __attribute__((packed)) TSSEntry;
 typedef TSSEntry tss_entry_t;
 
+extern tss_entry_t tss __attribute__((aligned(0x1000)));
+
 #define GDT_OFFSET_KERNEL_CODE (1*8)
 #define GDT_OFFSET_KERNEL_DATA (2*8)
 #define GDT_OFFSET_USER_CODE   (3*8)

@@ -6,7 +6,8 @@ flowchart
     root --> volumes(["volumes"])
     root --> system(["system"])
     root --> applications(["applications"])
-    system --> bin(["bin"])
-    system --> var(["var"])
+    system --> prog(["programs"])
+    system --> config(["config"])
     volumes --> ext1(["ext_device (fat32)"])
+    root --> data(["data"])
 ```

@@ -33,24 +33,14 @@ struct inode_t
 
 struct vfs_ops_t
 {
-    int (*open)(
-        char *path,
-        uint8_t flags,
-        file_descriptor_t *fd
-    );
-
-    int (*close)(
-        file_descriptor_t *fd
-    );
-
     int (*read)(
-        file_descriptor_t *fd,
+        inode_t *inode,
         uint64_t size,
         char *buffer
     );
 
     int (*write)(
-        file_descriptor_t *fd,
+        inode_t *fd,
         uint64_t size,
         void *buffer
     );
@@ -99,10 +89,22 @@ struct superblock_t
 {
     fs_type_t           fs_type;
     vfs_ops_t           *ops;
+    inode_t             *root;
 };
+
+
+#define FD_READ  0x01
+#define FD_WRITE 0x02
 
 #define PATH_DELIM "/\\" // so people can use paths with / AND \ !
 
+extern superblock_t *rootfs;
+
 void vfs_init();
+int split_path(const char *path, char segments[][256], int max_segs);
+
+file_descriptor_t *vfs_open(inode_t *cwd, char *path, uint8_t flags);
+int vfs_read(file_descriptor_t *fd, size_t size, void *buffer);
+int vfs_close(file_descriptor_t *fd);
 
 #endif // VFS_H

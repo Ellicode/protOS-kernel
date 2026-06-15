@@ -84,6 +84,7 @@ void gdt_init() {
     // Generate user data segment
     gdt[4] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R3_DATA, 0, 1, 1);
 
+
     // Generate TSS segment
     _tss_generate();
 
@@ -112,7 +113,7 @@ void gdt_init() {
     gdtr.base = (uint64_t)gdt;
     gdtr.limit = sizeof(gdt) - 1;
 
-    k_debug("gdt base: ", "proto.kernel.gdt_init");
+    k_debug("gdt_base: ", "proto.kernel.gdt_init");
     #if (PROTO_DEBUG == 1)
         print_f("%x, limit: %x\n", gdtr.base, gdtr.limit);
     #endif

@@ -2,6 +2,7 @@
 #include "debug/logger.h"
 #include "graphics/console.h"
 #include "interrupts/interrupts.h"
+#include "utils/utils.h"
 
 #include "interrupts/pic.h"
 
@@ -86,7 +87,6 @@ void _pic_disable(void) {
 }
 
 void pic_init() {
-    // Disable APIC - set APIC enable bit (bit 11) to 0 in IA32_APIC_BASE MSR
     uint32_t lo;
     uint32_t hi;
     __asm__ volatile("rdmsr" : "=a"(lo), "=d"(hi) : "c"(0x1B));

@@ -54,7 +54,7 @@ void heap_init() {
     heap_dump();
 }
 
-void *k_alloc(size_t size) {
+void *_heap_alloc_stub(size_t size, uint64_t vmm_flags) {
     if (heap_base == NULL) {
         k_error("k_alloc called before heap_init", "proto.kernel.k_alloc");
         return NULL;
@@ -103,7 +103,7 @@ void *k_alloc(size_t size) {
         }
 
         uint64_t grow_size = size + sizeof(HeapItem);
-        vmm_map_range(HEAP_VIRTUAL_START + heap_size, grow_size, F_WRITE);
+        vmm_map_range(HEAP_VIRTUAL_START + heap_size, grow_size, vmm_flags | F_WRITE);
 
         heap_item_t *new_block = (heap_item_t*)(HEAP_VIRTUAL_START + heap_size);
         new_block->size  = grow_size - sizeof(HeapItem);
@@ -117,6 +117,14 @@ void *k_alloc(size_t size) {
 
     ticketlock_unlock(&heap_lock, lock1r);
     return NULL;
+}
+
+void *k_alloc(size_t size) {
+    return _heap_alloc_stub(size, 0x0);
+}
+
+void *k_alloc_user(size_t size) {
+    return _heap_alloc_stub(size, F_USER);
 }
 
 void k_free(void *ptr) {

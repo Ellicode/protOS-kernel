@@ -54,7 +54,8 @@ typedef uint64_t virtual_address_t;
 
 void vmm_init();
 void vmm_flush_tlb();
-void vmm_map_range(uint64_t virt_start, size_t size, uint64_t flags);
+void *vmm_map_range(uint64_t virt_start, size_t size, uint64_t flags);
 uint64_t vmm_virt_to_phys(uint64_t virt);
+void vmm_get_pte(uint64_t virt);
 
 #endif // VMM_H

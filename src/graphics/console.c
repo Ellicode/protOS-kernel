@@ -93,11 +93,20 @@ void draw_char(uint32_t x, uint32_t y, const char c, color_t color)
     {
         return;
     }
+
+    if (c < 32) {
+        return;
+    }
+
     for (int row = 0; row < FONT_HEIGHT; row++)
     {
+        // Force flip the array reading layout vertically
+        unsigned char row_data = font[c - 32][(FONT_HEIGHT - 1) - row];
+
         for (int col = 0; col < FONT_WIDTH; col++)
         {
-            if (font[c - 32][FONT_HEIGHT - 1 - row] & (1 << (7 - col)))
+            // Read bits from left to right 
+            if (row_data & (1 << ((FONT_WIDTH - 1) - col)))
             {
                 putpixel(x + col, y + row, color);
             }
