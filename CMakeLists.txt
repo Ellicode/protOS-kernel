@@ -99,6 +99,9 @@ set(KERNEL_SOURCES
 
         src/filesystems/vfs.c
         include/filesystems/vfs.h
+
+        src/filesystems/tarfs.c
+        include/filesystems/tarfs.h
 )
 
 # add_executable(tests_elf_loading tests/elf-loading/main.c)

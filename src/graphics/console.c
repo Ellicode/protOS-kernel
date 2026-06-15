@@ -229,17 +229,18 @@ void print_f(const char *format, ...)
             else if (format[i] == 's')
             {
                 char *str = va_arg(args, char *);
+                if (str != NULL) {
+                    int len = strlen(str);
+                    while (len < width)
+                    {
+                        buffer[buffer_index++] = pad;
+                        len++;
+                    }
 
-                int len = strlen(str);
-                while (len < width)
-                {
-                    buffer[buffer_index++] = pad;
-                    len++;
-                }
-
-                while (*str)
-                {
-                    buffer[buffer_index++] = *str++;
+                    while (*str)
+                    {
+                        buffer[buffer_index++] = *str++;
+                    }
                 }
                 buffer[buffer_index] = '\0';
             }

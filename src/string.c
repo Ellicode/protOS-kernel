@@ -132,6 +132,109 @@ char* strcpy(char* dst, const char* src) {
     return dst;
 }
 
+long strtol(const char *nptr, char **endptr, int base) {
+    const char *s = nptr;
+    unsigned long acc = 0;
+    int c;
+    uint8_t neg = 0;
+    uint8_t any = 0;
+
+    // 1. Skip whitespace
+    while ((c = *s) == ' ' || (c == '\t') || (c == '\n') || 
+           (c == '\v') || (c == '\f') || (c == '\r')) {
+        s++;
+    }
+
+    // 2. Handle optional sign
+    if (*s == '-') {
+        neg = 1;
+        s++;
+    } else if (*s == '+') {
+        s++;
+    }
+
+    // 3. Auto-detect base if 0
+    if (base == 0) {
+        if (*s == '0' && (s[1] == 'x' || s[1] == 'X')) {
+            s += 2;
+            base = 16;
+        } else if (*s == '0') {
+            s++;
+            base = 8;
+        } else {
+            base = 10;
+        }
+    } else if (base == 16 && *s == '0' && (s[1] == 'x' || s[1] == 'X')) {
+        s += 2;
+    }
+
+    // 4. Conversion loop
+    for (c = *s; ; c = *++s) {
+        int val = -1;
+        if (c >= '0' && c <= '9') {
+            val = c - '0';
+        } else if (c >= 'a' && c <= 'z') {
+            val = c - 'a' + 10;
+        } else if (c >= 'A' && c <= 'Z') {
+            val = c - 'A' + 10;
+        }
+
+        if (val < 0 || val >= base) {
+            break;
+        }
+
+        any = 1;
+        acc = acc * base + val;
+    }
+
+    // 5. Apply sign
+    long res = (long)acc;
+    if (neg) {
+        res = -res;
+    }
+
+    // 6. Set endptr
+    if (endptr != NULL) {
+        *endptr = (char *)(any ? s : nptr);
+    }
+
+    return res;
+}
+
+int strncmp(const char *s1, const char *s2, size_t n) {
+    while (n > 0) {
+        if (*s1 != *s2) {
+            return (unsigned char)*s1 - (unsigned char)*s2;
+        }
+        if (*s1 == '\0') {
+            return 0;
+        }
+        s1++;
+        s2++;
+        n--;
+    }
+    return 0;
+}
+
+char *strncpy(char *dst, const char *src, size_t n) {
+    if (n != 0) {
+        char *d = dst;
+        const char *s = src;
+
+        // Copy characters from src to dst until 'n' is reached or src ends
+        do {
+            if ((*d++ = *s++) == '\0') {
+                // If src ended early, pad the remaining 'n' bytes with zeros
+                while (--n != 0) {
+                    *d++ = '\0';
+                }
+                break;
+            }
+        } while (--n != 0);
+    }
+    return dst;
+}
+
 // STRING CONVERSION FUNCTIONS =================================================================
 
 char *int_to_string(int64_t num)
@@ -195,4 +298,10 @@ char *hex_to_string(uint64_t value)
 
     str[2 + i] = '\0';
     return str;
+}
+
+int atoi(const char *nptr)
+{
+    // Converts base 10 string to a long, then casts it to an int
+    return (int)strtol(nptr, (char **)NULL, 10);
 }

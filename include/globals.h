@@ -19,6 +19,7 @@ extern struct limine_framebuffer *g_vga_active_framebuffer;
 extern struct limine_hhdm_response *g_lim_hhdm;
 extern struct limine_memmap_response *g_lim_memmap;
 extern struct limine_executable_address_response *g_lim_kaddr;
+extern struct limine_module_response *g_lim_modules;
 
 extern char g_kernel_start;
 extern char g_kernel_end;

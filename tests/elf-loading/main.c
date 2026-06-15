@@ -13,7 +13,7 @@ uint64_t syscall(uint64_t num, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
     return ret;
 }
 
-void _start()
+int main()
 {
     syscall(1, 0, 0, 0);
 }

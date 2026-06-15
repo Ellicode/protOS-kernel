@@ -22,15 +22,17 @@ int k_init(
     struct limine_framebuffer *fb, 
     struct limine_memmap_response *memmap,
     struct limine_hhdm_response *hhdm,
-    struct limine_executable_address_response *kaddr
+    struct limine_executable_address_response *kaddr,
+    struct limine_module_response *modules
 ) {
     // Triple line break to avoid overlapping issues with the QEMU logs :3
     print("\n\n\n");
     k_info("Starting boot sequence...\n", "proto.kernel.k_init");
-    
+
     g_lim_memmap = memmap;
     g_lim_hhdm = hhdm;
     g_lim_kaddr = kaddr;
+    g_lim_modules = modules;
 
     // 1) INITIALIZE SERIAL OUTPUT ===================================================
     if (serial_init() != 0) {
@@ -42,6 +44,19 @@ int k_init(
     // 2) INITIALIZE GRAPHICS ========================================================
     graphics_init(fb);
     k_success("Initialized graphics.\n", "proto.kernel.k_init");
+
+    // 2.5) CHECK LIMINE MODULES =====================================================
+    if (modules == NULL || modules->module_count == 0) {
+        k_error("No modules loaded!\n", "proto.kernel.k_init");
+    } else {
+        for (uint64_t i = 0; i < modules->module_count; i++) {
+            k_info("Module: ", "proto.kernel.k_init");
+            print_f("%s @ %x (%d bytes)\n",
+                modules->modules[i]->path,
+                modules->modules[i]->address,
+                modules->modules[i]->size);
+        }
+    }
 
     // 3) INITIALIZE GDT =============================================================
     gdt_init();

@@ -30,9 +30,13 @@ __attribute__((used, section(".limine_requests"))) static volatile struct limine
     .id = LIMINE_EXECUTABLE_ADDRESS_REQUEST_ID,
     .revision = 0};
 
+__attribute__((used, section(".limine_requests"))) static volatile struct limine_module_request module_request = {
+    .id = LIMINE_MODULE_REQUEST_ID,
+    .revision = 0};
 
 __attribute__((used, section(".limine_requests_start"))) static volatile uint64_t limine_requests_start_marker[] = LIMINE_REQUESTS_START_MARKER;
 __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
+
 
 // =============================================================================================
 
@@ -64,8 +68,9 @@ void k_early_main() {
     struct limine_memmap_response *memmap = memmap_request.response;
     struct limine_hhdm_response *hhdm = hhdm_request.response;
     struct limine_executable_address_response *kaddr = address_request.response;
+    struct limine_module_response *modules = module_request.response;
 
-    if (k_init(framebuffer, memmap, hhdm, kaddr) == 0) {
+    if (k_init(framebuffer, memmap, hhdm, kaddr, modules) == 0) {
         k_main();
     } else {
         k_error("Init script returned non-zero status code. The system will reboot now...", "proto.kernel.k_early_main");
