@@ -61,7 +61,7 @@ void idt_init() {
         GDT_ENTRY_PRESENT
     }};
 
-    idt[128] = _idt_generate_descriptor(syscall_handler, attr_user, 128);
+    idt[128] = _idt_generate_descriptor(isr_call_128, attr_user, 128);
 
     __asm__ volatile ("lidt %0" : : "m"(idtr));
 }

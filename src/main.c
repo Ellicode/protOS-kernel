@@ -12,7 +12,7 @@
 #include "boot.h"
 #include "userspace/scheduler.h"
 #include "userspace/userspace.h"
-#include "userspace/elf.h"
+#include "userspace/process.h"
 
 // LIMINE REQUESTS ==============================================================================
 
@@ -43,28 +43,13 @@ __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t 
 
 // =============================================================================================
 
-#define USER_STACK_BASE 0x7FFFF000ULL
-#define USER_STACK_SIZE 0x100000ULL
-
 void k_main() {
-    file_descriptor_t *f = vfs_open(rootfs->root, "./system/programs/executable.elf", FD_READ);
-    size_t size = f->inode->size;
-    char *buffer = k_alloc(size);
-    vfs_read(f, size, buffer);
-    vfs_close(f);
+    fill_screen(PROTO_BG);
+    cursor_set(0, 0);
 
-    void *entry = elf_load(buffer, size);
-    static uint8_t fault_stack[4096];
-    tss.rsp0 = (uint64_t)(fault_stack + sizeof(fault_stack));
+    create_process("./system/programs/executable.elf");
 
-    vmm_map_range(USER_STACK_BASE, USER_STACK_SIZE, F_PRESENT | F_USER | F_WRITE);
-    enter_userspace((uint64_t)entry, USER_STACK_BASE + USER_STACK_SIZE);
-
-    k_info("Welcome to ", "proto.kernel.k_init");
-    set_color(PROTO_CYAN);
-    print_f("ProtOS");
-    set_color(PROTO_WHITE);
-    print_f("! System will halt...");
+    enable_interrupts();
 
     for (;;) {
         __asm__ ("hlt");

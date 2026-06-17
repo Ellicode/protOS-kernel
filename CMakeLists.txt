@@ -98,6 +98,12 @@ set(KERNEL_SOURCES
         src/userspace/syscalls.c
         include/userspace/syscalls.h 
 
+        src/userspace/process.c
+        include/userspace/process.h 
+
+        src/userspace/user_fb.c
+        include/userspace/user_fb.h
+
         src/userspace/enter-userspace.asm
         include/userspace/userspace.h 
 

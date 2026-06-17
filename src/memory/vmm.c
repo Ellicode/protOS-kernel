@@ -7,7 +7,7 @@
 
 #include "memory/vmm.h"
 
-pt_entry_t* pml4;
+pt_entry_t* kernel_pml4;
 ticketlock_t vmm_lock = {0};
 
 void _load_cr3(uint64_t pml4_physical) {
@@ -53,20 +53,6 @@ void map_page(uint64_t virt, uint64_t phys, uint64_t flags, pt_entry_t* pml4) {
 
 uint64_t _kernel_size() {
     return (uint64_t)&g_kernel_end - (uint64_t)&g_kernel_start;
-}
-
-void vmm_get_pte(uint64_t virt) {
-    VirtualAddress v = { .value = 0x401020 };
-    PageTableEntry pml4e = { .value = pml4[v.pml4] };
-    uint64_t* pdpt = (uint64_t*)((pml4e.addr << 12) + g_lim_hhdm->offset);
-    PageTableEntry pdpte = { .value = pdpt[v.page_dir_ptr] };
-    uint64_t* pd = (uint64_t*)((pdpte.addr << 12) + g_lim_hhdm->offset);
-    PageTableEntry pde = { .value = pd[v.page_dir] };
-    uint64_t* pt = (uint64_t*)((pde.addr << 12) + g_lim_hhdm->offset);
-    PageTableEntry pte = { .value = pt[v.page_table] };
-
-    print_f("PML4E: %x\nPDPTE: %x\nPDE:   %x\nPTE:   %x\n",
-        pml4e.value, pdpte.value, pde.value, pte.value);
 }
 
 void _tables_dump(pt_entry_t* pml4) {
@@ -119,7 +105,9 @@ void _tables_dump(pt_entry_t* pml4) {
     #endif
 }
 
-void *vmm_map_range(uint64_t virt_start, size_t size, uint64_t flags) {
+void *vmm_map_range(uint64_t cr3, uint64_t virt_start, size_t size, uint64_t flags) {
+    pt_entry_t *pml4 = (pt_entry_t *)(cr3 + g_lim_hhdm->offset);
+
     if (pml4 == NULL) {
         k_error("Tried to map before initializing paging", "proto.kernel.vmm_alloc");
     }
@@ -146,6 +134,32 @@ void *vmm_map_range(uint64_t virt_start, size_t size, uint64_t flags) {
     return (void *)virt_start;
 }
 
+void *vmm_map_phys_range(uint64_t cr3, uint64_t virt_start, uint64_t phys_start, size_t size, uint64_t flags) {
+    pt_entry_t *pml4 = (pt_entry_t *)(cr3 + g_lim_hhdm->offset);
+
+    if (pml4 == NULL) {
+        k_error("Tried to map before initializing paging", "proto.kernel.vmm_map_phys_range");
+        return NULL;
+    }
+
+    int lock1r = ticketlock_lock(&vmm_lock);
+    
+    virt_start = PAGE_ALIGN(virt_start);
+    phys_start = PAGE_ALIGN(phys_start);
+    size_t num_pages = PAGE_ROUND(size) / PAGE_SIZE;
+
+    for (uint64_t idx = 0; idx < num_pages; idx++) {
+        uint64_t target_virt = virt_start + (idx * PAGE_SIZE);
+        uint64_t target_phys = phys_start + (idx * PAGE_SIZE);
+        
+        map_page(target_virt, target_phys, flags, pml4);
+    }
+
+    ticketlock_unlock(&vmm_lock, lock1r);
+
+    return (void *)virt_start;
+}
+
 void vmm_flush_tlb() {
     uint64_t cr3;
     __asm__ volatile (
@@ -155,16 +169,31 @@ void vmm_flush_tlb() {
     );
 }
 
+uint64_t create_user_pml4() {
+    uint64_t phys = (uint64_t)m_pmm_alloc_p();
+    uint64_t virt = phys + g_lim_hhdm->offset;
+    memset((void*)virt, 0, PAGE_SIZE);
+
+    pt_entry_t *new_pml4  = (pt_entry_t*)virt;
+    pt_entry_t *kern_pml4 = kernel_pml4;  // already virtual, no offset needed!
+
+    for (int i = 256; i < 512; i++) {
+        new_pml4[i] = kern_pml4[i];
+    }
+
+    return phys;  // return physical for cr3!
+}
+
 void vmm_init() {
     uint64_t phys = (uint64_t)m_pmm_alloc_p();
-    pml4 = (pt_entry_t*)(phys + g_lim_hhdm->offset);
+    kernel_pml4 = (pt_entry_t*)(phys + g_lim_hhdm->offset);
 
     k_debug("pml4_phys=", "proto.kernel.vmm_init");
     #if (PROTO_DEBUG == 1)
-        print_f("%x, pml4_virt=%x\n", phys, pml4);
+        print_f("%x, pml4_virt=%x\n", phys, kernel_pml4);
     #endif
 
-    memset(pml4, 0, PAGE_SIZE);
+    memset(kernel_pml4, 0, PAGE_SIZE);
 
     // Map the kernel
     uint64_t kphys = g_lim_kaddr->physical_base;
@@ -172,7 +201,7 @@ void vmm_init() {
     uint64_t ksize = _kernel_size();
 
     for (uint64_t off = 0; off < ksize; off += PAGE_SIZE) {
-        map_page(kvirt + off, kphys + off, F_WRITE, pml4);
+        map_page(kvirt + off, kphys + off, F_WRITE, kernel_pml4);
     }
 
     k_debug("Mapped kernel region\n", "proto.kernel.vmm_init");
@@ -183,18 +212,18 @@ void vmm_init() {
         for (uint64_t off = 0; off < entry->length; off += PAGE_SIZE) {
             map_page(entry->base + off + g_lim_hhdm->offset,
                     entry->base + off,
-                    F_WRITE, pml4);
+                    F_WRITE, kernel_pml4);
         }
     }
 
     k_debug("Mapped HHDM region\n", "proto.kernel.vmm_init");
 
     // Map framebuffer
-    uint64_t fb_phys = (uint64_t)g_vga_active_framebuffer->address - g_lim_hhdm->offset; // or however you access it
+    uint64_t fb_phys = (uint64_t)g_vga_active_framebuffer->address - g_lim_hhdm->offset;
     uint64_t fb_size = g_vga_active_framebuffer->pitch * g_vga_active_framebuffer->height;
 
     for (uint64_t off = 0; off < fb_size; off += PAGE_SIZE) {
-        map_page(fb_phys + off + g_lim_hhdm->offset, fb_phys + off, F_WRITE, pml4);
+        map_page(fb_phys + off + g_lim_hhdm->offset, fb_phys + off, F_WRITE, kernel_pml4);
     }
 
     k_debug("Mapped framebuffer region\n", "proto.kernel.vmm_init");
@@ -225,12 +254,8 @@ void vmm_init() {
     // print_f("%dMB from bootloader reclaimable memory\n", space_reclaimed / (uint64_t)(1024 * 1024));
 }
 
-uint64_t vmm_virt_to_phys(uint64_t virt) {
-    if (pml4 == NULL) {
-        k_error("Tried to convert before initializing paging", "proto.kernel.vmm_virt_to_phys");
-        return 0;
-    }
-
+uint64_t vmm_virt_to_phys(uint64_t cr3, uint64_t virt) {
+    pt_entry_t *pml4 = (pt_entry_t*)(cr3 + g_lim_hhdm->offset);
     VirtualAddress v = { .value = virt };
 
     PageTableEntry pml4e = { .value = pml4[v.pml4] };

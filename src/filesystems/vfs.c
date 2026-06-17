@@ -107,6 +107,26 @@ int vfs_read(file_descriptor_t *fd, size_t size, void *buffer) {
     return inode->parent_sb->ops->read(fd->inode, size, buffer);
 }
 
+int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer) {
+    inode_t *inode = fd->inode;
+    if (inode == NULL) {
+        k_error("Cannot read: file descriptor is empty\n", "proto.kernel.vfs_write");
+        return 1;
+    }
+
+    if (!inode->parent_sb->ops || !inode->parent_sb->ops->write) {
+        k_error("Operation \"write\" not supported on fs\n", "proto.kernel.vfs_write");
+        return 1;
+    }
+
+    if (!(fd->flags & FD_WRITE)) {
+        k_error("Cannot read: operation unauthorized.\n", "proto.kernel.vfs_write");
+        return 1;
+    }
+
+    return inode->parent_sb->ops->write(fd->inode, size, buffer);
+}
+
 int vfs_close(file_descriptor_t *fd) {
     k_free(fd);
     return 1;

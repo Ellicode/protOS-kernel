@@ -5,6 +5,7 @@
 #include "io.h"
 #include "globals.h"
 #include "userspace/scheduler.h"
+#include "userspace/syscalls.h"
 
 #include "interrupts/interrupts.h"
 
@@ -68,6 +69,8 @@ void isr_handler(idt_frame_t* frame) {
         scheduler_tick(frame);
     } else if (vec_buffer == 33) {
         ps2_isr();
+    } else if (vec_buffer == 0x80) {
+        syscall_handler(frame);
     } else {
         k_debug("BEEP! Interrupt received!", "proto.kernel.isr_handler");
         #if (PROTO_DEBUG == 1)

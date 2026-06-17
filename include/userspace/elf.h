@@ -45,6 +45,6 @@ typedef ElfProgramHeader elf_program_header_t;
 #define PF_W        0x2  // Writable segment
 #define PF_R        0x4  // Readable segment
 
-void *elf_load(char *data, size_t size);
+uint64_t elf_load(char *data, size_t size, uint64_t cr3);
 
 #endif // ELF_H

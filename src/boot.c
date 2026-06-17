@@ -92,16 +92,19 @@ int k_init(
     ps2_init();
     k_success("Initialized PS2 Keyboard.\n", "proto.kernel.k_init");
 
-    scheduler_init();
-    k_success("Initialized Scheduler\n", "proto.kernel.k_init");
-
-    enable_interrupts();
-    k_success("Interrupts enabled.\n", "proto.kernel.k_init");
-
     vfs_init();
     k_success("Initialized VFS.\n", "proto.kernel.k_init");
 
+    scheduler_init();
+    k_success("Initialized Scheduler\n", "proto.kernel.k_init");
+
     // DONE! =========================================================================
-    k_info("Boot sequence ended.\n", "proto.kernel.k_init");
+
+    k_info("Welcome to ", "proto.kernel.k_init");
+    set_color(PROTO_CYAN);
+    print_f("ProtOS");
+    set_color(PROTO_WHITE);
+    print_f("! System will halt...");
+
     return 0;
 }

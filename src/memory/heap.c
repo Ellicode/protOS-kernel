@@ -39,7 +39,8 @@ void heap_test() {
 }
 
 void heap_init() {
-    vmm_map_range(HEAP_VIRTUAL_START, heap_size, F_WRITE);
+    uint64_t kernel_cr3 = (uint64_t)kernel_pml4 - g_lim_hhdm->offset;
+    vmm_map_range(kernel_cr3, HEAP_VIRTUAL_START, heap_size, F_WRITE);
     
     heap_base = (heap_item_t*)HEAP_VIRTUAL_START;
     heap_base->size  = HEAP_MIN_SIZE - sizeof(HeapItem);
@@ -103,7 +104,8 @@ void *_heap_alloc_stub(size_t size, uint64_t vmm_flags) {
         }
 
         uint64_t grow_size = size + sizeof(HeapItem);
-        vmm_map_range(HEAP_VIRTUAL_START + heap_size, grow_size, vmm_flags | F_WRITE);
+        uint64_t kernel_cr3 = (uint64_t)kernel_pml4 - g_lim_hhdm->offset;
+        vmm_map_range(kernel_cr3, HEAP_VIRTUAL_START + heap_size, grow_size, vmm_flags | F_WRITE);
 
         heap_item_t *new_block = (heap_item_t*)(HEAP_VIRTUAL_START + heap_size);
         new_block->size  = grow_size - sizeof(HeapItem);

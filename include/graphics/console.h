@@ -1,13 +1,15 @@
 #include "../limine/limine.h"
-
-#include "vga.h"
+#include "graphics/vga.h"
 
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
+#include "fonts/niji-pixel-bold-16.h"
+
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 16
 #define FONT_KERNING 2
+
 // #define FONT_WIDTH 5
 // #define FONT_HEIGHT 8
 // #define FONT_KERNING 2

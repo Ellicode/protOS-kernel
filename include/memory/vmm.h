@@ -52,10 +52,14 @@ typedef uint64_t virtual_address_t;
 #define F_GLOBAL    (1ULL << 8)
 #define F_NX        (1ULL << 63)
 
+extern pt_entry_t *kernel_pml4;
+
+void _load_cr3(uint64_t pml4_physical);
 void vmm_init();
 void vmm_flush_tlb();
-void *vmm_map_range(uint64_t virt_start, size_t size, uint64_t flags);
-uint64_t vmm_virt_to_phys(uint64_t virt);
-void vmm_get_pte(uint64_t virt);
+void *vmm_map_range(uint64_t cr3, uint64_t virt_start, size_t size, uint64_t flags);
+void *vmm_map_phys_range(uint64_t cr3, uint64_t virt_start, uint64_t phys_start, size_t size, uint64_t flags);
+uint64_t vmm_virt_to_phys(uint64_t cr3, uint64_t virt);
+uint64_t create_user_pml4();
 
 #endif // VMM_H

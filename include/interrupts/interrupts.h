@@ -67,6 +67,8 @@ extern void isr_call_14();
 extern void isr_call_32();
 extern void isr_call_33();
 
+extern void isr_call_128();
+
 void isr_handler(idt_frame_t* frame);
 
 int interrupts_enabled();

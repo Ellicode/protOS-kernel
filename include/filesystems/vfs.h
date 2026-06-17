@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 
 #ifndef VFS_H
 #define VFS_H
@@ -36,13 +37,13 @@ struct vfs_ops_t
     int (*read)(
         inode_t *inode,
         uint64_t size,
-        char *buffer
+        void *buffer
     );
 
     int (*write)(
         inode_t *fd,
         uint64_t size,
-        void *buffer
+        const void *buffer
     );
 
     int (*lookup)(
@@ -105,6 +106,7 @@ int split_path(const char *path, char segments[][256], int max_segs);
 
 file_descriptor_t *vfs_open(inode_t *cwd, char *path, uint8_t flags);
 int vfs_read(file_descriptor_t *fd, size_t size, void *buffer);
+int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer);
 int vfs_close(file_descriptor_t *fd);
 
 #endif // VFS_H

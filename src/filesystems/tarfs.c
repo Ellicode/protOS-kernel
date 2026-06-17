@@ -69,7 +69,7 @@ int tarfs_lookup(inode_t *dir, char *name, inode_t **result) {
     return 0;
 }
 
-int tarfs_read(inode_t *inode, uint64_t size, char *buffer) {
+int tarfs_read(inode_t *inode, uint64_t size, void *buffer) {
     ustar_node_t *node = (ustar_node_t *)inode->fs_data;
     void *data = (void *)node->offset;
     memcpy(buffer, data, size);

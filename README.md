@@ -45,14 +45,14 @@ ProtOS is yet another hobby kernel made by an incompetent web developer wanting 
 
 **FILESYSTEMS**
 
-- [ ] Virtual Filesystem <span style="float:right">([`vfs.c`](src/filesystems/vfs.c))</span>
-- [ ] TAR filesystem
+- [x] Virtual Filesystem <span style="float:right">([`vfs.c`](src/filesystems/vfs.c))</span>
+- [x] TAR filesystem
 
 **USERSPACE**
 
 - [x] Scheduler <span style="float:right">([`heap.c`](src/userspace/scheduler.c))</span>
-- [ ] ELF Loading
-- [ ] Syscalls
+- [x] ELF Loading
+- [x] Syscalls
 
 _after that i can finally work on stuff_
 
