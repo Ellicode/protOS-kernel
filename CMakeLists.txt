@@ -1,6 +1,6 @@
 # Set the minimum required version of CMake
 cmake_minimum_required(VERSION 3.10)
-set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD 23)
 
 add_compile_definitions(PROTO_DEBUG=1)
 

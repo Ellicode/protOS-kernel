@@ -52,7 +52,7 @@ int _start()
     }
 
 
-    char *buffer[100];
+    char buffer[100] = "meow meow mroww-- :3";
     read(0, 0, buffer);
 
     write(1, 0, "Triggered after read() \n");

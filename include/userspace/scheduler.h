@@ -1,5 +1,6 @@
 #include "interrupts/interrupts.h"
 #include "userspace/process.h"
+#include "utils/ticket_lock.h"
 
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
@@ -21,8 +22,16 @@ typedef struct Thread {
 } Thread;
 typedef Thread thread_t;
 
+typedef struct __thread_queue_inner {
+    struct Thread               *thread;
+
+    struct __thread_queue_inner * prev;
+    struct __thread_queue_inner * next;
+} __thread_queue_inner;
+
 typedef struct wait_queue {
-    thread_t        *head;
+    __thread_queue_inner    *head;
+    ticketlock_t            *lock;
 } wait_queue_t;
 
 extern thread_t* g_current_thread;

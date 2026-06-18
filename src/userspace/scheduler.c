@@ -16,16 +16,19 @@
 thread_t* threads         = NULL;
 thread_t* g_current_thread  = NULL;
 ticketlock_t threads_lock = {0};
+thread_t *idle;
 
 void idle_fn() {
-    while (1) { }
+    while (1) {
+        __asm__ volatile ("hlt");
+    }
 }
 
 void scheduler_init() {
     threads = NULL;
     g_current_thread = NULL;
 
-    thread_t *idle      = k_alloc(sizeof(thread_t));
+    idle = k_alloc(sizeof(thread_t));
     idle->next          = NULL;
     idle->prev          = idle;
     idle->state         = THREAD_RUNNING;
@@ -49,19 +52,27 @@ void scheduler_yield() {
 }
 
 void queue_sleep(wait_queue_t *wq, thread_t *thread) {
+    int lock = ticketlock_lock(wq->lock);
     thread->state = THREAD_SLEEPING;
-    LL_APPEND(thread, wq->head);
+    __thread_queue_inner *thread_item = k_alloc(sizeof(__thread_queue_inner));
+    thread_item->thread = thread;
+    LL_APPEND(thread_item, wq->head);
+    ticketlock_unlock(wq->lock, lock);
     scheduler_yield();
 }   
 
 void queue_wake_all(wait_queue_t *wq) {
-    thread_t *t = wq->head;
+    if (wq->lock == NULL) { return; };
+    int lock = ticketlock_lock(wq->lock);
+    __thread_queue_inner *t = wq->head;
     while (t != NULL) {
-        thread_t *next = t->next;
-        t->state = THREAD_RUNNING;
+        __thread_queue_inner *next = t->next;
+        t->thread->state = THREAD_RUNNING;
         LL_UNLINK(t, wq->head);
+        k_free(t);
         t = next;
     }
+    ticketlock_unlock(wq->lock, lock);
 }
 
 void scheduler_tick(idt_frame_t* ctx) {
@@ -75,9 +86,10 @@ void scheduler_tick(idt_frame_t* ctx) {
     while (next->state == THREAD_SLEEPING) {
         next = next->next;
         if (next == NULL) {
-            next = threads;
+            next = idle;
+            break;
         }
-    }
+    };
 
     if (next->process != NULL) {
         if (g_current_thread->process == NULL ||

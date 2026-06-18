@@ -70,6 +70,9 @@ process_t *create_process(char *elf_path, uint8_t is_root) {
     process->cr3 = pml4;
 
     if (is_root) {
+        file_descriptor_t *stdin = vfs_open(process->cwd, "/Devices/stdin", FD_READ);
+        process->fd_table[0] = stdin;
+        
         file_descriptor_t *stdout = vfs_open(process->cwd, "/Devices/stdout", FD_WRITE);
         process->fd_table[1] = stdout;
     } else {

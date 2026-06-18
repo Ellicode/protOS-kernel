@@ -70,11 +70,16 @@ void isr_handler(idt_frame_t* frame) {
         scheduler_tick(frame);
     } else if (vec_buffer == 33) {
         char c = get_ps2_scancode();
+        devfs_node_t *stdin = g_stdin->fs_data;
+        stdin_data_t *stdin_data = stdin->extra_data;
+        if (stdin_data == NULL) { return; } // 3:< i gotchu
+
         if (c == '\n') {
-            print("return!");
-            devfs_node_t *stdin = g_stdin->fs_data;
             queue_wake_all(&stdin->waiters);
+        } else {
+            stdin_data->kbd_buf[stdin_data->kbd_write++] = c;
         }
+
         char str[2]; 
         str[0] = c;
         str[1] = '\0'; 

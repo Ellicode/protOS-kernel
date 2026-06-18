@@ -106,12 +106,25 @@ int devfs_create_dir(inode_t *dir, char *name, inode_t **result) {
 
 int devfs_read(inode_t *inode, uint64_t size, void *buffer) {
     devfs_node_t *node = inode->fs_data;
+    stdin_data_t *stdin_data = node->extra_data;
+
+    print_f("percent dihhh: %d\n", node->dev_type);
 
     switch (node->dev_type)
     {
         case DEV_STDIN:
-            queue_sleep(&node->waiters, g_current_thread);
-            // rest is handled by the interrupt
+            while (stdin_data->kbd_read == stdin_data->kbd_write) {
+                queue_sleep(&node->waiters, g_current_thread);
+            }
+
+            print_f("after eep!\n");
+
+            uint64_t i = 0;
+            while (i < size && stdin_data->kbd_read != stdin_data->kbd_write) {
+                ((char*)buffer)[i++] = stdin_data->kbd_buf[stdin_data->kbd_read++];
+            }
+            return i;
+
             break;
         default: // No match
             return 1;
@@ -142,6 +155,8 @@ int devfs_write(inode_t *inode, uint64_t size, const void *buffer) {
 }
 
 superblock_t *devfs_init() {
+    print_f("init devfs\n");
+
     devfs_root                          = k_alloc(sizeof(devfs_node_t));
     devfs_root->type                    = INODE_FOLDER;
     devfs_root->inode.type              = INODE_FOLDER;
@@ -162,12 +177,21 @@ superblock_t *devfs_init() {
     devfs_create(devfs_superblock->root, "stdin", &g_stdin);
     devfs_node_t *stdin_data = g_stdin->fs_data;
     stdin_data->dev_type = DEV_STDIN;
+    stdin_data->extra_data = k_alloc(sizeof(stdin_data_t));
+
+    print_f("init stdin\n");
+
     devfs_create(devfs_superblock->root, "stdout", &g_stdout);
     devfs_node_t *stdout_data = g_stdout->fs_data;
     stdout_data->dev_type = DEV_STDOUT;
+
+    print_f("init stdout\n");
+
     devfs_create(devfs_superblock->root, "stderr", &g_stderr);
     devfs_node_t *stderr_data = g_stderr->fs_data;
     stderr_data->dev_type = DEV_STDERR;
+
+    print_f("init stderr\n");
 
     return devfs_superblock;
 }
