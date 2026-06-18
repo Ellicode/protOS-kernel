@@ -114,6 +114,9 @@ set(KERNEL_SOURCES
 
         src/filesystems/tarfs.c
         include/filesystems/tarfs.h
+
+        src/filesystems/devfs.c
+        include/filesystems/devfs.h
 )
 
 add_executable(kernel ${KERNEL_SOURCES})

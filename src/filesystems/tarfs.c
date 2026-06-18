@@ -1,11 +1,11 @@
+#include <stdint.h>
+
 #include "debug/logger.h"
 #include "graphics/console.h"
 #include "string.h"
 #include "globals.h"
 #include "memory/heap.h"
 #include "filesystems/vfs.h"
-
-#include <stdint.h>
 
 #include "filesystems/tarfs.h"
 
@@ -84,23 +84,23 @@ superblock_t *tarfs_init() {
         return NULL;
     }
     
-    initramfs_start = g_lim_modules->modules[0]->address;
-    initramfs_size = g_lim_modules->modules[0]->size;
+    initramfs_start                         = g_lim_modules->modules[0]->address;
+    initramfs_size                          = g_lim_modules->modules[0]->size;
 
 
-    initramfs_root = k_alloc(sizeof(ustar_node_t));
-    initramfs_root->type = INODE_FOLDER;
-    initramfs_root->inode.type    = INODE_FOLDER;
-    initramfs_root->inode.fs_data = initramfs_root;
+    initramfs_root                          = k_alloc(sizeof(ustar_node_t));
+    initramfs_root->type                    = INODE_FOLDER;
+    initramfs_root->inode.type              = INODE_FOLDER;
+    initramfs_root->inode.fs_data           = initramfs_root;
 
-    initramfs_superblock = k_alloc(sizeof(superblock_t));
-    initramfs_superblock->ops = k_alloc(sizeof(vfs_ops_t));
-    initramfs_superblock->fs_type = FS_USTAR;
-    initramfs_superblock->ops->lookup = tarfs_lookup;
-    initramfs_superblock->ops->read = tarfs_read;
-    initramfs_superblock->root = &initramfs_root->inode;
+    initramfs_superblock                    = k_alloc(sizeof(superblock_t));
+    initramfs_superblock->ops               = k_alloc(sizeof(vfs_ops_t));
+    initramfs_superblock->fs_type           = FS_USTAR;
+    initramfs_superblock->ops->lookup       = tarfs_lookup;
+    initramfs_superblock->ops->read         = tarfs_read;
+    initramfs_superblock->root              = &initramfs_root->inode;
 
-    initramfs_root->inode.parent_sb = initramfs_superblock;
+    initramfs_root->inode.parent_sb         = initramfs_superblock;
 
     ustar_header_t *header = (ustar_header_t *)initramfs_start;
     unsigned int offset = 0;

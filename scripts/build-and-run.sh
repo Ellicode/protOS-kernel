@@ -67,7 +67,22 @@ cd "$PROJECT_ROOT" || error_exit "${B_RED} ERR! ${A_RESET} Failed to change dire
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 
-gcc -static -nostdlib -nodefaultlibs -ffreestanding -o build/tests-elf-loading.elf tests/elf-loading/main.c
+# build standard c library
+mkdir -p build/lib
+
+gcc -m64 -ffreestanding -fno-builtin -nostdlib -c lib/io.c -o build/lib/io.o
+gcc -m64 -ffreestanding -fno-builtin -nostdlib -c lib/syscall.c -o build/lib/syscall.o
+gcc -m64 -ffreestanding -fno-builtin -nostdlib -c lib/graphics.c -o build/lib/graphics.o
+
+ar rcs build/libproto.a     \
+    build/lib/io.o          \
+    build/lib/graphics.o          \
+    build/lib/syscall.o
+
+gcc -m64 -ffreestanding -fno-stack-protector -Ilib -no-pie -c tests/elf-loading/main.c -o build/executable.o
+ld -T tests/elf-loading/linker.ld build/executable.o -Lbuild -lproto -o build/executable.elf
+
+cp build/executable.elf tests/initramfs/System/Programs/executable.elf
 
 mkdir -p ignore-scripts
 
@@ -81,8 +96,6 @@ else
     mkdir -p $BOOT_DIRECTORY
     cp build/$BUILD_FILE_NAME $BOOT_DIRECTORY/$BUILD_FILE_NAME
 fi
-
-cp build/tests-elf-loading.elf tests/initramfs/system/programs/executable.elf
 
 mkdir -p ignore-scripts/esp
 

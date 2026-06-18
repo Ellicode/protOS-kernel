@@ -27,9 +27,8 @@ struct inode_t
     inode_type_t        type;
     uint64_t            size;
     superblock_t        *parent_sb;
-    void                *fs_data;
-    uint8_t             mount;
     superblock_t        *child_sb;
+    void                *fs_data;
 };
 
 struct vfs_ops_t
@@ -52,7 +51,7 @@ struct vfs_ops_t
         inode_t **result
     );
 
-    int (*mkdir)(
+    int (*create_dir)(
         inode_t *dir,
         char *name,
         inode_t **result
@@ -108,5 +107,7 @@ file_descriptor_t *vfs_open(inode_t *cwd, char *path, uint8_t flags);
 int vfs_read(file_descriptor_t *fd, size_t size, void *buffer);
 int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer);
 int vfs_close(file_descriptor_t *fd);
+
+int vfs_mount(superblock_t *sb, char *path);
 
 #endif // VFS_H

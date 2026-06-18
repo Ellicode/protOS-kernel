@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 
 #include "io.h"
 #include "globals.h"
@@ -13,7 +14,7 @@
 uint8_t shift_pressed  = 0;
 uint8_t alt_gr_pressed = 0;
 
-void ps2_isr() {
+char get_ps2_scancode() {
     if (g_kbd_enable == 1) {
         uint8_t scancode = inb(PS2_DATA_PORT);
         uint8_t key = scancode & 0x7F;
@@ -40,13 +41,10 @@ void ps2_isr() {
                 ascii = ascii_no_shift[key];
             }
 
-            char str[2];
-            str[0] = (char)ascii; // Cast to signed char
-            str[1] = '\0';     // Null terminator
-
-            print(str);
+            return ascii;
         }
     }
+    return '\0';
 }
 
 void ps2_init() {

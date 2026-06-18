@@ -3,6 +3,7 @@
 #include "memory/heap.h"
 #include "string.h"
 #include "filesystems/tarfs.h"
+#include "filesystems/devfs.h"
 
 #include "filesystems/vfs.h"
 
@@ -58,6 +59,10 @@ inode_t *vfs_lookup(inode_t *cwd, char *path) {
             return NULL;
         }
 
+        if (next->child_sb != NULL) {
+            next = next->child_sb->root;
+        }
+
         current = next;
         if (next->type != INODE_FOLDER && i < seg_count - 1) {
             k_error("Path element is not a folder\n", "proto.kernel.vfs_lookup");
@@ -110,7 +115,7 @@ int vfs_read(file_descriptor_t *fd, size_t size, void *buffer) {
 int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer) {
     inode_t *inode = fd->inode;
     if (inode == NULL) {
-        k_error("Cannot read: file descriptor is empty\n", "proto.kernel.vfs_write");
+        k_error("Cannot write: file descriptor is empty\n", "proto.kernel.vfs_write");
         return 1;
     }
 
@@ -120,7 +125,7 @@ int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer) {
     }
 
     if (!(fd->flags & FD_WRITE)) {
-        k_error("Cannot read: operation unauthorized.\n", "proto.kernel.vfs_write");
+        k_error("Cannot write: operation unauthorized.\n", "proto.kernel.vfs_write");
         return 1;
     }
 
@@ -132,6 +137,22 @@ int vfs_close(file_descriptor_t *fd) {
     return 1;
 }
 
+int vfs_mount(superblock_t *sb, char *path) {
+    inode_t *mountpoint = vfs_lookup(rootfs->root, path);
+    if (mountpoint == NULL || mountpoint->type != INODE_FOLDER) {
+        k_error("Could not find mountpoint\n", "proto.kernel.vfs_init");
+        return 1;
+    }
+
+    mountpoint->child_sb = sb;
+    return 0;
+
+    k_debug("Mounted type ", "proto.kernel.vfs_mount");
+    print_f("%d filesystem @ %s.", sb->fs_type, path);
+}
+
 void vfs_init() {
     rootfs = tarfs_init();
+    superblock_t *devfs = devfs_init();
+    vfs_mount(devfs, "/Devices");
 }

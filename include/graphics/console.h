@@ -6,14 +6,6 @@
 
 #include "fonts/niji-pixel-bold-16.h"
 
-#define FONT_WIDTH 8
-#define FONT_HEIGHT 16
-#define FONT_KERNING 2
-
-// #define FONT_WIDTH 5
-// #define FONT_HEIGHT 8
-// #define FONT_KERNING 2
-
 enum ProtoColors {
     PROTO_RED     = 0xFF6467,
     PROTO_GREEN   = 0x05DF72,

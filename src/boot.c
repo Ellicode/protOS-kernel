@@ -104,7 +104,7 @@ int k_init(
     set_color(PROTO_CYAN);
     print_f("ProtOS");
     set_color(PROTO_WHITE);
-    print_f("! System will halt...");
+    print_f("! System will halt...\n");
 
     return 0;
 }

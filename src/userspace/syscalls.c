@@ -16,7 +16,7 @@ void _sys_exit() {
     exit_thread(g_current_thread);
 }
 
-uint64_t sys_open(char *path, char *flags) {
+int sys_open(char *path, char *flags) {
     if (!g_current_thread || !g_current_thread->process || !g_current_thread->process->cwd) {
         return -1; 
     }
@@ -60,66 +60,45 @@ uint64_t sys_open(char *path, char *flags) {
     }
 
     proc->fd_table[descriptor_idx] = desc;
-    return descriptor_idx + 3;
+    return descriptor_idx;
 }
 
-uint64_t sys_read(uint64_t fd, size_t size, void *buffer) {
+int sys_read(uint64_t fd, size_t size, void *buffer) {
     if (!g_current_thread || !g_current_thread->process) {
         return -1; 
     }
 
     process_t *proc = g_current_thread->process;
 
-    if (fd == 0) { 
-        // TODO: STDIN
-        return 0; 
-    } else if (fd == 1 || fd == 2) { 
+    if (fd >= PROCESS_MAX_FDS) {
         return -1;
-    } else if (fd >= 3) {
-        uint64_t fd_id = fd - 3;
-        if (fd_id >= PROCESS_MAX_FDS) {
-            return -1;
-        }
-
-        file_descriptor_t *fd_pointer = proc->fd_table[fd_id];
-
-        if (fd_pointer == NULL) {
-            return -1; 
-        }
-        return vfs_read(fd_pointer, size, buffer);
     }
-    return -1;
+
+    file_descriptor_t *fd_pointer = proc->fd_table[fd];
+
+    if (fd_pointer == NULL) {
+        return -1; 
+    }
+    return vfs_read(fd_pointer, size, buffer);
 }
 
-uint64_t sys_write(uint64_t fd, size_t size, const void *buffer) {
+int sys_write(uint64_t fd, size_t size, const void *buffer) {
     if (!g_current_thread || !g_current_thread->process) {
         return -1; 
     }
 
     process_t *proc = g_current_thread->process;
 
-    if (fd == 0) {
+    if (fd >= PROCESS_MAX_FDS) {
         return -1;
-    } else if (fd == 1) { 
-        // TODO: STDIN
-        return 0; 
-    } else if (fd == 2) { 
-        // TODO: STDOUT
-        return 0;
-    } else if (fd >= 3) {
-        uint64_t fd_id = fd - 3;
-        if (fd_id >= PROCESS_MAX_FDS) {
-            return -1;
-        }
-
-        file_descriptor_t *fd_pointer = proc->fd_table[fd_id];
-
-        if (fd_pointer == NULL) {
-            return -1; 
-        }
-        return vfs_write(fd_pointer, size, buffer);
     }
-    return -1;
+
+    file_descriptor_t *fd_pointer = proc->fd_table[fd];
+
+    if (fd_pointer == NULL) {
+        return -1; 
+    }
+    return vfs_write(fd_pointer, size, buffer);
 }
 
 int sys_close(uint64_t fd) {
@@ -129,20 +108,28 @@ int sys_close(uint64_t fd) {
 
     process_t *proc = g_current_thread->process;
 
-    if (fd >= 3) {
-        uint64_t fd_id = fd - 3;
-        if (fd_id >= PROCESS_MAX_FDS) {
-            return -1;
-        }
-
-        file_descriptor_t *fd_pointer = proc->fd_table[fd_id];
-
-        if (fd_pointer == NULL) {
-            return -1; 
-        }
-        return vfs_close(fd_pointer);
+    if (fd >= PROCESS_MAX_FDS) {
+        return -1;
     }
-    return -1;
+
+    file_descriptor_t *fd_pointer = proc->fd_table[fd];
+
+    if (fd_pointer == NULL) {
+        return -1; 
+    }
+
+    int ret = vfs_close(fd_pointer);
+
+    fd_pointer = NULL;
+}
+
+int sys_create_process(char *path) {
+    process_t *process = create_process(path, 0);
+    if (process == NULL) {
+        return -1;
+    }
+    
+    return 0;
 }
 
 
@@ -152,7 +139,7 @@ void* syscall_handlers[] = {
     [SYS_WRITE]             = sys_write,
     [SYS_OPEN]              = sys_open,
     [SYS_CLOSE]             = sys_close,
-    [SYS_CREATE_PROCESS]    = create_process,
+    [SYS_CREATE_PROCESS]    = sys_create_process,
     [SYS_FETCH_FB]          = sys_fetch_fb,
 };
 

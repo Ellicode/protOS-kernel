@@ -17,17 +17,51 @@ thread_t* threads         = NULL;
 thread_t* g_current_thread  = NULL;
 ticketlock_t threads_lock = {0};
 
+void idle_fn() {
+    while (1) { }
+}
+
 void scheduler_init() {
     threads = NULL;
     g_current_thread = NULL;
 
-    thread_t *idle = k_alloc(sizeof(thread_t));
-    idle->next       = NULL;
-    idle->prev       = idle;
-    idle->stack_base = 0;
+    thread_t *idle      = k_alloc(sizeof(thread_t));
+    idle->next          = NULL;
+    idle->prev          = idle;
+    idle->state         = THREAD_RUNNING;
+    idle->stack_base    = 0;
     memset(&idle->context, 0, sizeof(idt_frame_t));
-    threads        = idle;
-    g_current_thread = idle;
+    threads             = idle;
+    g_current_thread    = idle;
+}
+
+void scheduler_yield() {
+    __asm__ volatile (
+        "pushq %rbp;" // for backtracing
+        "movq %rsp, %rbp;"
+        "pushf;"
+        "sti;"
+        "int $0x20;"
+        "popf;"
+        "popq %rbp;"
+        "ret;"
+    );
+}
+
+void queue_sleep(wait_queue_t *wq, thread_t *thread) {
+    thread->state = THREAD_SLEEPING;
+    LL_APPEND(thread, wq->head);
+    scheduler_yield();
+}   
+
+void queue_wake_all(wait_queue_t *wq) {
+    thread_t *t = wq->head;
+    while (t != NULL) {
+        thread_t *next = t->next;
+        t->state = THREAD_RUNNING;
+        LL_UNLINK(t, wq->head);
+        t = next;
+    }
 }
 
 void scheduler_tick(idt_frame_t* ctx) {
@@ -37,6 +71,13 @@ void scheduler_tick(idt_frame_t* ctx) {
     LL_APPEND(g_current_thread, threads);
 
     thread_t *next = threads;
+
+    while (next->state == THREAD_SLEEPING) {
+        next = next->next;
+        if (next == NULL) {
+            next = threads;
+        }
+    }
 
     if (next->process != NULL) {
         if (g_current_thread->process == NULL ||
@@ -113,6 +154,7 @@ thread_t* create_user_thread(process_t *process, uint64_t entry_point) {
     thread->context.rsp     = (stack + USER_STACK_SIZE) & ~0xFULL;
     thread->context.rflags  = 0x202;
     thread->process         = process;
+    thread->state           = THREAD_RUNNING;
 
     LL_APPEND(thread, threads);
 

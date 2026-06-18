@@ -6,6 +6,7 @@
 #include "globals.h"
 #include "userspace/scheduler.h"
 #include "userspace/syscalls.h"
+#include "filesystems/devfs.h"
 
 #include "interrupts/interrupts.h"
 
@@ -68,7 +69,16 @@ void isr_handler(idt_frame_t* frame) {
         g_pit_ticks++;
         scheduler_tick(frame);
     } else if (vec_buffer == 33) {
-        ps2_isr();
+        char c = get_ps2_scancode();
+        if (c == '\n') {
+            print("return!");
+            devfs_node_t *stdin = g_stdin->fs_data;
+            queue_wake_all(&stdin->waiters);
+        }
+        char str[2]; 
+        str[0] = c;
+        str[1] = '\0'; 
+        print(str);
     } else if (vec_buffer == 0x80) {
         syscall_handler(frame);
     } else {

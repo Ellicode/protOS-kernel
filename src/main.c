@@ -44,10 +44,10 @@ __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t 
 // =============================================================================================
 
 void k_main() {
-    fill_screen(PROTO_BG);
-    cursor_set(0, 0);
+    // fill_screen(PROTO_BG);
+    // cursor_set(0, 0);
 
-    create_process("./system/programs/executable.elf");
+    create_process("./System/Programs/executable.elf", 1);
 
     enable_interrupts();
 

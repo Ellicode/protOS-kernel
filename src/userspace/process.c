@@ -18,25 +18,25 @@
 uint64_t curr_pid = 0;
 process_t *g_active_processes = NULL;
 
-int create_process(char *elf_path) {
+process_t *create_process(char *elf_path, uint8_t is_root) {
     file_descriptor_t *f = vfs_open(rootfs->root, elf_path, FD_READ);
 
     if (f == NULL) {
         k_error("Could not open ELF path", "proto.kernel.create_process");
-        return 1;
+        return NULL;
     }
 
     size_t size = f->inode->size;
     char *buffer = k_alloc(size);
     if (buffer == NULL) {
         k_error("Could not allocate ELF contents", "proto.kernel.create_process");
-        return 1;
+        return NULL;
     }
 
     uint64_t ret = vfs_read(f, size, buffer);
     if (ret != 0) {
         k_error("Could not read ELF", "proto.kernel.create_process");
-        return 1;
+        return NULL;
     }
 
     vfs_close(f);
@@ -44,6 +44,7 @@ int create_process(char *elf_path) {
     uint64_t pml4 = create_user_pml4();
     uint64_t physical_fb = (uint64_t)g_vga_active_framebuffer->address - g_lim_hhdm->offset;
     size_t fb_size = PAGE_ROUND(g_vga_active_framebuffer->width * g_vga_active_framebuffer->height);
+    
     vmm_map_phys_range(
         pml4, 
         USER_FRAMEBUFFER_BASE, 
@@ -57,20 +58,31 @@ int create_process(char *elf_path) {
 
     if (entry == 1) {
         k_error("Could not load ELF", "proto.kernel.create_process");
-        return 1;
+        return NULL;
     }
     
     process_t *process = k_alloc(sizeof(process_t));
 
     process->pid = ++curr_pid;
+    process->cwd = rootfs->root;
     process->ptype = PROCESS_OTHER;
     process->kernel_stack = k_alloc(4096);
-    tss.rsp0 = (uint64_t)process->kernel_stack + 4096;
     process->cr3 = pml4;
+
+    if (is_root) {
+        file_descriptor_t *stdout = vfs_open(process->cwd, "/Devices/stdout", FD_WRITE);
+        process->fd_table[1] = stdout;
+    } else {
+        if (g_current_thread->process != NULL) {
+            memcpy(process->fd_table, g_current_thread->process->fd_table, sizeof(g_current_thread->process->fd_table));
+        }
+    }
+
+    tss.rsp0 = (uint64_t)process->kernel_stack + 4096;
 
     LL_APPEND(process, g_active_processes);
 
     create_user_thread(process, entry);
 
-    return 0;
+    return process;
 }
