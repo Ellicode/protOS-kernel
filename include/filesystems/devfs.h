@@ -11,9 +11,7 @@ typedef enum {
 } dev_type_t;
 
 typedef struct stdin_data_t {
-    char                    kbd_buf[256];   // circular keyboard buffer
-    uint8_t                 kbd_read;
-    uint8_t                 kbd_write;
+    char                    kbd_buf[256];
 } stdin_data_t;
 
 typedef struct devfs_node_t {

@@ -5,167 +5,148 @@
 #include "debug/serial.h"
 #include "string.h"
 #include "globals.h"
+#include "memory/heap.h"
 
 #include "graphics/console.h"
 
-void cursor_set(uint32_t x, uint32_t y)
-{
-    if (g_vga_active_framebuffer == NULL)
-    {
-        return;
+uint64_t cursor_row         = 0;
+uint64_t cursor_col         = 0;
+color_t current_fg          = PROTO_WHITE;
+color_t current_bg          = PROTO_BG;
+uint64_t term_rows          = PROTO_BG;
+uint64_t term_cols          = PROTO_BG;
+uint64_t term_graphics_init = 0;
+
+cell_t *grid;
+
+void terminal_init() {
+    term_cols = g_vga_active_framebuffer->width / (FONT_WIDTH + FONT_KERNING);
+    term_rows = g_vga_active_framebuffer->height / FONT_HEIGHT;
+
+    grid = k_alloc(sizeof(cell_t) * term_rows * term_cols);
+    for (uint64_t i = 0; i < term_rows * term_cols; i++) {
+        grid[i].ch = ' ';
+        grid[i].fg = current_fg;
+        grid[i].bg = current_bg;
     }
-    g_tty_cursor_x = x;
-    g_tty_cursor_y = y;
+
+    cursor_row = 0;
+    cursor_col = 0;
+    term_graphics_init = 1;
 }
 
-static void scroll_up(void)
-{
-    if (g_vga_active_framebuffer == NULL)
-    {
-        return;
-    }
-
-    uint32_t pitch_px = g_vga_active_framebuffer->pitch / 4;
-    uint32_t width = g_vga_active_framebuffer->width;
-    uint32_t height = g_vga_active_framebuffer->height;
-    volatile uint32_t *fb = g_vga_active_framebuffer->address;
-
-    // Move every row up by FONT_HEIGHT rows
-    for (uint32_t row = 0; row < height - FONT_HEIGHT; row++)
-    {
-        for (uint32_t col = 0; col < width; col++)
-        {
-            fb[row * pitch_px + col] = fb[(row + FONT_HEIGHT) * pitch_px + col];
-        }
-    }
-
-    // Clear the bottom FONT_HEIGHT rows
-    for (uint32_t row = height - FONT_HEIGHT; row < height; row++)
-    {
-        for (uint32_t col = 0; col < width; col++)
-        {
-            fb[row * pitch_px + col] = 0x000000;
-        }
-    }
+cell_t *cell_at(int row, int col) {
+    return &grid[row * term_cols + col];
 }
 
-void cursor_newline(void)
-{
-    if (g_vga_active_framebuffer == NULL)
-    {
-        return;
-    }
-    g_tty_cursor_x = 0;
-    g_tty_cursor_y += FONT_HEIGHT;
-    if (g_tty_cursor_y + FONT_HEIGHT > g_vga_active_framebuffer->height)
-    {
-        scroll_up();
-        g_tty_cursor_y -= FONT_HEIGHT;
-    }
-}
+void render_char(int row, int col) {
+    cell_t *cell = cell_at(row, col);
 
-static void cursor_advance(void)
-{
-    if (g_vga_active_framebuffer == NULL)
-    {
-        return;
-    }
-    g_tty_cursor_x += FONT_WIDTH + FONT_KERNING;
-    if (g_tty_cursor_x + FONT_WIDTH > g_vga_active_framebuffer->width)
-    {
-        cursor_newline();
-    }
-}
+    int x = col * (FONT_WIDTH + FONT_KERNING);
+    int y = row * FONT_HEIGHT;
 
-static void cursor_retreat(void)
-{
-    if (g_vga_active_framebuffer == NULL)
-    {
-        return;
-    }
-    g_tty_cursor_x -= FONT_WIDTH + FONT_KERNING;
-}
+    color_t fg = cell->fg;
+    color_t bg = cell->bg;
 
-void draw_char(uint32_t x, uint32_t y, const char c, color_t color)
-{
-    if (g_vga_active_framebuffer == NULL)
-    {
-        return;
+    if (row == cursor_row && col == cursor_col) {
+        color_t tmp = fg;
+        fg = bg;
+        bg = tmp;
     }
 
-    if (c < 32) {
-        return;
-    }
-
-    for (int row = 0; row < FONT_HEIGHT; row++)
-    {
+    for (int r = 0; r < FONT_HEIGHT; r++) {
         // Force flip the array reading layout vertically
-        unsigned char row_data = font[c - 32][(FONT_HEIGHT - 1) - row];
+        unsigned char row_data = font[cell->ch - 32][(FONT_HEIGHT - 1) - r];
 
-        for (int col = 0; col < FONT_WIDTH; col++)
-        {
+        for (int c = 0; c < FONT_WIDTH; c++) {
             // Read bits from left to right 
-            if (row_data & (1 << ((FONT_WIDTH - 1) - col)))
-            {
-                putpixel(x + col, y + row, color);
+            if (row_data & (1 << ((FONT_WIDTH - 1) - c))) {
+                putpixel(x + c, y + r, fg);
+            } else {
+                putpixel(x + c, y + r, bg);
             }
         }
     }
+
+    if (cell->bg != PROTO_BG) {
+        draw_rect(x-FONT_KERNING, y, FONT_KERNING, FONT_HEIGHT, cell->bg); // fill in the gaps!
+    }
 }
 
-void draw_text(uint32_t x, uint32_t y, const char *text, color_t color)
-{
-    if (g_vga_active_framebuffer == NULL) {
-        return;
-    }
+void put_char(int row, int col, char c) {
+    if (term_graphics_init) {
+        cell_t *cell = cell_at(row, col);
+        
+        cell->ch = c;
+        cell->fg = current_fg;
+        cell->bg = current_bg;
 
-    cursor_set(x, y);
+        render_char(row, col);
+    } 
+    serial_write(c);
+}
 
-    for (size_t i = 0; text[i] != '\0'; i++) {
-        if (text[i] == '\n') {
-            cursor_newline();
-        } else if (text[i] == '\b') {
-            cursor_retreat();  // you'll need to implement this
-            draw_rect(g_tty_cursor_x, g_tty_cursor_y, FONT_WIDTH, FONT_HEIGHT, 0x000000);
+void set_cursor(int row, int col) {
+    int old_row = cursor_row;
+    int old_col = cursor_col;
+
+    cursor_row = row;
+    cursor_col = col;
+
+    render_char(old_row, old_col);
+    render_char(cursor_row, cursor_col);
+}
+
+
+void set_color(color_t fg, color_t bg) {
+    current_fg = fg;
+    current_bg = bg;
+}
+
+void print_char(char c) {
+    if (term_graphics_init) {
+        if (c == '\n') {
+            set_cursor(cursor_row+1, 0);
+        } else if (c == '\b') {
+            put_char(cursor_row, cursor_col-1, ' ');
+            set_cursor(cursor_row, cursor_col-1);
         } else {
-            draw_char(g_tty_cursor_x, g_tty_cursor_y, text[i], color);
-            cursor_advance();
+            put_char(cursor_row, cursor_col, c);
+
+            if (cursor_col >= term_cols) {
+                set_cursor(cursor_row+1, 0);
+            } else {
+                set_cursor(cursor_row, cursor_col+1);
+            }
         }
+    } else {
+        put_char(cursor_row, cursor_col, c); // we don't care about the row and col since we're outputting via serial
     }
 }
 
-void print(const char *text)
-{
-    if (g_vga_active_framebuffer != NULL)
-    {
-        draw_text(g_tty_cursor_x, g_tty_cursor_y, text, g_tty_current_color);
-    }
-    
-
+void print_ansi() {
     const char *ansi_code = ANSI_RESET;
 
-    if (g_tty_current_color == PROTO_RED)         { ansi_code = ANSI_RED; }
-    else if (g_tty_current_color == PROTO_YELLOW) { ansi_code = ANSI_YELLOW; }
-    else if (g_tty_current_color == PROTO_GREEN)  { ansi_code = ANSI_GREEN; }
-    else if (g_tty_current_color == PROTO_CYAN)   { ansi_code = ANSI_CYAN; }
-    else if (g_tty_current_color == PROTO_BLUE)   { ansi_code = ANSI_BLUE; }
-    else if (g_tty_current_color == PROTO_MAGENTA){ ansi_code = ANSI_MAGENTA; }
-    else if (g_tty_current_color == PROTO_WHITE)  { ansi_code = ANSI_WHITE; };
+    if (current_fg == PROTO_RED)         { ansi_code = ANSI_RED; }
+    else if (current_fg == PROTO_YELLOW) { ansi_code = ANSI_YELLOW; }
+    else if (current_fg == PROTO_GREEN)  { ansi_code = ANSI_GREEN; }
+    else if (current_fg == PROTO_CYAN)   { ansi_code = ANSI_CYAN; }
+    else if (current_fg == PROTO_BLUE)   { ansi_code = ANSI_BLUE; }
+    else if (current_fg == PROTO_MAGENTA){ ansi_code = ANSI_MAGENTA; }
+    else if (current_fg == PROTO_WHITE)  { ansi_code = ANSI_WHITE; };
 
     // First print the color ansi code
     for (size_t c = 0; ansi_code[c] != '\0'; c++) {
         serial_write(ansi_code[c]);
     }
-
-    // Then the actual text for the print
-    for (size_t c = 0; text[c] != '\0'; c++){
-        serial_write(text[c]);
-    }
 }
 
-void set_color(color_t color)
-{
-    g_tty_current_color = color;
+void print(const char *str) {
+    int len = strlen(str);
+    print_ansi();
+    for (size_t c = 0; c < len; c++){
+        print_char(str[c]);
+    }
 }
 
 void print_f(const char *format, ...)

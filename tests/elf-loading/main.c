@@ -43,27 +43,17 @@ int _start()
     fb_info_t fb;
     int res = fetch_framebuffer(&fb);
 
-    int res2 = write(1, 0, "Triggered before read() \n");
-    if (res2 == -1) {
-        draw_rect(&fb, 0, 0, 50, 50, 0xff0000);
-    }
-    if (res2 == 1) {
-        draw_rect(&fb, 0, 0, 50, 50, 0x00ff00);
-    }
-
-
-    char buffer[100] = "meow meow mroww-- :3";
-    read(0, 0, buffer);
-
-    write(1, 0, "Triggered after read() \n");
-    write(1, 0, buffer);
-
     // if (res == 0) {
     //     draw_rect(&fb, 0, 0, 100, 100, 0xff0000);
     // }
 
     while (1)
     {
-        
+        write(1, 0, "Enter your name: ");
+        char buffer[256];
+        read(0, 0, buffer);
+        write(1, 0, "Greetings, ");
+        write(1, 0, buffer);
+        write(1, 0, "!\n");
     }
 }

@@ -108,23 +108,12 @@ int devfs_read(inode_t *inode, uint64_t size, void *buffer) {
     devfs_node_t *node = inode->fs_data;
     stdin_data_t *stdin_data = node->extra_data;
 
-    print_f("percent dihhh: %d\n", node->dev_type);
-
     switch (node->dev_type)
     {
         case DEV_STDIN:
-            while (stdin_data->kbd_read == stdin_data->kbd_write) {
-                queue_sleep(&node->waiters, g_current_thread);
-            }
-
-            print_f("after eep!\n");
-
-            uint64_t i = 0;
-            while (i < size && stdin_data->kbd_read != stdin_data->kbd_write) {
-                ((char*)buffer)[i++] = stdin_data->kbd_buf[stdin_data->kbd_read++];
-            }
-            return i;
-
+            queue_sleep(&node->waiters, g_current_thread);
+            strcpy(buffer, stdin_data->kbd_buf);
+            memset(stdin_data->kbd_buf, 0, sizeof(stdin_data->kbd_buf)); // clean junk ew
             break;
         default: // No match
             return 1;
@@ -142,9 +131,9 @@ int devfs_write(inode_t *inode, uint64_t size, const void *buffer) {
             print(buffer);
             break;
         case DEV_STDERR:
-            set_color(PROTO_RED);
+            set_color(PROTO_RED, PROTO_BG);
             print(buffer);
-            set_color(PROTO_WHITE);
+            set_color(PROTO_WHITE, PROTO_BG);
             break;
         default: // No match
             print_f("no match for %d", node->dev_type);
@@ -177,6 +166,7 @@ superblock_t *devfs_init() {
     devfs_create(devfs_superblock->root, "stdin", &g_stdin);
     devfs_node_t *stdin_data = g_stdin->fs_data;
     stdin_data->dev_type = DEV_STDIN;
+    stdin_data->waiters.lock = k_alloc(sizeof(ticketlock_t));
     stdin_data->extra_data = k_alloc(sizeof(stdin_data_t));
 
     print_f("init stdin\n");

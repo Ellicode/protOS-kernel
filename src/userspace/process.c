@@ -66,7 +66,7 @@ process_t *create_process(char *elf_path, uint8_t is_root) {
     process->pid = ++curr_pid;
     process->cwd = rootfs->root;
     process->ptype = PROCESS_OTHER;
-    process->kernel_stack = k_alloc(4096);
+    process->kernel_stack = k_alloc(KERNEL_STACK_SIZE);
     process->cr3 = pml4;
 
     if (is_root) {
@@ -81,7 +81,7 @@ process_t *create_process(char *elf_path, uint8_t is_root) {
         }
     }
 
-    tss.rsp0 = (uint64_t)process->kernel_stack + 4096;
+    tss.rsp0 = (uint64_t)process->kernel_stack + KERNEL_STACK_SIZE;
 
     LL_APPEND(process, g_active_processes);
 

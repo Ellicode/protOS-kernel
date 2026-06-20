@@ -4,6 +4,7 @@
 #include "drivers/ps2.h"
 #include "io.h"
 #include "globals.h"
+#include "string.h"
 #include "userspace/scheduler.h"
 #include "userspace/syscalls.h"
 #include "filesystems/devfs.h"
@@ -45,9 +46,9 @@ void _panic_print(idt_frame_t* frame) {
     asm __volatile__ ("movq %%cr2, %0": "=R"(cr2)); 
 
     print_f("[");
-    set_color(PROTO_RED);
+    set_color(PROTO_WHITE, PROTO_RED);
     print_f("PANIC");
-    set_color(PROTO_WHITE);
+    set_color(PROTO_WHITE, PROTO_BG);
     print_f("] VEC: %18d, ERR: %18x, %s.\n", frame->vector, frame->error_code, p_msg == 0x0 ? "???" : p_msg);
     print_f("        R8 : %18x, R9 : %18x, R10: %18x, R11: %18x\n", frame->r8, frame->r9, frame->r10, frame->r11);
     print_f("        R12: %18x, R13: %18x, R14: %18x, R15: %18x\n", frame->r12, frame->r13, frame->r14, frame->r15);
@@ -72,12 +73,14 @@ void isr_handler(idt_frame_t* frame) {
         char c = get_ps2_scancode();
         devfs_node_t *stdin = g_stdin->fs_data;
         stdin_data_t *stdin_data = stdin->extra_data;
-        if (stdin_data == NULL) { return; } // 3:< i gotchu
+        // if (stdin_data == NULL) { return; } // 3:< i gotchu
 
         if (c == '\n') {
             queue_wake_all(&stdin->waiters);
         } else {
-            stdin_data->kbd_buf[stdin_data->kbd_write++] = c;
+            size_t len = strlen(stdin_data->kbd_buf);
+            stdin_data->kbd_buf[len] = c;
+            stdin_data->kbd_buf[len + 1] = '\0';
         }
 
         char str[2]; 

@@ -18,6 +18,12 @@ enum ProtoColors {
     PROTO_BG      = 0x000000,
 };
 
+typedef struct {
+    char     ch;
+    uint32_t fg;
+    uint32_t bg;
+} cell_t;
+
 #define ANSI_RED     "\x1b[31m"
 #define ANSI_YELLOW  "\x1b[33m"
 #define ANSI_GREEN   "\x1b[32m"
@@ -27,12 +33,18 @@ enum ProtoColors {
 #define ANSI_WHITE   "\x1b[37m"
 #define ANSI_RESET   "\x1b[0m"
 
-void cursor_set(uint32_t x, uint32_t y);
-void cursor_newline(void);
-void draw_char(uint32_t x, uint32_t y, char c, color_t color);
-void draw_text(uint32_t x, uint32_t y, const char *text, color_t color);
-void print(const char *text);
+extern uint64_t cursor_row;
+extern uint64_t cursor_col;
+extern color_t current_fg;
+extern color_t current_bg;
+extern uint64_t term_rows;
+extern uint64_t term_cols;
+extern uint64_t term_graphics_init;
+
+void terminal_init();
+void set_cursor(int row, int col);
+void print(const char *str);
 void print_f(const char *format, ...);
-void set_color(color_t color);
+void set_color(color_t fg, color_t bg);
 
 #endif // CONSOLE_H

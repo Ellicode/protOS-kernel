@@ -38,10 +38,10 @@ void scheduler_init() {
     g_current_thread    = idle;
 }
 
-void scheduler_yield() {
-    __asm__ volatile (
-        "pushq %rbp;" // for backtracing
-        "movq %rsp, %rbp;"
+__attribute__((naked)) void scheduler_yield() {
+    asm volatile (
+        "pushq %rbp;"
+        "mov %rsp, %rbp;"
         "pushf;"
         "sti;"
         "int $0x20;"
@@ -52,34 +52,34 @@ void scheduler_yield() {
 }
 
 void queue_sleep(wait_queue_t *wq, thread_t *thread) {
-    int lock = ticketlock_lock(wq->lock);
-    thread->state = THREAD_SLEEPING;
     __thread_queue_inner *thread_item = k_alloc(sizeof(__thread_queue_inner));
     thread_item->thread = thread;
+    
     LL_APPEND(thread_item, wq->head);
-    ticketlock_unlock(wq->lock, lock);
+    thread->state = THREAD_SLEEPING;
+
     scheduler_yield();
 }   
 
 void queue_wake_all(wait_queue_t *wq) {
-    if (wq->lock == NULL) { return; };
-    int lock = ticketlock_lock(wq->lock);
     __thread_queue_inner *t = wq->head;
+    wq->head = NULL; 
+
     while (t != NULL) {
         __thread_queue_inner *next = t->next;
         t->thread->state = THREAD_RUNNING;
-        LL_UNLINK(t, wq->head);
         k_free(t);
         t = next;
     }
-    ticketlock_unlock(wq->lock, lock);
 }
 
 void scheduler_tick(idt_frame_t* ctx) {
     memcpy(&g_current_thread->context, ctx, sizeof(idt_frame_t));
         
-    LL_UNLINK(g_current_thread, threads);
-    LL_APPEND(g_current_thread, threads);
+    if (g_current_thread->state != THREAD_SLEEPING) {
+        LL_UNLINK(g_current_thread, threads);
+        LL_APPEND(g_current_thread, threads);
+    }
 
     thread_t *next = threads;
 
@@ -94,7 +94,7 @@ void scheduler_tick(idt_frame_t* ctx) {
     if (next->process != NULL) {
         if (g_current_thread->process == NULL ||
             next->process->cr3 != g_current_thread->process->cr3) {
-            tss.rsp0 = (uint64_t)next->process->kernel_stack + 4096;
+            tss.rsp0 = (uint64_t)next->process->kernel_stack + KERNEL_STACK_SIZE;
             _load_cr3(next->process->cr3);
         }
     } else {

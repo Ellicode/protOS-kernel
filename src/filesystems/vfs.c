@@ -145,10 +145,11 @@ int vfs_mount(superblock_t *sb, char *path) {
     }
 
     mountpoint->child_sb = sb;
-    return 0;
 
     k_debug("Mounted type ", "proto.kernel.vfs_mount");
-    print_f("%d filesystem @ %s.", sb->fs_type, path);
+    print_f("%d filesystem @ %s\n", sb->fs_type, path);
+
+    return 0;
 }
 
 void vfs_init() {

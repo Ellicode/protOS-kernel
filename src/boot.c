@@ -80,6 +80,8 @@ int k_init(
     heap_init();
     k_success("Initialized Heap.\n", "proto.kernel.k_init");
 
+    terminal_init();
+
     // 6) INITIALIZE PIC =============================================================
     pic_init();
     k_success("Initialized PIC.\n", "proto.kernel.k_init");
@@ -101,9 +103,9 @@ int k_init(
     // DONE! =========================================================================
 
     k_info("Welcome to ", "proto.kernel.k_init");
-    set_color(PROTO_CYAN);
+    set_color(PROTO_BG, PROTO_BLUE);
     print_f("ProtOS");
-    set_color(PROTO_WHITE);
+    set_color(PROTO_WHITE, PROTO_BG);
     print_f("! System will halt...\n");
 
     return 0;
