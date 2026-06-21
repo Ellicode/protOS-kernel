@@ -27,6 +27,10 @@ int write(uint64_t fd, size_t size, const void *buffer);
 int open(const char *path, const char *flags);
 int close(uint64_t fd);
 
+// PROCESS ===================================================================================
+
+int create_process(const char *elf);
+
 // GRAPHICS ==================================================================================
 
 typedef struct __attribute__((packed)) {

@@ -18,7 +18,7 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ALLOCATED_MEMORY=256M
 EXTRA_QEMU_ARGS="" # You can add extra arguments for QEMU here if needed
 
-# Foreground colors
+# Foreground colors =================================================================
 T_BLACK='\033[0;30m'
 T_RED='\033[0;31m'
 T_GREEN='\033[0;32m'
@@ -29,7 +29,7 @@ T_CYAN='\033[0;36m'
 T_WHITE='\033[0;37m'
 T_DEFAULT='\033[0;39m'
 
-# Background colors
+# Background colors =================================================================
 B_BLACK='\033[0;40m'
 B_RED='\033[0;41m'
 B_GREEN='\033[0;42m'
@@ -40,7 +40,7 @@ B_CYAN='\033[0;46m'
 B_WHITE='\033[0;47m'
 B_DEFAULT='\033[0;49m'
 
-# Attributes
+# Attributes =================================================================
 A_RESET='\033[0m'
 A_BOLD='\033[1m'
 A_DIM='\033[2m'
@@ -67,25 +67,7 @@ cd "$PROJECT_ROOT" || error_exit "${B_RED} ERR! ${A_RESET} Failed to change dire
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 
-# build standard c library
-mkdir -p build/lib
-
-gcc -m64 -ffreestanding -fno-builtin -nostdlib -c lib/io.c -o build/lib/io.o
-gcc -m64 -ffreestanding -fno-builtin -nostdlib -c lib/syscall.c -o build/lib/syscall.o
-gcc -m64 -ffreestanding -fno-builtin -nostdlib -c lib/graphics.c -o build/lib/graphics.o
-
-ar rcs build/libproto.a     \
-    build/lib/io.o          \
-    build/lib/graphics.o          \
-    build/lib/syscall.o
-
-
-# build executable test
-
-gcc -m64 -ffreestanding -fno-stack-protector -Ilib -no-pie -c tests/executable/main.c -o build/executable.o
-ld -T tests/executable/linker.ld build/executable.o -Lbuild -lproto -o build/executable.elf
-
-cp build/executable.elf initramfs/System/Programs/executable.elf
+cp build/programs/coqi/coqi.elf initramfs/System/Programs/coqi.elf
 
 mkdir -p ignore-scripts
 
@@ -124,13 +106,9 @@ fi
 
 qemu-system-x86_64 \
     -m $ALLOCATED_MEMORY \
-    -machine q35 \
-    -cpu qemu64 \
     -drive if=pflash,format=raw,readonly=on,file=$LOCAL_OVMF_CODE_PATH \
     -drive if=ide,format=raw,file=fat:rw:ignore-scripts/esp \
-    -net none \
     -serial stdio \
-    -vga std \
     -no-reboot \
     -no-shutdown \
     $EXTRA_QEMU_ARGS \

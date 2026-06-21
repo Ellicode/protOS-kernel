@@ -45,11 +45,11 @@ __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t 
 // =============================================================================================
 
 void k_main() {
-    // term_clear_buffer();
-    // fill_screen(PROTO_BG);
-    // set_cursor(0, 0);
+    term_clear_buffer();
+    fill_screen(PROTO_BG);
+    set_cursor(0, 0);
 
-    create_process("./System/Programs/executable.elf", 1);
+    create_process("./System/Programs/coqi.elf", 1);
 
     enable_interrupts();
 

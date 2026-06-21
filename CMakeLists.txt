@@ -10,6 +10,9 @@ project(kernel
         LANGUAGES C ASM_NASM
 )
 
+add_subdirectory(lib)
+add_subdirectory(programs)
+
 set(KERNEL_SOURCES
         src/main.c
         include/main.h
@@ -139,8 +142,8 @@ target_link_options(kernel PRIVATE
         -m64
         -nostdlib
         -nostartfiles
-        -no-pie
         -nodefaultlibs
+        -no-pie
         "-Wl,-T,${CMAKE_SOURCE_DIR}/linker.ld"
         -Wl,--build-id=none
         -Wl,-z,max-page-size=0x1000
