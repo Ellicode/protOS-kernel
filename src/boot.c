@@ -1,13 +1,12 @@
 #include "debug/logger.h"
 #include "debug/serial.h"
-#include "graphics/vga.h"
+#include "debug/errors.h"
+#include "graphics/graphics.h"
 #include "graphics/console.h"
 #include "interrupts/idt.h"
 #include "interrupts/pic.h"
 #include "drivers/ps2.h"
-#include "memory/memory.h"
 #include "memory/freelist_pmm.h"
-#include "memory/pmm.h"
 #include "memory/vmm.h"
 #include "memory/heap.h"
 #include "userspace/scheduler.h"
@@ -28,7 +27,7 @@ int k_init(
 ) {
     // Triple line break to avoid overlapping issues with the QEMU logs :3
     print("\n\n\n");
-    k_info("Starting boot sequence...\n", "proto.kernel.k_init");
+    k_info("Starting boot sequence...\n");
 
     g_lim_memmap = memmap;
     g_lim_hhdm = hhdm;
@@ -36,22 +35,22 @@ int k_init(
     g_lim_modules = modules;
 
     // 1) INITIALIZE SERIAL OUTPUT ===================================================
-    if (serial_init() != 0) {
-        k_error("Couldn't initialize serial output.\n", "proto.kernel.k_init");
-        return 1;
+    if (serial_init() != PROTO_OK) {
+        k_assert(PROTO_ERR_INIT_FAILED);
+        return PROTO_ERR_INIT_FAILED;
     }
-    k_success("Initialized serial output.\n", "proto.kernel.k_init");
+    k_success("Initialized serial output.\n");
 
     // 2) INITIALIZE GRAPHICS ========================================================
     graphics_init(fb);
-    k_success("Initialized graphics.\n", "proto.kernel.k_init");
+    k_success("Initialized graphics.\n");
 
     // 2.5) CHECK LIMINE MODULES =====================================================
     if (modules == NULL || modules->module_count == 0) {
-        k_error("No modules loaded!\n", "proto.kernel.k_init");
+        k_warning("No modules loaded!\n");
     } else {
         for (uint64_t i = 0; i < modules->module_count; i++) {
-            k_info("Module: ", "proto.kernel.k_init");
+            k_info("Module: ");
             print_f("%s @ %x (%d bytes)\n",
                 modules->modules[i]->path,
                 modules->modules[i]->address,
@@ -61,52 +60,53 @@ int k_init(
 
     // 3) INITIALIZE GDT =============================================================
     gdt_init();
-    k_success("Initialized GDT.\n", "proto.kernel.k_init");
+    k_success("Initialized GDT.\n");
 
     // 4) INITIALIZE IDT =============================================================
     idt_init();
-    k_success("Initialized IDT.\n", "proto.kernel.k_init");
+    k_success("Initialized IDT.\n");
 
     // 5) INITIALIZE PAGING ==========================================================
-    if (fpmm_init() == 1) {
-        k_error("Couldn't initialize PMM.\n", "proto.kernel.k_init");
-        return 1;
+    if (fpmm_init() != PROTO_OK) {
+        k_assert(PROTO_ERR_INIT_FAILED);
+        return PROTO_ERR_INIT_FAILED;
     }
-    k_success("Initialized PMM.\n", "proto.kernel.k_init");
+    k_success("Initialized PMM.\n");
     
     vmm_init();
-    k_success("Initialized Paging.\n", "proto.kernel.k_init");
+    k_success("Initialized Paging.\n");
 
     heap_init();
-    k_success("Initialized Heap.\n", "proto.kernel.k_init");
+    k_success("Initialized Heap.\n");
 
     terminal_init();
+    k_success("Initialized Terminal Output.\n");
 
     // 6) INITIALIZE PIC =============================================================
     pic_init();
-    k_success("Initialized PIC.\n", "proto.kernel.k_init");
+    k_success("Initialized PIC.\n");
 
     // 7) INITIALIZE PIT =============================================================
     pit_init(100);
-    k_success("Initialized PIT.\n", "proto.kernel.k_init");
+    k_success("Initialized PIT.\n");
 
     // 8) INITIALIZE PS2 KEYBOARD ====================================================
     ps2_init();
-    k_success("Initialized PS2 Keyboard.\n", "proto.kernel.k_init");
+    k_success("Initialized PS2 Keyboard.\n");
 
     vfs_init();
-    k_success("Initialized VFS.\n", "proto.kernel.k_init");
+    k_success("Initialized VFS.\n");
 
     scheduler_init();
-    k_success("Initialized Scheduler\n", "proto.kernel.k_init");
+    k_success("Initialized Scheduler\n");
 
     // DONE! =========================================================================
 
-    k_info("Welcome to ", "proto.kernel.k_init");
+    k_info("Welcome to ");
     set_color(PROTO_BG, PROTO_BLUE);
     print_f("ProtOS");
     set_color(PROTO_WHITE, PROTO_BG);
     print_f("! System will halt...\n");
 
-    return 0;
+    return PROTO_OK;
 }

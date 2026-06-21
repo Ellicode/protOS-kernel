@@ -1,4 +1,5 @@
 #include "debug/serial.h"
+#include "debug/errors.h"
 #include "io.h"
 
 // SOURCE CODE FROM THE OSDEV WIKI:
@@ -17,13 +18,14 @@ int serial_init() {
 
    // Check if serial is faulty (i.e: not same byte as sent)
    if(inb(SERIAL_PORT + 0) != 0xAE) {
-      return 1;
+      k_assert(PROTO_ERR_INIT_FAILED);
+      return PROTO_ERR_INIT_FAILED;
    }
 
    // If serial is not faulty set it in normal operation mode
    // (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
    outb(SERIAL_PORT + 4, 0x0F);
-   return 0;
+   return PROTO_OK;
 }
 
 int _is_transmit_empty() {

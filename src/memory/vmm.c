@@ -92,13 +92,13 @@ void _tables_dump(pt_entry_t* pml4) {
     uint64_t table_count = 1 + pml4_count + pdpt_count + pd_count;
     uint64_t table_bytes = table_count * PAGE_SIZE;
 
-    k_debug("Page table entries dump: ", "proto.kernel._tables_dump");
+    k_debug("Page table entries dump: ");
     #if (PROTO_DEBUG == 1)
         print_f("pml4=%d pdpt=%d pd=%d pt=%d (pages=%d, %dMB)\n",
             pml4_count, pdpt_count, pd_count, pt_count,
             pt_count, (pt_count * PAGE_SIZE) / (uint64_t)(1024 * 1024));
     #endif
-    k_debug("Page table size: ", "proto.kernel._tables_dump");
+    k_debug("Page table size: ");
     #if (PROTO_DEBUG == 1)
         print_f("%d tables, %dMB\n",
             table_count, table_bytes / (uint64_t)(1024 * 1024));
@@ -109,7 +109,7 @@ void *vmm_map_range(uint64_t cr3, uint64_t virt_start, size_t size, uint64_t fla
     pt_entry_t *pml4 = (pt_entry_t *)(cr3 + g_lim_hhdm->offset);
 
     if (pml4 == NULL) {
-        k_error("Tried to map before initializing paging", "proto.kernel.vmm_alloc");
+        k_warning("Tried to map before initializing paging\n");
     }
 
     int lock1r = ticketlock_lock(&vmm_lock);
@@ -121,7 +121,7 @@ void *vmm_map_range(uint64_t cr3, uint64_t virt_start, size_t size, uint64_t fla
         uint64_t page = (uint64_t)m_pmm_alloc_p();
 
         if (page == 0) {
-            k_error("out of memory!", "proto.kernel.vmm_map_range");
+            k_error("out of memory!\n");
             ticketlock_unlock(&vmm_lock, lock1r);
             return NULL;
         }
@@ -138,7 +138,7 @@ void *vmm_map_phys_range(uint64_t cr3, uint64_t virt_start, uint64_t phys_start,
     pt_entry_t *pml4 = (pt_entry_t *)(cr3 + g_lim_hhdm->offset);
 
     if (pml4 == NULL) {
-        k_error("Tried to map before initializing paging", "proto.kernel.vmm_map_phys_range");
+        k_warning("Tried to map before initializing paging\n");
         return NULL;
     }
 
@@ -188,7 +188,7 @@ void vmm_init() {
     uint64_t phys = (uint64_t)m_pmm_alloc_p();
     kernel_pml4 = (pt_entry_t*)(phys + g_lim_hhdm->offset);
 
-    k_debug("pml4_phys=", "proto.kernel.vmm_init");
+    k_debug("pml4_phys=");
     #if (PROTO_DEBUG == 1)
         print_f("%x, pml4_virt=%x\n", phys, kernel_pml4);
     #endif
@@ -204,7 +204,7 @@ void vmm_init() {
         map_page(kvirt + off, kphys + off, F_WRITE, kernel_pml4);
     }
 
-    k_debug("Mapped kernel region\n", "proto.kernel.vmm_init");
+    k_debug("Mapped kernel region\n");
 
     // Map HHDM entries
     for (size_t i = 0; i < g_lim_memmap->entry_count; i++) {
@@ -216,24 +216,24 @@ void vmm_init() {
         }
     }
 
-    k_debug("Mapped HHDM region\n", "proto.kernel.vmm_init");
+    k_debug("Mapped HHDM region\n");
 
     // Map framebuffer
     uint64_t fb_phys = (uint64_t)g_vga_active_framebuffer->address - g_lim_hhdm->offset;
     uint64_t fb_size = g_vga_active_framebuffer->pitch * g_vga_active_framebuffer->height;
 
     for (uint64_t off = 0; off < fb_size; off += PAGE_SIZE) {
-        map_page(fb_phys + off + g_lim_hhdm->offset, fb_phys + off, F_WRITE, kernel_pml4);
+        map_page(fb_phys + off + g_lim_hhdm->offset, fb_phys + off, F_WRITE | F_PCD, kernel_pml4);
     }
 
-    k_debug("Mapped framebuffer region\n", "proto.kernel.vmm_init");
+    k_debug("Mapped framebuffer region\n");
 
     // _tables_dump(pml4);
 
     _load_cr3(phys);
     _enable_paging();
 
-    k_debug("CR3 loaded and paging enabled\n", "proto.kernel.vmm_init");
+    k_debug("CR3 loaded and paging enabled\n");
 
     // // Reclaim bootloader reclaimable regions
     // uint64_t space_reclaimed = 0;

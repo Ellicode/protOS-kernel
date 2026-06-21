@@ -26,7 +26,7 @@ static const unsigned char ascii_no_shift[256] = {
 
 static const unsigned char ascii_shift[256] = {
     [0x29] = '\\',                                              // / \ |
-    [0x02] = '!', [0x03] = '"', [0x04] = '/', [0x05] = '$',
+    [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$',
     [0x06] = '%', [0x07] = '?', [0x08] = '&', [0x09] = '*',
     [0x0A] = '(', [0x0B] = ')', [0x0C] = '_', [0x0D] = '+',
 
@@ -40,7 +40,7 @@ static const unsigned char ascii_shift[256] = {
 
     [0x2C] = 'Z', [0x2D] = 'X', [0x2E] = 'C', [0x2F] = 'V',
     [0x30] = 'B', [0x31] = 'N', [0x32] = 'M', [0x33] = '\'',
-    [0x34] = '>', [0x35] = 'E',                                // E = É fallback
+    [0x34] = '"', [0x35] = 'E',                                // E = É fallback
 
     [0x39] = ' ',
     [0x1C] = '\n',
@@ -49,26 +49,16 @@ static const unsigned char ascii_shift[256] = {
 
 static const unsigned char ascii_altgr[256] = {
     [0x29] = '|',                                              // / \ |
-    [0x02] = '|',  // AltGr+1
-    [0x03] = '@',  // AltGr+2
-    [0x04] = '#',  // AltGr+3
-    [0x05] = '$',  // AltGr+4
-    [0x06] = '{',  // AltGr+5
-    [0x07] = '}',  // AltGr+6
-    [0x08] = '[',  // AltGr+7
-    [0x09] = ']',  // AltGr+8
-    [0x0A] = '~',  // AltGr+9
-    [0x0B] = '\\', // AltGr+0
-    [0x0C] = '-',  // AltGr+-
-    [0x0D] = '+',  // AltGr+=
 
-    [0x19] = '`',  // AltGr+p
-    [0x1A] = '[',  // AltGr+^
-    [0x1B] = ']',  // AltGr+ç
+    [0x08] = '{',  // AltGr+7
+    [0x09] = '}',  // AltGr+8
+    [0x0A] = '[',  // AltGr+9
+    [0x0B] = ']', // AltGr+0
 
-    [0x27] = '~',  // AltGr+;
+    [0x1A] = '`',  // AltGr+^
+    [0x1B] = '~',  // AltGr+ç
+
     [0x28] = '{',  // AltGr+è
-    [0x35] = '\\', // AltGr+é
 
     [0x33] = '<',  // AltGr+,
     [0x34] = '>',  // AltGr+.

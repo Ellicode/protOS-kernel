@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include "debug/logger.h"
+#include "debug/errors.h"
 #include "graphics/console.h"
 #include "string.h"
 #include "globals.h"
@@ -43,16 +44,17 @@ int tarfs_lookup(inode_t *dir, char *name, inode_t **result) {
 
     if (strcmp(name,  ".") == 0) { 
         *result = dir;
-        return 0;
+        return PROTO_OK;
     }
     if (strcmp(name,  "..") == 0) { 
         if (node->parent) {
             current = node->parent;
             *result = &current->inode;
-            return 0;
+            return PROTO_OK;
         } else {
             *result = NULL;
-            return 1;
+            k_assert(PROTO_ERR_FILE_NOT_FOUND);
+            return PROTO_ERR_FILE_NOT_FOUND;
         }
     }
 
@@ -62,11 +64,12 @@ int tarfs_lookup(inode_t *dir, char *name, inode_t **result) {
 
     if (current == NULL) {
         *result = NULL;
-        return -1;
+        k_assert(PROTO_ERR_FILE_NOT_FOUND);
+        return PROTO_ERR_FILE_NOT_FOUND;
     }
 
     *result = &current->inode;
-    return 0;
+    return PROTO_OK;
 }
 
 int tarfs_read(inode_t *inode, uint64_t size, void *buffer) {
@@ -74,13 +77,13 @@ int tarfs_read(inode_t *inode, uint64_t size, void *buffer) {
     void *data = (void *)node->offset;
     memcpy(buffer, data, size);
 
-    return 0;
+    return PROTO_OK;
 }
 
 
 superblock_t *tarfs_init() {
     if (g_lim_modules == NULL || g_lim_modules->module_count == 0) {
-        k_error("Could not load limine modules\n", "proto.kernel.tarfs_init");
+        k_error("Could not load limine modules\n");
         return NULL;
     }
     
@@ -109,7 +112,7 @@ superblock_t *tarfs_init() {
         if (header->file_name[0] == '\0') { break; }
 
         if (strncmp(header->ustar_magic, USTAR_MAGIC, 5) != 0) {
-            k_error("Invalid USTAR header magic\n", "proto.kernel.tarfs_init");
+            k_error("Invalid USTAR header magic\n");
             return NULL;
         }
 

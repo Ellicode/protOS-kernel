@@ -3,6 +3,7 @@
 #include "memory/heap.h"
 #include "graphics/console.h"
 #include "utils/linked_lists.h"
+#include "debug/errors.h"
 #include "string.h"
 
 #include "filesystems/devfs.h"
@@ -20,16 +21,17 @@ int devfs_lookup(inode_t *dir, char *name, inode_t **result) {
 
     if (strcmp(name,  ".") == 0) { 
         *result = dir;
-        return 0;
+        return PROTO_OK;
     }
     if (strcmp(name,  "..") == 0) { 
         if (node->parent) {
             current = node->parent;
             *result = &current->inode;
-            return 0;
+            return PROTO_OK;
         } else {
             *result = NULL;
-            return 1;
+            // k_assert(PROTO_ERR_FILE_NOT_FOUND);
+            return PROTO_ERR_FILE_NOT_FOUND;
         }
     }
 
@@ -39,22 +41,25 @@ int devfs_lookup(inode_t *dir, char *name, inode_t **result) {
 
     if (current == NULL) {
         *result = NULL;
-        return -1;
+        // k_assert(PROTO_ERR_FILE_NOT_FOUND);
+        return PROTO_ERR_FILE_NOT_FOUND;
     }
 
     *result = &current->inode;
-    return 0;
+    return PROTO_OK;
 }
 
 int devfs_create(inode_t *dir, char *name, inode_t **result) {
     if (dir == NULL) {
-        return -1;
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return PROTO_ERR_INVALID_ARGUMENT;
     }
 
     inode_t *res;
 
-    if (devfs_lookup(dir, name, &res) == 0) {
-        return -1; // File already exists
+    if (devfs_lookup(dir, name, &res) == PROTO_OK) {
+        k_assert(PROTO_ERR_ALREADY_EXISTS);
+        return PROTO_ERR_ALREADY_EXISTS; // File already exists
     }
 
     devfs_node_t *parent_node = dir->fs_data;
@@ -72,18 +77,20 @@ int devfs_create(inode_t *dir, char *name, inode_t **result) {
 
     (*result) = &node->inode;
 
-    return 0;
+    return PROTO_OK;
 }
 
 int devfs_create_dir(inode_t *dir, char *name, inode_t **result) {
     if (dir == NULL) {
-        return -1;
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return PROTO_ERR_INVALID_ARGUMENT;
     }
 
     inode_t *res;
 
-    if (devfs_lookup(dir, name, &res) == 0) {
-        return -1; // Folder already exists
+    if (devfs_lookup(dir, name, &res) == PROTO_OK) {
+        k_assert(PROTO_ERR_ALREADY_EXISTS);
+        return PROTO_ERR_ALREADY_EXISTS; // Folder already exists
     }
 
     devfs_node_t *parent_node = dir->fs_data;
@@ -101,7 +108,7 @@ int devfs_create_dir(inode_t *dir, char *name, inode_t **result) {
 
     (*result) = &node->inode;
 
-    return 0;
+    return PROTO_OK;
 }
 
 int devfs_read(inode_t *inode, uint64_t size, void *buffer) {
@@ -116,10 +123,11 @@ int devfs_read(inode_t *inode, uint64_t size, void *buffer) {
             memset(stdin_data->kbd_buf, 0, sizeof(stdin_data->kbd_buf)); // clean junk ew
             break;
         default: // No match
-            return 1;
+            k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
+            return PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
 
-    return 0;
+    return PROTO_OK;
 }
 
 int devfs_write(inode_t *inode, uint64_t size, const void *buffer) {
@@ -136,16 +144,14 @@ int devfs_write(inode_t *inode, uint64_t size, const void *buffer) {
             set_color(PROTO_WHITE, PROTO_BG);
             break;
         default: // No match
-            print_f("no match for %d", node->dev_type);
-            return 1;
+            k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
+            return PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
 
-    return 0;
+    return PROTO_OK;
 }
 
 superblock_t *devfs_init() {
-    print_f("init devfs\n");
-
     devfs_root                          = k_alloc(sizeof(devfs_node_t));
     devfs_root->type                    = INODE_FOLDER;
     devfs_root->inode.type              = INODE_FOLDER;
@@ -169,19 +175,13 @@ superblock_t *devfs_init() {
     stdin_data->waiters.lock = k_alloc(sizeof(ticketlock_t));
     stdin_data->extra_data = k_alloc(sizeof(stdin_data_t));
 
-    print_f("init stdin\n");
-
     devfs_create(devfs_superblock->root, "stdout", &g_stdout);
     devfs_node_t *stdout_data = g_stdout->fs_data;
     stdout_data->dev_type = DEV_STDOUT;
 
-    print_f("init stdout\n");
-
     devfs_create(devfs_superblock->root, "stderr", &g_stderr);
     devfs_node_t *stderr_data = g_stderr->fs_data;
     stderr_data->dev_type = DEV_STDERR;
-
-    print_f("init stderr\n");
 
     return devfs_superblock;
 }

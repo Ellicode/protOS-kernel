@@ -1,4 +1,5 @@
 #include "debug/logger.h"
+#include "debug/errors.h"
 #include "graphics/console.h"
 #include "memory/heap.h"
 #include "string.h"
@@ -44,17 +45,17 @@ inode_t *vfs_lookup(inode_t *cwd, char *path) {
         inode_t *next;
 
         if (!current->parent_sb) {
-            k_error("No parent superblock\n", "proto.kernel.vfs_lookup");
+            k_error("No parent superblock\n");
             return NULL;
         }
         if (!current->parent_sb->ops || !current->parent_sb->ops->lookup) {
-            k_error("Operation \"lookup\" not supported on fs\n", "proto.kernel.vfs_lookup");
+            k_error("Operation \"lookup\" not supported on fs\n");
             return NULL;
         }
 
         int res = current->parent_sb->ops->lookup(current, segments[i], &next);
-        if (res != 0 || !next) {
-            k_error("Lookup failed with status=", "proto.kernel.vfs_lookup");
+        if (res != PROTO_OK || !next) {
+            k_error("Lookup failed with status=");
             print_f("%d\n", res);
             return NULL;
         }
@@ -65,7 +66,7 @@ inode_t *vfs_lookup(inode_t *cwd, char *path) {
 
         current = next;
         if (next->type != INODE_FOLDER && i < seg_count - 1) {
-            k_error("Path element is not a folder\n", "proto.kernel.vfs_lookup");
+            k_error("Path element is not a folder\n");
             return NULL;
         }
     }
@@ -76,13 +77,13 @@ inode_t *vfs_lookup(inode_t *cwd, char *path) {
 file_descriptor_t *vfs_open(inode_t *cwd, char *path, uint8_t flags) {
     inode_t *inode = vfs_lookup(cwd, path);
     if (inode == NULL) {
-        k_error("Cannot open: lookup failed\n", "proto.kernel.vfs_open");
+        k_error("Cannot open: lookup failed\n");
         return NULL;
     }
 
     file_descriptor_t *fd = k_alloc(sizeof(file_descriptor_t));
     if (fd == NULL) {
-        k_error("Cannot allocate file descriptor\n", "proto.kernel.vfs_open");
+        k_error("Cannot allocate file descriptor\n");
         return NULL;
     }
 
@@ -95,18 +96,23 @@ file_descriptor_t *vfs_open(inode_t *cwd, char *path, uint8_t flags) {
 int vfs_read(file_descriptor_t *fd, size_t size, void *buffer) {
     inode_t *inode = fd->inode;
     if (inode == NULL) {
-        k_error("Cannot read: file descriptor is empty\n", "proto.kernel.vfs_read");
-        return 1;
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return PROTO_ERR_INVALID_ARGUMENT;
     }
 
     if (!inode->parent_sb->ops || !inode->parent_sb->ops->read) {
-        k_error("Operation \"read\" not supported on fs\n", "proto.kernel.vfs_read");
-        return 1;
+        k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
+        return PROTO_ERR_FILE_UNSUPPORTED_OP;
+    }
+
+    if (inode->type != INODE_FILE) {
+        k_assert(PROTO_ERR_IS_A_DIRECTORY);
+        return PROTO_ERR_IS_A_DIRECTORY;
     }
 
     if (!(fd->flags & FD_READ)) {
-        k_error("Cannot read: operation unauthorized.\n", "proto.kernel.vfs_read");
-        return 1;
+        k_assert(PROTO_ERR_FILE_UNAUTHORIZED_OP);
+        return PROTO_ERR_FILE_UNAUTHORIZED_OP;
     }
 
     return inode->parent_sb->ops->read(fd->inode, size, buffer);
@@ -115,18 +121,23 @@ int vfs_read(file_descriptor_t *fd, size_t size, void *buffer) {
 int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer) {
     inode_t *inode = fd->inode;
     if (inode == NULL) {
-        k_error("Cannot write: file descriptor is empty\n", "proto.kernel.vfs_write");
-        return 1;
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return PROTO_ERR_INVALID_ARGUMENT;
     }
 
     if (!inode->parent_sb->ops || !inode->parent_sb->ops->write) {
-        k_error("Operation \"write\" not supported on fs\n", "proto.kernel.vfs_write");
-        return 1;
+        k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
+        return PROTO_ERR_FILE_UNSUPPORTED_OP;
+    }
+
+    if (inode->type != INODE_FILE) {
+        k_assert(PROTO_ERR_IS_A_DIRECTORY);
+        return PROTO_ERR_IS_A_DIRECTORY;
     }
 
     if (!(fd->flags & FD_WRITE)) {
-        k_error("Cannot write: operation unauthorized.\n", "proto.kernel.vfs_write");
-        return 1;
+        k_assert(PROTO_ERR_FILE_UNAUTHORIZED_OP);
+        return PROTO_ERR_FILE_UNAUTHORIZED_OP;
     }
 
     return inode->parent_sb->ops->write(fd->inode, size, buffer);
@@ -134,22 +145,22 @@ int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer) {
 
 int vfs_close(file_descriptor_t *fd) {
     k_free(fd);
-    return 1;
+    return PROTO_OK;
 }
 
 int vfs_mount(superblock_t *sb, char *path) {
     inode_t *mountpoint = vfs_lookup(rootfs->root, path);
     if (mountpoint == NULL || mountpoint->type != INODE_FOLDER) {
-        k_error("Could not find mountpoint\n", "proto.kernel.vfs_init");
-        return 1;
+        k_assert(PROTO_ERR_FILE_NOT_FOUND);
+        return PROTO_ERR_FILE_NOT_FOUND;
     }
 
     mountpoint->child_sb = sb;
 
-    k_debug("Mounted type ", "proto.kernel.vfs_mount");
+    k_debug("Mounted type ");
     print_f("%d filesystem @ %s\n", sb->fs_type, path);
 
-    return 0;
+    return PROTO_OK;
 }
 
 void vfs_init() {

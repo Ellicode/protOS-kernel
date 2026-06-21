@@ -24,7 +24,7 @@ static idt_entry_t _idt_generate_descriptor(
     descriptor.isr_high       = ((uint64_t)isr >> 32) & 0xFFFFFFFF;
     descriptor._reserved      = 0;
 
-    k_debug("idt_entry", "proto.kernel.idt_init");
+    k_debug("idt_entry");
     #if (PROTO_DEBUG == 1)
         print_f(": vec=%d, attr=%x\n", vector, attributes.value);
     #endif

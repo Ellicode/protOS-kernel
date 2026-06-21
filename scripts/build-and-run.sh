@@ -79,10 +79,13 @@ ar rcs build/libproto.a     \
     build/lib/graphics.o          \
     build/lib/syscall.o
 
-gcc -m64 -ffreestanding -fno-stack-protector -Ilib -no-pie -c tests/elf-loading/main.c -o build/executable.o
-ld -T tests/elf-loading/linker.ld build/executable.o -Lbuild -lproto -o build/executable.elf
 
-cp build/executable.elf tests/initramfs/System/Programs/executable.elf
+# build executable test
+
+gcc -m64 -ffreestanding -fno-stack-protector -Ilib -no-pie -c tests/executable/main.c -o build/executable.o
+ld -T tests/executable/linker.ld build/executable.o -Lbuild -lproto -o build/executable.elf
+
+cp build/executable.elf initramfs/System/Programs/executable.elf
 
 mkdir -p ignore-scripts
 
@@ -99,7 +102,7 @@ fi
 
 mkdir -p ignore-scripts/esp
 
-tar -cf ignore-scripts/esp/boot/initramfs.tar -C tests/initramfs .
+tar -cf ignore-scripts/esp/boot/initramfs.tar -C initramfs .
 echo -e "${B_GREEN}  OK  ${A_RESET} Initramfs generated successfully"
 
 echo -e "${B_BLUE} INFO ${A_RESET} Build completed. Attempting to launch QEMU..."

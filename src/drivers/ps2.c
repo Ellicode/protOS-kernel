@@ -37,6 +37,8 @@ char get_ps2_scancode() {
             unsigned char ascii;
             if (shift_pressed) {
                 ascii = ascii_shift[key];
+            }  else if (alt_gr_pressed) {
+                ascii = ascii_altgr[key];
             } else {
                 ascii = ascii_no_shift[key];
             }

@@ -108,7 +108,7 @@ void scheduler_tick(idt_frame_t* ctx) {
 }
 
 thread_t* create_kernel_thread(void (*fn)()) {
-    k_debug("Creating thread\n", "proto.kernel.create_kernel_thread");
+    k_debug("Creating thread\n");
 
     int lock1r = ticketlock_lock(&threads_lock);
 
@@ -116,13 +116,13 @@ thread_t* create_kernel_thread(void (*fn)()) {
     void *stack = k_alloc(81024);                  
 
     if (stack == NULL) {
-        k_error("Could not allocate stack for kernel thread!\n", "proto.kernel.create_kernel_thread");
+        k_error("Could not allocate stack for kernel thread!\n");
         ticketlock_unlock(&threads_lock, lock1r);
         return NULL;
     }
 
     if (thread == NULL) {
-        k_error("Could not allocate thread struct!\n", "proto.kernel.create_kernel_thread");
+        k_error("Could not allocate thread struct!\n");
         k_free(stack);
         ticketlock_unlock(&threads_lock, lock1r);
         return NULL;
@@ -146,14 +146,14 @@ thread_t* create_user_thread(process_t *process, uint64_t entry_point) {
 
     thread_t *thread = k_alloc(sizeof(thread_t));  
     if (thread == NULL) {
-        k_error("Could not allocate thread struct!\n", "proto.kernel.create_user_thread");
+        k_error("Could not allocate thread struct!\n");
         ticketlock_unlock(&threads_lock, lock1r);
         return NULL;
     }
 
     uint64_t stack = (uint64_t)vmm_map_range(process->cr3, USER_STACK_BASE, USER_STACK_SIZE, F_PRESENT | F_USER | F_WRITE);
     if (stack == 0) {
-        k_error("Could not allocate stack for user thread!\n", "proto.kernel.create_user_thread");
+        k_error("Could not allocate stack for user thread!\n");
         ticketlock_unlock(&threads_lock, lock1r);
         return NULL;
     }

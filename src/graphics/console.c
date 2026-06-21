@@ -19,16 +19,24 @@ uint64_t term_graphics_init = 0;
 
 cell_t *grid;
 
-void terminal_init() {
-    term_cols = g_vga_active_framebuffer->width / (FONT_WIDTH + FONT_KERNING);
-    term_rows = g_vga_active_framebuffer->height / FONT_HEIGHT;
-
-    grid = k_alloc(sizeof(cell_t) * term_rows * term_cols);
+void term_clear_buffer() {
     for (uint64_t i = 0; i < term_rows * term_cols; i++) {
         grid[i].ch = ' ';
         grid[i].fg = current_fg;
         grid[i].bg = current_bg;
     }
+}
+
+void terminal_init() {
+    term_cols = g_vga_active_framebuffer->width / (FONT_WIDTH + FONT_KERNING);
+    term_rows = g_vga_active_framebuffer->height / FONT_HEIGHT;
+
+    grid = k_alloc(sizeof(cell_t) * term_rows * term_cols);
+    if (grid == NULL) {
+        return;
+    }
+
+    term_clear_buffer();
 
     cursor_row = 0;
     cursor_col = 0;
@@ -67,10 +75,7 @@ void render_char(int row, int col) {
             }
         }
     }
-
-    if (cell->bg != PROTO_BG) {
-        draw_rect(x-FONT_KERNING, y, FONT_KERNING, FONT_HEIGHT, cell->bg); // fill in the gaps!
-    }
+    draw_rect(x-FONT_KERNING, y, FONT_KERNING, FONT_HEIGHT, cell->bg); // fill in the gaps!
 }
 
 void put_char(int row, int col, char c) {
@@ -86,7 +91,42 @@ void put_char(int row, int col, char c) {
     serial_write(c);
 }
 
+void _term_refresh() {
+    for (uint64_t row = 0; row < term_rows; row++) {
+        for (uint64_t col = 0; col < term_cols; col++) {
+            render_char(row, col);
+        }
+    }
+}
+
+void scroll_terminal() {
+    // shift every row up by one
+    for (uint64_t row = 1; row < term_rows; row++) {
+        for (uint64_t col = 0; col < term_cols; col++) {
+            cell_t *src = cell_at(row, col);
+            cell_t *dst = cell_at(row - 1, col);
+            *dst = *src;
+        }
+    }
+
+    // clear the last row
+    uint64_t last_row = term_rows - 1;
+    for (uint64_t col = 0; col < term_cols; col++) {
+        cell_t *cell = cell_at(last_row, col);
+        cell->ch = ' ';
+        cell->fg = current_fg;
+        cell->bg = current_bg;
+    }
+
+    _term_refresh();
+}
+
 void set_cursor(int row, int col) {
+    if (row >= term_rows) {
+        scroll_terminal();
+        row = term_rows - 1;
+    }
+
     int old_row = cursor_row;
     int old_col = cursor_col;
 
@@ -97,7 +137,6 @@ void set_cursor(int row, int col) {
     render_char(cursor_row, cursor_col);
 }
 
-
 void set_color(color_t fg, color_t bg) {
     current_fg = fg;
     current_bg = bg;
@@ -106,9 +145,12 @@ void set_color(color_t fg, color_t bg) {
 void print_char(char c) {
     if (term_graphics_init) {
         if (c == '\n') {
+            serial_write('\n');
             set_cursor(cursor_row+1, 0);
         } else if (c == '\b') {
+            serial_write('\b');
             put_char(cursor_row, cursor_col-1, ' ');
+            serial_write('\b');
             set_cursor(cursor_row, cursor_col-1);
         } else {
             put_char(cursor_row, cursor_col, c);

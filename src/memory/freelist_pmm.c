@@ -36,6 +36,7 @@
 #include <string.h>
 
 #include "utils/ticket_lock.h"
+#include "debug/errors.h"
 #include "debug/logger.h"
 #include "limine/limine.h"
 #include "memory/vmm.h"
@@ -102,7 +103,7 @@ void* fpmm_allocate_page() {
     }
     
     if (freelist_pmm_head == NULL) {
-        k_error("out of memory!\n", "proto.kernel.fpmm_allocate_page");
+        k_error("out of memory!\n");
     }
 
     freelist_pmm_node_t* node = freelist_pmm_head;
@@ -131,5 +132,5 @@ int fpmm_init() {
     m_pmm_alloc_p = fpmm_allocate_page;
     m_pmm_free_p = fpmm_free_page;
 
-    return 0;
+    return PROTO_OK;
 }

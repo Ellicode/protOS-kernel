@@ -1,5 +1,5 @@
 #include "../limine/limine.h"
-#include "graphics/vga.h"
+#include "graphics/graphics.h"
 
 #ifndef CONSOLE_H
 #define CONSOLE_H
@@ -15,6 +15,7 @@ enum ProtoColors {
     PROTO_CYAN    = 0x00D3F2,
     PROTO_WHITE   = 0xFFFFFF,
     PROTO_GREY    = 0x777777,
+    PROTO_BLACK   = 0x000000,
     PROTO_BG      = 0x000000,
 };
 
@@ -41,8 +42,10 @@ extern uint64_t term_rows;
 extern uint64_t term_cols;
 extern uint64_t term_graphics_init;
 
+void term_clear_buffer();
 void terminal_init();
 void set_cursor(int row, int col);
+void print_char(char c);
 void print(const char *str);
 void print_f(const char *format, ...);
 void set_color(color_t fg, color_t bg);

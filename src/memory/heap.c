@@ -12,7 +12,7 @@ ticketlock_t heap_lock = {0};
 
 void heap_dump() {
     #if (PROTO_DEBUG == 1)
-        k_debug("Heap dump: ", "proto.kernel.heap_dump");
+        k_debug("Heap dump: ");
         heap_item_t *node = heap_base;
         uint64_t heap_used = 0;
         while (node != NULL)
@@ -31,7 +31,7 @@ void heap_dump() {
 void heap_test() {
     char* hello = k_alloc(6);
     memcpy(hello, "Hello", 6);
-    k_debug("hello buffer data: ", "proto.kernel.heap_test");
+    k_debug("hello buffer data: ");
     print_f("%s\n", hello);    
     heap_dump();
 
@@ -57,7 +57,7 @@ void heap_init() {
 
 void *_heap_alloc_stub(size_t size, uint64_t vmm_flags) {
     if (heap_base == NULL) {
-        k_error("k_alloc called before heap_init", "proto.kernel.k_alloc");
+        k_warning("k_alloc called before heap_init");
         return NULL;
     }
 
@@ -129,6 +129,61 @@ void *k_alloc_user(size_t size) {
     return _heap_alloc_stub(size, F_USER);
 }
 
+void *k_realloc(void *ptr, size_t newsize) {
+    if (ptr == NULL) {
+        return k_alloc(newsize);
+    }
+    if (newsize == 0) {
+        k_free(ptr);
+        return NULL;
+    }
+
+    int lock1r = ticketlock_lock(&heap_lock);
+
+    heap_item_t *node = (heap_item_t*)((uint8_t*)ptr - sizeof(HeapItem));
+
+    if (node->size >= newsize) {
+        uint64_t remainder = node->size - newsize;
+
+        if (remainder > sizeof(HeapItem)) {
+            heap_item_t *new_node = (heap_item_t*)((uint8_t*)node + sizeof(HeapItem) + newsize);
+            new_node->size  = remainder - sizeof(HeapItem);
+            new_node->flags = H_FREE;
+            new_node->prev  = node;
+            new_node->next  = node->next;
+
+            if (node->next != NULL) {
+                node->next->prev = new_node;
+            }
+            node->next = new_node;
+            node->size = newsize;
+
+            if (new_node->next != NULL && (new_node->next->flags & H_FREE)) {
+                new_node->size += sizeof(HeapItem) + new_node->next->size;
+                new_node->next  = new_node->next->next;
+                if (new_node->next != NULL) {
+                    new_node->next->prev = new_node;
+                }
+            }
+        }
+        
+        ticketlock_unlock(&heap_lock, lock1r);
+        return ptr;
+    }
+
+    uint64_t old_size = node->size;
+    ticketlock_unlock(&heap_lock, lock1r);
+
+    void *new_ptr = k_alloc(newsize);
+    if (new_ptr == NULL) {
+        return NULL;
+    }
+    memcpy(new_ptr, ptr, old_size);
+    k_free(ptr);
+
+    return new_ptr;
+}
+
 void k_free(void *ptr) {
     if (ptr == NULL) {
         return;
@@ -139,7 +194,7 @@ void k_free(void *ptr) {
     heap_item_t *block = (heap_item_t*)((uint8_t*)ptr - sizeof(HeapItem));
 
     if (block->flags & H_FREE) {
-        k_error("k_free: double free detected", "proto.kernel.k_free");
+        k_warning("k_free: double free detected");
         ticketlock_unlock(&heap_lock, lock1r);
         return;
     }

@@ -32,7 +32,7 @@ gdt_entry_t _gdt_generate_descriptor(
     descriptor.granuality = gran;
 
 
-    k_debug("gdt_entry (", "proto.kernel.gdt_init");
+    k_debug("gdt_entry (");
     #if (PROTO_DEBUG == 1)
         print_f("%x): base=%x, limit=%x, ring=%d, exe=%d, r/w=%d\n", 
             descriptor.value, base, limit, access.dpl, access.executable, access.read_write);
@@ -104,7 +104,7 @@ void gdt_init() {
     }}, 0, 0, 0);
     gdt[6] = higher;
 
-    k_debug("gdt_entry (", "proto.kernel.gdt_init");
+    k_debug("gdt_entry (");
     #if (PROTO_DEBUG == 1)
         print_f("%x): higher half tss\n", higher);
     #endif
@@ -113,7 +113,7 @@ void gdt_init() {
     gdtr.base = (uint64_t)gdt;
     gdtr.limit = sizeof(gdt) - 1;
 
-    k_debug("gdt_base: ", "proto.kernel.gdt_init");
+    k_debug("gdt_base: ");
     #if (PROTO_DEBUG == 1)
         print_f("%x, limit: %x\n", gdtr.base, gdtr.limit);
     #endif

@@ -1,7 +1,7 @@
 #include <stdint.h>
 
 #include "graphics/console.h"
-#include "graphics/vga.h"
+#include "graphics/graphics.h"
 
 #ifndef GLOBALS_H
 #define GLOBALS_H

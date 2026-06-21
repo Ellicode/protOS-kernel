@@ -1,8 +1,9 @@
 #include <stddef.h>
 
 #include "globals.h"
-
-#include "graphics/vga.h"
+#include "debug/logger.h"
+#include "memory/heap.h"
+#include "graphics/graphics.h"
 
 void graphics_init(struct limine_framebuffer *framebuffer)
 {

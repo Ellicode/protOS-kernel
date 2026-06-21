@@ -2,6 +2,7 @@
 #include "memory/heap.h"
 #include "graphics/console.h"
 #include "userspace/process.h"
+#include "debug/errors.h"
 
 #include "userspace/user_fb.h"
 
@@ -12,5 +13,5 @@ uint64_t sys_fetch_fb(fb_info_t *info) {
     info->pitch   = g_vga_active_framebuffer->pitch;
     info->bpp     = g_vga_active_framebuffer->bpp;
 
-    return 0;
+    return PROTO_OK;
 }

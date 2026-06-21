@@ -38,7 +38,9 @@ set(KERNEL_SOURCES
 
         # DEBUG ================================================================
 
-        src/debug/logger.c
+        src/debug/errors.c
+        include/debug/errors.h
+
         include/debug/logger.h
 
         src/debug/serial.c
@@ -49,8 +51,8 @@ set(KERNEL_SOURCES
         src/graphics/console.c
         include/graphics/console.h
 
-        src/graphics/vga.c
-        include/graphics/vga.h
+        src/graphics/graphics.c
+        include/graphics/graphics.h
 
         # INTERRUPTS ===========================================================
 
@@ -72,14 +74,8 @@ set(KERNEL_SOURCES
 
         # MEMORY ================================================================
 
-        src/memory/pmm.c
-        include/memory/pmm.h
-
         src/memory/vmm.c
         include/memory/vmm.h
-
-        src/memory/memory.c
-        include/memory/memory.h
 
         src/memory/freelist_pmm.c
         include/memory/freelist_pmm.h

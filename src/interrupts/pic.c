@@ -44,7 +44,7 @@ void unmask_irq(irq_t irq) {
     outb(port, value);
     io_wait();
 
-    k_debug("Unmasked IRQ (vector=", "proto.kernel.pic_init");
+    k_debug("Unmasked IRQ (vector=");
     #if (PROTO_DEBUG == 1)
         print_f("%d)\n", irq);
     #endif

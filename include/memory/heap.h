@@ -23,6 +23,7 @@ void heap_init();
 void heap_dump();
 
 void *k_alloc(size_t size);
+void *k_realloc(void *ptr, size_t newsize);
 void *k_alloc_user(size_t size);
 void k_free(void *ptr);
 

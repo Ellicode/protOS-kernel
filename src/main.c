@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "debug/errors.h"
 #include "debug/logger.h"
 #include "limine/limine.h"
 #include "utils/utils.h"
@@ -44,8 +45,9 @@ __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t 
 // =============================================================================================
 
 void k_main() {
+    // term_clear_buffer();
     // fill_screen(PROTO_BG);
-    // cursor_set(0, 0);
+    // set_cursor(0, 0);
 
     create_process("./System/Programs/executable.elf", 1);
 
@@ -58,7 +60,7 @@ void k_main() {
 
 void k_early_main() {
     // Ensure the bootloader actually understands our base revision (see spec).
-    if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
+    if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == 0) {
         hcf();
     }
     
@@ -74,9 +76,9 @@ void k_early_main() {
     struct limine_executable_address_response *kaddr = address_request.response;
     struct limine_module_response *modules = module_request.response;
 
-    if (k_init(framebuffer, memmap, hhdm, kaddr, modules) == 0) {
+    if (k_init(framebuffer, memmap, hhdm, kaddr, modules) == PROTO_OK) {
         k_main();
     } else {
-        k_error("Init script returned non-zero status code. The system will reboot now...", "proto.kernel.k_early_main");
+        k_error("Init script returned non-zero status code. The system will reboot now...");
     }
 }

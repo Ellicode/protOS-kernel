@@ -1,4 +1,5 @@
 #include "debug/logger.h"
+#include "debug/errors.h"
 #include "filesystems/vfs.h"
 #include "graphics/console.h"
 #include "userspace/process.h"
@@ -18,7 +19,8 @@ void _sys_exit() {
 
 int sys_open(char *path, char *flags) {
     if (!g_current_thread || !g_current_thread->process || !g_current_thread->process->cwd) {
-        return -1; 
+        k_assert(PROTO_ERR_UNKNOWN);
+        return PROTO_ERR_UNKNOWN; 
     }
 
     process_t *proc = g_current_thread->process;
@@ -50,13 +52,14 @@ int sys_open(char *path, char *flags) {
     }
 
     if (descriptor_idx == -1) {
-        k_warning("Process hit maximum file descriptor limit", "sys_open");
-        return -1;
+        k_assert(PROTO_ERR_MAX_FD_REACHED);
+        return PROTO_ERR_MAX_FD_REACHED;
     }    
 
     file_descriptor_t *desc = vfs_open(proc->cwd, path, flags_int);
     if (desc == NULL) {
-        return -1;
+        k_assert(PROTO_ERR_UNKNOWN);
+        return PROTO_ERR_UNKNOWN;
     }
 
     proc->fd_table[descriptor_idx] = desc;
@@ -65,71 +68,73 @@ int sys_open(char *path, char *flags) {
 
 int sys_read(uint64_t fd, size_t size, void *buffer) {
     if (!g_current_thread || !g_current_thread->process) {
-        return -1; 
+        k_assert(PROTO_ERR_UNKNOWN);
+        return PROTO_ERR_UNKNOWN; 
     }
 
     process_t *proc = g_current_thread->process;
 
     if (fd >= PROCESS_MAX_FDS) {
-        return -1;
+        k_assert(PROTO_ERR_MAX_FD_REACHED);
+        return PROTO_ERR_MAX_FD_REACHED;
     }
 
     file_descriptor_t *fd_pointer = proc->fd_table[fd];
 
     if (fd_pointer == NULL) {
-        return -1; 
+        k_assert(PROTO_ERR_INVALID_FD);
+        return PROTO_ERR_INVALID_FD; 
     }
     return vfs_read(fd_pointer, size, buffer);
 }
 
 int sys_write(uint64_t fd, size_t size, const void *buffer) {
     if (!g_current_thread || !g_current_thread->process) {
-        return -1; 
+        k_assert(PROTO_ERR_UNKNOWN);
+        return PROTO_ERR_UNKNOWN; 
     }
 
     process_t *proc = g_current_thread->process;
 
     if (fd >= PROCESS_MAX_FDS) {
-        return -1;
+        k_assert(PROTO_ERR_MAX_FD_REACHED);
+        return PROTO_ERR_MAX_FD_REACHED;
     }
 
     file_descriptor_t *fd_pointer = proc->fd_table[fd];
 
     if (fd_pointer == NULL) {
-        return -1; 
+        k_assert(PROTO_ERR_INVALID_FD);
+        return PROTO_ERR_INVALID_FD; 
     }
     return vfs_write(fd_pointer, size, buffer);
 }
 
 int sys_close(uint64_t fd) {
     if (!g_current_thread || !g_current_thread->process) {
-        return -1; 
+        k_assert(PROTO_ERR_UNKNOWN);
+        return PROTO_ERR_UNKNOWN; 
     }
 
     process_t *proc = g_current_thread->process;
 
     if (fd >= PROCESS_MAX_FDS) {
-        return -1;
+        k_assert(PROTO_ERR_MAX_FD_REACHED);
+        return PROTO_ERR_MAX_FD_REACHED;
     }
 
     file_descriptor_t *fd_pointer = proc->fd_table[fd];
 
     if (fd_pointer == NULL) {
-        return -1; 
+        k_assert(PROTO_ERR_INVALID_FD);
+        return PROTO_ERR_INVALID_FD; 
     }
 
-    int ret = vfs_close(fd_pointer);
-
-    fd_pointer = NULL;
+    return vfs_close(fd_pointer);
 }
 
-int sys_create_process(char *path) {
-    process_t *process = create_process(path, 0);
-    if (process == NULL) {
-        return -1;
-    }
-    
-    return 0;
+int sys_create_process(char *path) {    
+    return create_process(path, 0);
 }
 
 
@@ -147,19 +152,18 @@ void syscall_handler(idt_frame_t *frame) {
     uint64_t syscall_id = frame->rax;
 
     if (syscall_id > NUM_SYSCALLS - 1) {
-        k_warning("Syscall ID out of bounds!", "proto.interrupt_frame.syscall_handler");
-        frame->rax = -1; // Commonly returned for errors
+        frame->rax = PROTO_ERR_SYSCALL_OUT_OF_BOUNDS;
         return;
     }
 
     syscall_t handler = (syscall_t)syscall_handlers[syscall_id];
     uint64_t ret = handler(
-        frame->rdi,   // Arg 1
-        frame->rsi,   // Arg 2
-        frame->rdx,   // Arg 3
-        frame->r10,   // Arg 4 (Make sure your idt_frame_t saves r10!)
-        frame->r8,    // Arg 5
-        frame->r9     // Arg 6
+        frame->rdi,
+        frame->rsi,
+        frame->rdx,
+        frame->r10,
+        frame->r8,
+        frame->r9
     );
 
     frame->rax = ret;

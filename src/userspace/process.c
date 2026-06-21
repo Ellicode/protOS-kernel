@@ -10,6 +10,7 @@
 #include "utils/utils.h"
 #include "utils/linked_lists.h"
 #include "debug/logger.h"
+#include "debug/errors.h"
 #include "string.h"
 #include "globals.h"
 
@@ -18,25 +19,25 @@
 uint64_t curr_pid = 0;
 process_t *g_active_processes = NULL;
 
-process_t *create_process(char *elf_path, uint8_t is_root) {
+int create_process(char *elf_path, uint8_t is_root) {
     file_descriptor_t *f = vfs_open(rootfs->root, elf_path, FD_READ);
 
     if (f == NULL) {
-        k_error("Could not open ELF path", "proto.kernel.create_process");
-        return NULL;
+        k_assert(PROTO_ERR_FILE_NOT_FOUND);
+        return PROTO_ERR_FILE_NOT_FOUND;
     }
 
     size_t size = f->inode->size;
     char *buffer = k_alloc(size);
     if (buffer == NULL) {
-        k_error("Could not allocate ELF contents", "proto.kernel.create_process");
-        return NULL;
+        k_assert(PROTO_ERR_OUT_OF_MEMORY);
+        return PROTO_ERR_OUT_OF_MEMORY;
     }
 
     uint64_t ret = vfs_read(f, size, buffer);
     if (ret != 0) {
-        k_error("Could not read ELF", "proto.kernel.create_process");
-        return NULL;
+        k_assert(PROTO_ERR_ELF_CORRUPTED);
+        return PROTO_ERR_ELF_CORRUPTED;
     }
 
     vfs_close(f);
@@ -57,8 +58,8 @@ process_t *create_process(char *elf_path, uint8_t is_root) {
     k_free(buffer);
 
     if (entry == 1) {
-        k_error("Could not load ELF", "proto.kernel.create_process");
-        return NULL;
+        k_assert(PROTO_ERR_ELF_CANNOT_LOAD);
+        return PROTO_ERR_ELF_CANNOT_LOAD;
     }
     
     process_t *process = k_alloc(sizeof(process_t));
@@ -87,5 +88,5 @@ process_t *create_process(char *elf_path, uint8_t is_root) {
 
     create_user_thread(process, entry);
 
-    return process;
+    return PROTO_OK;
 }

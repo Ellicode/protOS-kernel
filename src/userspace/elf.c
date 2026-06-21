@@ -1,6 +1,7 @@
 #include <stddef.h>
 
 #include "utils/utils.h"
+#include "debug/errors.h"
 #include "debug/logger.h"
 #include "graphics/console.h"
 #include "memory/vmm.h"
@@ -58,14 +59,14 @@ uint64_t elf_load(char *data, size_t size, uint64_t cr3)
         ehdr->e_ident[2] != 'L'  ||
         ehdr->e_ident[3] != 'F')
     {
-        k_error("The ELF file specified is not a valid ELF file.", "proto.kernel.load_elf");
-        return 1;
+        k_assert(PROTO_ERR_ELF_INVALID_HDR);
+        return PROTO_ERR_ELF_INVALID_HDR;
     }
 
     if (ehdr->e_machine != EM_X86_64)
     {
-        k_error("The ELF file specified is not an x86_64 ELF file.", "proto.kernel.load_elf");
-        return 1;
+        k_assert(PROTO_ERR_ELF_UNSUPPORTED);
+        return PROTO_ERR_ELF_UNSUPPORTED;
     }
 
     uint64_t load_base = (ehdr->e_type == ET_DYN) ? USER_LOAD_BASE : 0;

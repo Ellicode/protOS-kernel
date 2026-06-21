@@ -45,11 +45,12 @@ void _panic_print(idt_frame_t* frame) {
     uint64_t cr2;
     asm __volatile__ ("movq %%cr2, %0": "=R"(cr2)); 
 
+    set_color(PROTO_BLACK, PROTO_RED);
     print_f("[");
-    set_color(PROTO_WHITE, PROTO_RED);
     print_f("PANIC");
+    print_f("]");
     set_color(PROTO_WHITE, PROTO_BG);
-    print_f("] VEC: %18d, ERR: %18x, %s.\n", frame->vector, frame->error_code, p_msg == 0x0 ? "???" : p_msg);
+    print_f(" VEC: %18d, ERR: %18x, %s.\n", frame->vector, frame->error_code, p_msg == 0x0 ? "???" : p_msg);
     print_f("        R8 : %18x, R9 : %18x, R10: %18x, R11: %18x\n", frame->r8, frame->r9, frame->r10, frame->r11);
     print_f("        R12: %18x, R13: %18x, R14: %18x, R15: %18x\n", frame->r12, frame->r13, frame->r14, frame->r15);
     print_f("        RBP: %18x, RDI: %18x, RSI: %18x, RDX: %18x\n", frame->rbp, frame->rdi, frame->rsi, frame->rdx);
@@ -73,24 +74,26 @@ void isr_handler(idt_frame_t* frame) {
         char c = get_ps2_scancode();
         devfs_node_t *stdin = g_stdin->fs_data;
         stdin_data_t *stdin_data = stdin->extra_data;
-        // if (stdin_data == NULL) { return; } // 3:< i gotchu
 
+        if (stdin_data == NULL) { return; } // 3:< i gotchu
+        size_t len = strlen(stdin_data->kbd_buf);
         if (c == '\n') {
             queue_wake_all(&stdin->waiters);
-        } else {
-            size_t len = strlen(stdin_data->kbd_buf);
+            print_char('\n');
+        } else if (c == '\b') {
+            if (len > 0) {
+                stdin_data->kbd_buf[len - 1] = '\0';
+                print_char('\b');
+            }
+        } else if (c > 0) {
             stdin_data->kbd_buf[len] = c;
             stdin_data->kbd_buf[len + 1] = '\0';
+            print_char(c);
         }
-
-        char str[2]; 
-        str[0] = c;
-        str[1] = '\0'; 
-        print(str);
     } else if (vec_buffer == 0x80) {
         syscall_handler(frame);
     } else {
-        k_debug("BEEP! Interrupt received!", "proto.kernel.isr_handler");
+        k_debug("BEEP! Interrupt received!");
         #if (PROTO_DEBUG == 1)
             print_f(" %d, error=%x, rip=%x\n", vec_buffer, frame->error_code, frame->rip);
         #endif
