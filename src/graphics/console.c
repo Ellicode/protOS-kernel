@@ -17,6 +17,26 @@ uint64_t term_rows          = PROTO_BG;
 uint64_t term_cols          = PROTO_BG;
 uint64_t term_graphics_init = 0;
 
+const color_t ANSI_PALETTE[16] = {
+    PROTO_BLACK, // 0: Black
+    PROTO_RED, // 1: Red
+    PROTO_GREEN, // 2: Green
+    PROTO_YELLOW, // 3: Yellow
+    PROTO_BLUE, // 4: Blue
+    PROTO_MAGENTA, // 5: Magenta
+    PROTO_CYAN, // 6: Cyan
+    PROTO_WHITE,  // 7: White / Default
+
+    PROTO_GREY, // 0: Black
+    PROTO_RED, // 1: Red
+    PROTO_GREEN, // 2: Green
+    PROTO_YELLOW, // 3: Yellow
+    PROTO_BLUE, // 4: Blue
+    PROTO_MAGENTA, // 5: Magenta
+    PROTO_CYAN, // 6: Cyan
+    PROTO_WHITE  // 7: White / Default
+};
+
 cell_t *grid;
 
 void term_clear_buffer() {
@@ -184,110 +204,66 @@ void print_ansi() {
 }
 
 void print(const char *str) {
-    int len = strlen(str);
+    size_t len = strlen(str);
+    size_t c = 0;
+    
     print_ansi();
-    for (size_t c = 0; c < len; c++){
-        print_char(str[c]);
+
+    while (c < len) {
+        if (str[c] == '\x1b' && (c + 1 < len) && str[c+1] == '[') {
+            c += 2; // Skip '\x1b' and '['
+            
+            int param = 0;
+            bool param_empty = true;
+
+            while (c < len) {
+                if (str[c] >= '0' && str[c] <= '9') {
+                    param = param * 10 + (str[c] - '0');
+                    param_empty = false;
+                } else if (str[c] == ';' || str[c] == 'm') {
+                    if (param_empty) { param = 0; }
+
+                    if (param == 0) {
+                        // Reset to defaults
+                        current_fg = ANSI_PALETTE[7]; 
+                        current_bg = ANSI_PALETTE[0];
+                    } else if (param >= 30 && param <= 37) {
+                        // Foreground colors
+                        current_fg = ANSI_PALETTE[param - 30];
+                    } else if (param >= 40 && param <= 47) {
+                        // Background colors
+                        current_bg = ANSI_PALETTE[param - 40];
+                    }
+
+                    set_color(current_fg, current_bg);
+
+                    print_ansi();
+
+                    if (str[c] == 'm') {
+                        c++;
+                        break; 
+                    }
+                    
+                    param = 0;
+                    param_empty = true;
+                } else {
+                    break; 
+                }
+                c++;
+            }
+        } else {
+            print_char(str[c]);
+            c++;
+        }
     }
 }
 
-void print_f(const char *format, ...)
-{
+void print_f(const char *format, ...) {
     va_list args;
     va_start(args, format);
-
     char buffer[1024];
-    buffer[0] = '\0';
-    int buffer_index = 0;
-
-    for (size_t i = 0; format[i] != '\0'; i++)
-    {
-        if (format[i] == '%')
-        {
-            i++;
-
-            char pad = ' ';
-            int width = 0;
-
-            if (format[i] == '0')
-            {
-                pad = '0';
-                i++;
-            }
-
-            while (format[i] >= '0' && format[i] <= '9')
-            {
-                width = width * 10 + (format[i] - '0');
-                i++;
-            }
-
-            if (format[i] == 'd')
-            {
-                int value = va_arg(args, int);
-                char *str = int_to_string(value);
-
-                int len = strlen(str);
-                while (len < width)
-                {
-                    buffer[buffer_index++] = pad;
-                    len++;
-                }
-
-                while (*str)
-                {
-                    buffer[buffer_index++] = *str++;
-                }
-                buffer[buffer_index] = '\0';
-            }
-            else if (format[i] == 'x')
-            {
-                uint64_t value = va_arg(args, uint64_t);
-                char *str = hex_to_string(value);
-
-                int len = strlen(str);
-                while (len < width)
-                {
-                    buffer[buffer_index++] = pad;
-                    len++;
-                }
-
-                while (*str)
-                {
-                    buffer[buffer_index++] = *str++;
-                }
-                buffer[buffer_index] = '\0';
-            }
-            else if (format[i] == 's')
-            {
-                char *str = va_arg(args, char *);
-                if (str != NULL) {
-                    int len = strlen(str);
-                    while (len < width)
-                    {
-                        buffer[buffer_index++] = pad;
-                        len++;
-                    }
-
-                    while (*str)
-                    {
-                        buffer[buffer_index++] = *str++;
-                    }
-                }
-                buffer[buffer_index] = '\0';
-            }
-            else if (format[i] == '%')
-            {
-                buffer[buffer_index++] = '%';
-                buffer[buffer_index] = '\0';
-            }
-        }
-        else
-        {
-            buffer[buffer_index++] = format[i];
-            buffer[buffer_index] = '\0';
-        }
-    }
-
+    vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
+
     print(buffer);
 }

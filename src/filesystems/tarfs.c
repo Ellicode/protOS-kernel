@@ -12,6 +12,7 @@
 
 char *initramfs_start;
 uint64_t initramfs_size;
+uint64_t initramfs_next_id = 1;
 superblock_t *initramfs_superblock;
 ustar_node_t *initramfs_root;
 
@@ -31,6 +32,7 @@ ustar_node_t *find_or_create_child(ustar_node_t *parent, char *name, inode_type_
     node->inode.type = type;
     node->inode.fs_data = node;
     node->inode.parent_sb = initramfs_superblock;
+    node->inode.id = initramfs_next_id++;
 
     node->next = parent->child;
     parent->child = node;
@@ -52,9 +54,8 @@ int tarfs_lookup(inode_t *dir, char *name, inode_t **result) {
             *result = &current->inode;
             return PROTO_OK;
         } else {
-            *result = NULL;
-            k_assert(PROTO_ERR_FILE_NOT_FOUND);
-            return PROTO_ERR_FILE_NOT_FOUND;
+            *result = dir; 
+            return PROTO_OK;
         }
     }
 
@@ -64,7 +65,7 @@ int tarfs_lookup(inode_t *dir, char *name, inode_t **result) {
 
     if (current == NULL) {
         *result = NULL;
-        k_assert(PROTO_ERR_FILE_NOT_FOUND);
+        // k_assert(PROTO_ERR_FILE_NOT_FOUND);
         return PROTO_ERR_FILE_NOT_FOUND;
     }
 
@@ -72,14 +73,69 @@ int tarfs_lookup(inode_t *dir, char *name, inode_t **result) {
     return PROTO_OK;
 }
 
-int tarfs_read(inode_t *inode, uint64_t size, void *buffer) {
+int tarfs_stat(inode_t *inode, dentry_t *buffer) {
+    if (inode == NULL) {
+        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return PROTO_ERR_INVALID_ARGUMENT;
+    }
     ustar_node_t *node = (ustar_node_t *)inode->fs_data;
+    if (node == NULL) {
+        // k_assert(PROTO_ERR_UNKNOWN);
+        return PROTO_ERR_UNKNOWN;
+    }
+    strcpy(buffer->name, node->name);
+    buffer->inode = inode;
+    buffer->size = node->size;
+
+    return PROTO_OK;
+}
+
+int tarfs_read(inode_t *inode, uint64_t size, void *buffer) {
+    if (inode == NULL) {
+        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return PROTO_ERR_INVALID_ARGUMENT;
+    }
+
+    ustar_node_t *node = (ustar_node_t *)inode->fs_data;
+    if (node == NULL) {
+        // k_assert(PROTO_ERR_UNKNOWN);
+        return PROTO_ERR_UNKNOWN;
+    }
     void *data = (void *)node->offset;
     memcpy(buffer, data, size);
 
     return PROTO_OK;
 }
 
+int tarfs_read_dir(inode_t *dir, dentry_t *entries, int *num_entries) {
+    if (dir == NULL) {
+        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return PROTO_ERR_INVALID_ARGUMENT;
+    }
+
+    ustar_node_t *node = (ustar_node_t *)dir->fs_data;
+    if (node == NULL) {
+        // k_assert(PROTO_ERR_UNKNOWN);
+        return PROTO_ERR_UNKNOWN;
+    }
+    if (node->type != INODE_FOLDER) {
+        return PROTO_ERR_NOT_A_DIRECTORY;
+    }
+
+    *num_entries = 0;
+    ustar_node_t *entry = node->child;
+    while (entry != NULL) {
+        entries[*num_entries].inode = &entry->inode;
+        strcpy(entries[*num_entries].name, entry->name);
+        entries[*num_entries].size = entry->size;
+        entries[*num_entries].type = entry->type;
+        
+        entry = entry->next;
+        *num_entries += 1;
+    }
+
+    return PROTO_OK;
+}
 
 superblock_t *tarfs_init() {
     if (g_lim_modules == NULL || g_lim_modules->module_count == 0) {
@@ -95,12 +151,15 @@ superblock_t *tarfs_init() {
     initramfs_root->type                    = INODE_FOLDER;
     initramfs_root->inode.type              = INODE_FOLDER;
     initramfs_root->inode.fs_data           = initramfs_root;
+    initramfs_root->inode.id                = initramfs_next_id++;
 
     initramfs_superblock                    = k_alloc(sizeof(superblock_t));
     initramfs_superblock->ops               = k_alloc(sizeof(vfs_ops_t));
     initramfs_superblock->fs_type           = FS_USTAR;
     initramfs_superblock->ops->lookup       = tarfs_lookup;
     initramfs_superblock->ops->read         = tarfs_read;
+    initramfs_superblock->ops->stat         = tarfs_stat;
+    initramfs_superblock->ops->read_dir     = tarfs_read_dir;
     initramfs_superblock->root              = &initramfs_root->inode;
 
     initramfs_root->inode.parent_sb         = initramfs_superblock;

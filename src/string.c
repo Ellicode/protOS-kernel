@@ -1,3 +1,5 @@
+#include <stdarg.h>
+
 #include "string.h"
 
 // MEMORY RELATED FUNCTIONS ====================================================================
@@ -235,6 +237,37 @@ char *strncpy(char *dst, const char *src, size_t n) {
     return dst;
 }
 
+char *strchr(const char *s, int c) {
+    while (*s != '\0') {
+        if (*s == (char)c) {
+            return (char *)s;
+        }
+        s++;
+    }
+
+    if (c == '\0') {
+        return (char *)s;
+    }
+
+    return NULL;
+}
+
+char *strrchr(const char *s, int c) {
+    char *last_match = NULL;
+    while (*s != '\0') {
+        if (*s == (char)c) {
+            last_match = (char *)s;
+        }
+        s++;
+    }
+    if (c == '\0') {
+        return (char *)s;
+    }
+
+    return last_match;
+}
+
+
 // STRING CONVERSION FUNCTIONS =================================================================
 
 char *int_to_string(int64_t num)
@@ -304,4 +337,104 @@ int atoi(const char *nptr)
 {
     // Converts base 10 string to a long, then casts it to an int
     return (int)strtol(nptr, (char **)NULL, 10);
+}
+
+int vsnprintf(char *str, size_t size, const char *format, va_list args) {
+    if (str == NULL || size == 0) {
+        return 0;
+    }
+
+    size_t written = 0;
+
+    for (size_t i = 0; format[i] != '\0'; i++) {
+        // If we are out of space (leaving room for '\0'), stop writing but keep counting 
+        // to return the correct standard total length.
+        if (format[i] == '%') {
+            i++;
+
+            char pad = ' ';
+            int width = 0;
+
+            if (format[i] == '0') {
+                pad = '0';
+                i++;
+            }
+
+            while (format[i] >= '0' && format[i] <= '9') {
+                width = width * 10 + (format[i] - '0');
+                i++;
+            }
+
+            char *arg_str = NULL;
+            char static_buf[19]; // Fallback if conversion strings aren't thread-safe
+
+            if (format[i] == 'd') {
+                int value = va_arg(args, int);
+                arg_str = int_to_string(value);
+            } 
+            else if (format[i] == 'x') {
+                uint64_t value = va_arg(args, uint64_t);
+                arg_str = hex_to_string(value);
+            } 
+            else if (format[i] == 's') {
+                arg_str = va_arg(args, char *);
+                if (arg_str == NULL) {
+                    arg_str = "(null)";
+                }
+            } 
+            else if (format[i] == '%') {
+                if (written < size - 1) {
+                    str[written] = '%';
+                }
+                written++;
+                continue;
+            }
+
+            if (arg_str != NULL) {
+                int len = strlen(arg_str);
+                
+                // Process padding width
+                while (len < width) {
+                    if (written < size - 1) {
+                        str[written] = pad;
+                    }
+                    written++;
+                    width--;
+                }
+
+                // Copy token contents
+                while (*arg_str) {
+                    if (written < size - 1) {
+                        str[written] = *arg_str;
+                    }
+                    written++;
+                    arg_str++;
+                }
+            }
+        } else {
+            if (written < size - 1) {
+                str[written] = format[i];
+            }
+            written++;
+        }
+    }
+
+    // Always null-terminate safely within limits
+    if (written < size) {
+        str[written] = '\0';
+    } else {
+        str[size - 1] = '\0';
+    }
+
+    return (int)written;
+}
+
+int snprintf(char *str, size_t size, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    
+    int result = vsnprintf(str, size, format, args);
+    
+    va_end(args);
+    return result;
 }

@@ -13,10 +13,11 @@
 
 #include "userspace/scheduler.h"
 
-thread_t* threads         = NULL;
+thread_t* g_threads         = NULL;
 thread_t* g_current_thread  = NULL;
-ticketlock_t threads_lock = {0};
+ticketlock_t threads_lock   = {0};
 thread_t *idle;
+wait_queue_t *run_queue;
 
 void idle_fn() {
     while (1) {
@@ -25,8 +26,10 @@ void idle_fn() {
 }
 
 void scheduler_init() {
-    threads = NULL;
+    g_threads = NULL;
     g_current_thread = NULL;
+
+    run_queue = k_alloc(sizeof(wait_queue_t));
 
     idle = k_alloc(sizeof(thread_t));
     idle->next          = NULL;
@@ -34,7 +37,7 @@ void scheduler_init() {
     idle->state         = THREAD_RUNNING;
     idle->stack_base    = 0;
     memset(&idle->context, 0, sizeof(idt_frame_t));
-    threads             = idle;
+    g_threads           = idle;
     g_current_thread    = idle;
 }
 
@@ -76,14 +79,14 @@ void queue_wake_all(wait_queue_t *wq) {
 void scheduler_tick(idt_frame_t* ctx) {
     memcpy(&g_current_thread->context, ctx, sizeof(idt_frame_t));
         
-    if (g_current_thread->state != THREAD_SLEEPING) {
-        LL_UNLINK(g_current_thread, threads);
-        LL_APPEND(g_current_thread, threads);
-    }
+    // if (g_current_thread->state == THREAD_RUNNING) {
+        LL_UNLINK(g_current_thread, g_threads);
+        LL_APPEND(g_current_thread, g_threads);
+    // }
 
-    thread_t *next = threads;
+    thread_t *next = g_threads;
 
-    while (next->state == THREAD_SLEEPING) {
+    while (next->state != THREAD_RUNNING) {
         next = next->next;
         if (next == NULL) {
             next = idle;
@@ -103,7 +106,6 @@ void scheduler_tick(idt_frame_t* ctx) {
     }
 
     memcpy(ctx, &next->context, sizeof(idt_frame_t));
-
     g_current_thread = next;
 }
 
@@ -135,7 +137,7 @@ thread_t* create_kernel_thread(void (*fn)()) {
     thread->context.rsp     = ((uint64_t)stack + 81024) & ~0xFULL;
     thread->context.rflags  = 0x202;
 
-    LL_APPEND(thread, threads);
+    LL_APPEND(thread, g_threads);
 
     ticketlock_unlock(&threads_lock, lock1r);
     return thread;
@@ -168,7 +170,7 @@ thread_t* create_user_thread(process_t *process, uint64_t entry_point) {
     thread->process         = process;
     thread->state           = THREAD_RUNNING;
 
-    LL_APPEND(thread, threads);
+    LL_APPEND(thread, g_threads);
 
     ticketlock_unlock(&threads_lock, lock1r);
 
@@ -179,9 +181,9 @@ thread_t* create_user_thread(process_t *process, uint64_t entry_point) {
 void exit_thread(thread_t* thread) {
     int lock1r = ticketlock_lock(&threads_lock);
 
-    LL_UNLINK(thread, threads);
+    LL_UNLINK(thread, g_threads);
 
-    k_free((void *)thread->stack_base);
+    // k_free((void *)thread->stack_base);
     k_free((void *)thread);
 
     if (thread->process) {

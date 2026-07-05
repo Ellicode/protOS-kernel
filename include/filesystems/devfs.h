@@ -7,8 +7,15 @@
 typedef enum {
     DEV_STDIN,
     DEV_STDOUT,
-    DEV_STDERR
+    DEV_STDERR,
+    DEV_STATIC
 } dev_type_t;
+
+typedef struct about_data_t {
+    char                    os_name[256];
+    char                    os_version[64];
+    char                    arch[64];
+} about_data_t;
 
 typedef struct stdin_data_t {
     char                    kbd_buf[256];
@@ -20,6 +27,7 @@ typedef struct devfs_node_t {
     inode_t                 inode;
     dev_type_t              dev_type;
     wait_queue_t            waiters;
+    uint64_t                size;
 
     void                    *extra_data;
 

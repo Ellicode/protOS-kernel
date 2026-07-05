@@ -67,7 +67,10 @@ cd "$PROJECT_ROOT" || error_exit "${B_RED} ERR! ${A_RESET} Failed to change dire
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 
-cp build/programs/coqi/coqi.elf initramfs/System/Programs/coqi.elf
+cp build/programs/corgi/corgi initramfs/System/Programs/corgi
+cp build/programs/protofetch/protofetch initramfs/System/Programs/protofetch
+cp build/programs/ls/ls initramfs/System/Programs/ls
+cp build/programs/protowm/protowm initramfs/System/Programs/protowm
 
 mkdir -p ignore-scripts
 

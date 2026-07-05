@@ -1,8 +1,10 @@
 add_library(proto STATIC
-    io.c
-    syscall.c
-    graphics.c
-    process.c
+    src/malloc.c
+    src/io.c
+    src/syscall.c
+    src/graphics.c
+    src/string.c
+    src/process.c
 )
 
 target_include_directories(proto PUBLIC
@@ -13,5 +15,17 @@ target_compile_options(proto PRIVATE
     -m64
     -ffreestanding
     -nostdlib
+    -fno-stack-protector
+    -fno-builtin
+)
+
+add_library(crt0 OBJECT
+    crt0.c
+)
+
+target_compile_options(crt0 PRIVATE
+    -m64
+    -ffreestanding
+    -fno-stack-protector
     -fno-builtin
 )

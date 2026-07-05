@@ -2,8 +2,6 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_C_STANDARD 23)
 
-add_compile_definitions(PROTO_DEBUG=1)
-
 project(kernel
         VERSION 0.1.0
         DESCRIPTION "A kernel for protOS"
@@ -125,6 +123,13 @@ set_target_properties(kernel PROPERTIES
 )
 
 set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
+
+target_compile_definitions(kernel PUBLIC
+    PROTO_NAME=\"ProtOS\"
+    PROTO_VERSION="1.0.0"
+    PROTO_DEBUG=1
+    PROTO_ARCH=\"${CMAKE_SYSTEM_PROCESSOR}\"
+)
 
 target_compile_options(kernel PRIVATE
     $<$<COMPILE_LANGUAGE:C>:-m64>

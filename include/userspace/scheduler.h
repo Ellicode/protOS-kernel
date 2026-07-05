@@ -7,7 +7,8 @@
 
 typedef enum {
     THREAD_RUNNING,
-    THREAD_SLEEPING
+    THREAD_SLEEPING,
+    THREAD_STOPPED
 } thread_state_t;
 
 
@@ -16,6 +17,8 @@ typedef struct Thread {
     uint64_t        stack_base;
     process_t       *process;
     thread_state_t  state;
+
+    int             waiting_for;
 
     struct Thread   *next;
     struct Thread   *prev;
@@ -35,6 +38,8 @@ typedef struct wait_queue {
 } wait_queue_t;
 
 extern thread_t* g_current_thread;
+extern thread_t* g_threads;
+extern wait_queue_t *run_queue;
 
 void scheduler_init();
 void scheduler_tick(idt_frame_t* ctx);

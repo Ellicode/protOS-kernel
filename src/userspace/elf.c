@@ -59,13 +59,13 @@ uint64_t elf_load(char *data, size_t size, uint64_t cr3)
         ehdr->e_ident[2] != 'L'  ||
         ehdr->e_ident[3] != 'F')
     {
-        k_assert(PROTO_ERR_ELF_INVALID_HDR);
+        // k_assert(PROTO_ERR_ELF_INVALID_HDR);
         return PROTO_ERR_ELF_INVALID_HDR;
     }
 
     if (ehdr->e_machine != EM_X86_64)
     {
-        k_assert(PROTO_ERR_ELF_UNSUPPORTED);
+        // k_assert(PROTO_ERR_ELF_UNSUPPORTED);
         return PROTO_ERR_ELF_UNSUPPORTED;
     }
 

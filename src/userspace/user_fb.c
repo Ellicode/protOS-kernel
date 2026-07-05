@@ -6,7 +6,7 @@
 
 #include "userspace/user_fb.h"
 
-uint64_t sys_fetch_fb(fb_info_t *info) {    
+uint64_t sys_fetch_fb(fb_info_t *info) {
     info->address = USER_FRAMEBUFFER_BASE;
     info->width   = g_vga_active_framebuffer->width;
     info->height  = g_vga_active_framebuffer->height;

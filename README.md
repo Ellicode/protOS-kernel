@@ -90,3 +90,17 @@ To build and debug the kernel, you can either
 cmake -S . -B build
 cmake --build build
 ```
+
+---
+
+Made with <3 by Elli
+
+```
+  /\    /\           Z
+ /  \__/  \        Z
+/   //   ~~~~~+  z
+ | \/          \
+ \( )  __     __\
+   \\     \/\/  /
+\___\\_________/
+```

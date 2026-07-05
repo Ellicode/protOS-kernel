@@ -4,7 +4,7 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
-#include "fonts/niji-pixel-bold-16.h"
+#include "fonts/niji-pixel-regular-16.h"
 
 enum ProtoColors {
     PROTO_RED     = 0xFF6467,

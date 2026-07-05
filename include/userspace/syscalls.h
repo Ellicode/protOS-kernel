@@ -3,7 +3,7 @@
 #ifndef SYSCALLS_H
 #define SYSCALLS_H
 
-#define NUM_SYSCALLS    7
+#define NUM_SYSCALLS    11
 
 enum {
     SYS_EXIT,
@@ -12,9 +12,14 @@ enum {
     SYS_WRITE,
     SYS_OPEN,
     SYS_CLOSE,
+    SYS_STAT,
+    SYS_READ_DIR,
 
     SYS_CREATE_PROCESS,
-    SYS_FETCH_FB
+    SYS_FETCH_FB,
+    SYS_CHDIR,
+    SYS_GETCWD,
+    SYS_WAIT_FOR_PROCESS,
 };
 
 typedef uint64_t (*syscall_t)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
