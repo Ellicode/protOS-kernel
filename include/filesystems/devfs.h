@@ -1,20 +1,24 @@
+#ifndef DEVFS_H
+#define DEVFS_H
+
 #include "filesystems/vfs.h"
 #include "userspace/scheduler.h"
-
-#ifndef DEVFS_NODE_T
-#define DEVFS_NODE_T
 
 typedef enum {
     DEV_STDIN,
     DEV_STDOUT,
     DEV_STDERR,
-    DEV_STATIC
+    DEV_STATIC,
+    DEV_ABOUT
 } dev_type_t;
 
 typedef struct about_data_t {
     char                    os_name[256];
     char                    os_version[64];
-    char                    arch[64];
+    char                    os_arch[64];
+
+    int                     mem_size;
+    int                     mem_used;
 } about_data_t;
 
 typedef struct stdin_data_t {
@@ -42,4 +46,4 @@ extern inode_t *g_stderr;
 
 superblock_t *devfs_init();
 
-#endif // DEVFS_NODE_T
+#endif // DEVFS_H

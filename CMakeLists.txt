@@ -101,6 +101,9 @@ set(KERNEL_SOURCES
         src/userspace/user_fb.c
         include/userspace/user_fb.h
 
+        src/userspace/ipc.c
+        include/userspace/ipc.h
+
         src/userspace/enter-userspace.asm
         include/userspace/userspace.h 
 

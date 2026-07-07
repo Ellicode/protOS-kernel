@@ -107,14 +107,17 @@ if [ $DEBUG_MODE -eq 1 ]; then
     echo "QEMU: waiting for GDB on port 1234"
 fi
 
-qemu-system-x86_64 \
-    -m $ALLOCATED_MEMORY \
-    -drive if=pflash,format=raw,readonly=on,file=$LOCAL_OVMF_CODE_PATH \
-    -drive if=ide,format=raw,file=fat:rw:ignore-scripts/esp \
-    -serial stdio \
-    -no-reboot \
-    -no-shutdown \
-    $EXTRA_QEMU_ARGS \
-    # -d int
+case $1 in
+    * ) qemu-system-x86_64 \
+            -m $ALLOCATED_MEMORY \
+            -drive if=pflash,format=raw,readonly=on,file=$LOCAL_OVMF_CODE_PATH \
+            -drive if=ide,format=raw,file=fat:rw:ignore-scripts/esp \
+            -serial stdio \
+            -no-reboot \
+            -no-shutdown \
+            -display gtk,gl=on,zoom-to-fit=on \
+            -device virtio-vga-gl \
+            $EXTRA_QEMU_ARGS
+esac
 
 echo -e "\n"

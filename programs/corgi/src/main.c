@@ -13,22 +13,21 @@
 #include "split.h"
 #include "corgi.h"
 
-char pathbuf[128];
-char cmdbuf[256]; // if you ever write a command greater than this, good job!
-char argv[16][64];
-
 int pmain()
 {
     chdir("/");
     printf("protOS corgi v%s\n", CORGI_VERSION);
 
+    char *pathbuf = malloc(128);
+    char *cmdbuf = malloc(256);
+    char argv[16][64];
+
     while (1)
     {
         getcwd(pathbuf, 128);
-
         printf("[" ANSI_BLUE "%s" ANSI_RESET "]& ", pathbuf);
-        input(cmdbuf);
 
+        input(cmdbuf);
         split_cmd(cmdbuf, argv, 64);
 
         if (strcmp(argv[0], "cd") == 0) {
@@ -43,4 +42,7 @@ int pmain()
             }
         }
     }
+
+    free(pathbuf);
+    free(cmdbuf);
 }

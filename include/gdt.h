@@ -1,7 +1,7 @@
-#include <stdint.h>
-
 #ifndef GDT_H
 #define GDT_H
+
+#include <stdint.h>
 
 enum {
     GDT_ENTRY_DPL_KERNEL        = 0,

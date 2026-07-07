@@ -1,7 +1,7 @@
-#include "../limine/limine.h"
-
 #ifndef VGA_H
 #define VGA_H
+
+#include "../limine/limine.h"
 
 typedef uint64_t color_t;
 

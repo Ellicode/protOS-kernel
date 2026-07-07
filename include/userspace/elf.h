@@ -1,8 +1,8 @@
-#include <stdint.h>
-#include <stddef.h>
-
 #ifndef ELF_H
 #define ELF_H
+
+#include <stdint.h>
+#include <stddef.h>
 
 typedef struct {
     uint8_t  e_ident[16];   // magic + class + data + version + OS/ABI

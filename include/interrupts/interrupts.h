@@ -1,7 +1,7 @@
-#include "interrupts/idt.h"
-
 #ifndef INTERRUPTS_H
 #define INTERRUPTS_H
+
+#include "interrupts/idt.h"
 
 #define ISR_EXCEPTION_COUNT          32
 #define ISR_IRQ_COUNT                2

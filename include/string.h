@@ -1,9 +1,9 @@
+#ifndef STRING_H
+#define STRING_H
+
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdint.h>
-
-#ifndef STRING_H
-#define STRING_H
 
 int memcmp(const void*, const void*, size_t);
 void* memcpy(void* __restrict, const void* __restrict, size_t);

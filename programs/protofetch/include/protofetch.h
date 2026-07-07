@@ -1,12 +1,6 @@
 #ifndef PROTOFETCH_H
 #define PROTOFETCH_H
 
-typedef struct about_data_t {
-    char                    os_name[256];
-    char                    os_version[64];
-    char                    arch[64];
-} about_data_t;
-
 #define ANSI_RED     "\x1b[31m"
 #define ANSI_YELLOW  "\x1b[33m"
 #define ANSI_GREEN   "\x1b[32m"
@@ -23,6 +17,8 @@ typedef struct about_data_t {
                         " \\( )  __     __\\ \n" \
                         "   \\\\     \\/\\/  / \n" \
                         "\\___\\\\_________/  \n" \
+
+#define SWATCH_SYMBOL "O "
 
 #define PROTOGEN_ASCII_WIDTH    17
 #define PROTOGEN_ASCII_HEIGHT   7

@@ -1,7 +1,7 @@
-#include <stdint.h>
-
 #ifndef PIC_H
 #define PIC_H
+
+#include <stdint.h>
 
 #define PIC1_ADDR	           0x20		/* IO base address for master PIC */
 #define PIC2_ADDR    	       0xA0		/* IO base address for slave PIC */

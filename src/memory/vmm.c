@@ -234,24 +234,6 @@ void vmm_init() {
     _enable_paging();
 
     k_debug("CR3 loaded and paging enabled\n");
-
-    // // Reclaim bootloader reclaimable regions
-    // uint64_t space_reclaimed = 0;
-
-    // for (size_t i = 0; i < g_lim_memmap->entry_count; i++) {
-    //     struct limine_memmap_entry *entry = g_lim_memmap->entries[i];
-
-    //     if (entry->type == LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE) {
-    //         for (uint64_t idx = 0; idx < PAGE_ROUND(entry->length) / PAGE_SIZE; idx++) {
-    //             m_pmm_free_p((void *)(entry->base + idx * PAGE_SIZE));
-    //         }
-
-    //         space_reclaimed += entry->length;
-    //     }
-    // }
-
-    // k_info("Reclaimed ", "proto.kernel.vmm_init");
-    // print_f("%dMB from bootloader reclaimable memory\n", space_reclaimed / (uint64_t)(1024 * 1024));
 }
 
 uint64_t vmm_virt_to_phys(uint64_t cr3, uint64_t virt) {

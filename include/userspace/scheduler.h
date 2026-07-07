@@ -1,9 +1,9 @@
-#include "interrupts/interrupts.h"
-#include "userspace/process.h"
-#include "utils/ticket_lock.h"
-
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
+
+#include "userspace/process.h"
+#include "interrupts/interrupts.h"
+#include "utils/ticket_lock.h"
 
 typedef enum {
     THREAD_RUNNING,

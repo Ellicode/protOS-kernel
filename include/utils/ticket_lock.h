@@ -1,7 +1,7 @@
-#include "interrupts/interrupts.h"
-
 #ifndef TICKET_LOCK_H
 #define TICKET_LOCK_H
+
+#include "interrupts/interrupts.h"
 
 typedef struct {
     uint32_t next;

@@ -1,8 +1,8 @@
-#include <stdint.h>
-#include <stddef.h>
-
 #ifndef VFS_H
 #define VFS_H
+
+#include <stdint.h>
+#include <stddef.h>
 
 enum {
     INODE_FILE = 0,

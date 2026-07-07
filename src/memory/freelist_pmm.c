@@ -134,3 +134,13 @@ int fpmm_init() {
 
     return PROTO_OK;
 }
+
+// What does it fucking have to do with freelist? i have no idea
+int getmemsz() {
+    int accumulated_size = 0;
+    for (uint64_t i = 0; i < g_lim_memmap->entry_count; i++) {
+        struct limine_memmap_entry *entry = g_lim_memmap->entries[i];
+        accumulated_size += entry->length;
+    }
+    return accumulated_size;
+}

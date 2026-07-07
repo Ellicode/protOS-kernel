@@ -4,6 +4,8 @@ extern int pmain(char argv[16][64]);
 
 void _start(char argv[16][64])
 {
+    heap_init();
+    
     pmain(argv);
 
     exit();

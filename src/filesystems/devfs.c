@@ -3,7 +3,9 @@
 #include "memory/heap.h"
 #include "graphics/console.h"
 #include "utils/linked_lists.h"
+#include "memory/freelist_pmm.h"
 #include "debug/errors.h"
+#include "globals.h"
 #include "string.h"
 
 #include "filesystems/devfs.h"
@@ -129,6 +131,20 @@ int devfs_read(inode_t *inode, uint64_t size, void *buffer) {
         case DEV_STATIC:
             memcpy(buffer, node->extra_data, node->size);
             break;
+        case DEV_ABOUT:
+            int memsz = getmemsz();
+            int memused = 0;
+
+            about_data_t about_data = (about_data_t) {
+                .os_name        = PROTO_NAME,
+                .os_version     = PROTO_VERSION,
+                .os_arch        = PROTO_ARCH,
+
+                .mem_size       = memsz,
+                .mem_used       = memused
+            };
+            memcpy(buffer, &about_data, sizeof(about_data_t));
+            break;
         default: // No match
             // k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
             return PROTO_ERR_FILE_UNSUPPORTED_OP;
@@ -223,16 +239,8 @@ superblock_t *devfs_init() {
     inode_t *about;
     devfs_create(devfs_superblock->root, "about", &about);
     devfs_node_t *about_data = about->fs_data;
-    about_data->dev_type = DEV_STATIC;
-    
-    about_data_t *about_extra_data = k_alloc(sizeof(about_data_t));
-
-    strcpy(about_extra_data->os_name, PROTO_NAME);
-    strcpy(about_extra_data->os_version, PROTO_VERSION);
-    strcpy(about_extra_data->arch, PROTO_ARCH);
-
-    about_data->extra_data = about_extra_data;
-    about_data->size = sizeof(about_data_t);
+    about_data->dev_type = DEV_ABOUT;
+    about_data->size = 0;
 
     return devfs_superblock;
 }

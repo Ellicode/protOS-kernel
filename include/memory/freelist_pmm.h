@@ -18,13 +18,13 @@
     SOFTWARE.
 */
 
+#ifndef FREELIST_PMM_H
+#define FREELIST_PMM_H
+
 #include <stdint.h>
 
 #include "utils/utils.h"
 #include "memory/vmm.h"
-
-#ifndef FREELIST_PMM_H
-#define FREELIST_PMM_H
 
 typedef struct freelist_pmm_node {
     struct freelist_pmm_node* next;
@@ -37,5 +37,7 @@ extern uint64_t freelist_pmm_fill_offset;
 void* fpmm_allocate_page();
 void  fpmm_free_page(void* ptr);
 int   fpmm_init();
+
+int getmemsz();
 
 #endif // FREELIST_PMM_H

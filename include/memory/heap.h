@@ -1,8 +1,8 @@
-#include <stdint.h>
-#include <stddef.h>
-
 #ifndef HEAP_H
 #define HEAP_H
+
+#include <stdint.h>
+#include <stddef.h>
 
 #define HEAP_VIRTUAL_START 0xFFFFA00000000000
 

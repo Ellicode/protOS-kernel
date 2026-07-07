@@ -13,25 +13,15 @@ void graphics_init(struct limine_framebuffer *framebuffer)
 
 void putpixel(uint32_t x, uint32_t y, color_t color)
 {
-    if (g_vga_active_framebuffer == NULL)
-    {
-        return;
-    }
-    if (x >= g_vga_active_framebuffer->width ||
-        y >= g_vga_active_framebuffer->height)
-    {
-        return;
-    }
+    if (g_vga_active_framebuffer == NULL) { return; }
+    if (x >= g_vga_active_framebuffer->width || y >= g_vga_active_framebuffer->height) { return; }
     volatile uint32_t *fb_ptr = g_vga_active_framebuffer->address;
     fb_ptr[y * (g_vga_active_framebuffer->pitch / 4) + x] = color;
 }
 
 void draw_rect(uint32_t x, uint32_t y, uint32_t w, uint32_t h, color_t color)
 {
-    if (g_vga_active_framebuffer == NULL)
-    {
-        return;
-    }
+    if (g_vga_active_framebuffer == NULL) { return; }
 
     uint32_t *fb_ptr = g_vga_active_framebuffer->address;
     
@@ -46,10 +36,7 @@ void draw_rect(uint32_t x, uint32_t y, uint32_t w, uint32_t h, color_t color)
 }
 
 void fill_screen(color_t color) {
-    if (g_vga_active_framebuffer == NULL)
-    {
-        return;
-    }
+    if (g_vga_active_framebuffer == NULL) { return; }
 
     draw_rect(0, 0, g_vga_active_framebuffer->width, g_vga_active_framebuffer->height, color);
 }

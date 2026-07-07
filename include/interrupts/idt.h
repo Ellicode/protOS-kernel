@@ -1,9 +1,9 @@
+#ifndef IDT_H
+#define IDT_H
+
 #include <stdint.h>
 
 #include "../gdt.h"
-
-#ifndef IDT_H
-#define IDT_H
 
 enum {
     IDT_GATE_TYPE_INTERRUPT = 0b1110,

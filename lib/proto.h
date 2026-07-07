@@ -55,6 +55,15 @@ enum {
     STDERR
 };
 
+typedef struct about_data_t {
+    char os_name[256];
+    char os_version[64];
+    char os_arch[64];
+
+    int mem_size;
+    int mem_used;
+} about_data_t;
+
 uint64_t syscall(uint64_t num, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 
 // IO ========================================================================================
@@ -136,5 +145,17 @@ typedef struct HeapItem {
     struct HeapItem* next;
 } __attribute__((packed)) HeapItem;
 typedef HeapItem heap_item_t;
+
+#define HEAP_MIN_SIZE       0x0000000000400000 // 4 MiB
+#define HEAP_MAX_SIZE       0x00000FFFFFFFFFFF // A lot of GiB
+#define HEAP_VIRTUAL_START  0x0000100000000000
+
+#define H_FREE      (1ULL << 0)
+#define H_WRITE     (1ULL << 1)
+#define H_USER      (1ULL << 2)
+
+void heap_init();
+void *malloc(size_t size);
+int free(void *ptr);
 
 #endif

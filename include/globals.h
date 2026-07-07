@@ -1,10 +1,10 @@
+#ifndef GLOBALS_H
+#define GLOBALS_H
+
 #include <stdint.h>
 
 #include "graphics/console.h"
 #include "graphics/graphics.h"
-
-#ifndef GLOBALS_H
-#define GLOBALS_H
 
 extern uint64_t g_pit_frequency;
 extern uint64_t g_pit_ticks;

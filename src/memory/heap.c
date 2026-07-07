@@ -28,6 +28,7 @@ void heap_dump() {
     #endif
 }
 
+// idk how it works but whatever
 void heap_test() {
     char* hello = k_alloc(6);
     memcpy(hello, "Hello", 6);

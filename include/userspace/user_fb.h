@@ -1,7 +1,7 @@
-#include <stdint.h>
-
 #ifndef USER_FB_H
 #define USER_FB_H
+
+#include <stdint.h>
 
 typedef struct __attribute__((packed)) {
     uint64_t address;

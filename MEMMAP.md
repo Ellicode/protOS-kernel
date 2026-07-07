@@ -4,12 +4,12 @@
 
 The lower half of the virtual memory of protOS contains user-space related data. It starts at the begginning of the virtual memory (`0x0000000000000000`) and ends at address `0x00007FFFFFFFFFFF`
 
-| Start                | End                  | Description                       |
-| -------------------- | -------------------- | --------------------------------- |
-| `0x0000000000400000` | `         ?        ` | Elf program                       |
-| `0x0000100000000000` | `0x00001FFFFFFFFFFF` | Memory map region (heap included) |
-| `0x0000200000000000` | `         ?        ` | User Framebuffer                  |
-| `0x0000300000000000` | `0x0000300000100000` | User Stack (1 MiB)                |
+| Start                | End                  | Description        |
+| -------------------- | -------------------- | ------------------ |
+| `0x0000000000400000` | `         ?        ` | Elf program        |
+| `0x0000100000000000` | `0x00001FFFFFFFFFFF` | User heap          |
+| `0x0000200000000000` | `         ?        ` | User Framebuffer   |
+| `0x0000300000000000` | `0x0000300000100000` | User Stack (1 MiB) |
 
 ## Upper half
 

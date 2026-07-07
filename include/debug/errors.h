@@ -1,10 +1,10 @@
+#ifndef ERRORS_H
+#define ERRORS_H
+
 #include <stddef.h>
 
 #include "debug/logger.h"
 #include "graphics/console.h"
-
-#ifndef ERRORS_H
-#define ERRORS_H
 
 enum status_code_t {
     PROTO_OK                            = 0,
@@ -29,6 +29,9 @@ enum status_code_t {
     PROTO_ERR_ELF_UNSUPPORTED           = 42,
     PROTO_ERR_ELF_CORRUPTED             = 43,
     PROTO_ERR_ELF_CANNOT_LOAD           = 44,
+
+    PROTO_ERR_IPC_QUEUE_FULL            = 51,
+    PROTO_ERR_IPC_QUEUE_EMPTY           = 52
 };
 
 enum status_type_t {

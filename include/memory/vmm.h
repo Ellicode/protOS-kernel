@@ -1,10 +1,10 @@
+#ifndef VMM_H
+#define VMM_H
+
 #include <stdint.h>
 #include <stddef.h>
 
 #include "limine/limine.h"
-
-#ifndef VMM_H
-#define VMM_H
 
 typedef union {
     struct {

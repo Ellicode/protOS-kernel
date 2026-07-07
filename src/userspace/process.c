@@ -46,12 +46,21 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64])
     uint64_t physical_fb = (uint64_t)g_vga_active_framebuffer->address - g_lim_hhdm->offset;
     size_t fb_size = PAGE_ROUND(g_vga_active_framebuffer->width * g_vga_active_framebuffer->height);
     
+    // map framebuffer
     vmm_map_phys_range(
         pml4, 
         USER_FRAMEBUFFER_BASE, 
         physical_fb, 
         fb_size, 
         F_USER | F_WRITE | F_PCD 
+    );
+
+    // map heap
+    vmm_map_range(
+        pml4,
+        USER_HEAP_BASE,
+        USER_HEAP_MIN_SIZE,
+        F_USER | F_WRITE
     );
     
     uint64_t entry = elf_load(buffer, size, pml4);

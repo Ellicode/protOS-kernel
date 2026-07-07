@@ -1,7 +1,7 @@
-#include <stddef.h>
-
 #ifndef LINKED_LISTS_H
 #define LINKED_LISTS_H
+
+#include <stddef.h>
 
 #define LL_UNLINK(item, list) {                     \
     if ((item)->next != NULL) {                     \
