@@ -47,6 +47,10 @@ enum {
     SYS_CHDIR,
     SYS_GETCWD,
     SYS_WAIT_FOR_PROCESS,
+
+    SYS_SEND,
+    SYS_RECIEVE,
+    SYS_GETPID
 };
 
 enum {
@@ -102,6 +106,7 @@ void fprintf(uint64_t fd, const char *format, ...);
 int create_process(const char *elf, char argv[16][64]);
 void exit();
 void wait_for_process(int pid);
+int getpid();
 
 // GRAPHICS ==================================================================================
 
@@ -157,5 +162,27 @@ typedef HeapItem heap_item_t;
 void heap_init();
 void *malloc(size_t size);
 int free(void *ptr);
+
+// IPC ======================================================================================
+
+typedef struct ipc_syscall_payload {
+    char            *message;
+    void            *data;
+    size_t          size;
+} ipc_syscall_payload;
+
+typedef struct ipc_message_t {
+    uint64_t                sender;
+    char                    name[255];
+
+    uint64_t                size;
+    void                    *data;
+
+    struct ipc_message_t    *next;
+    struct ipc_message_t    *prev;
+} ipc_message_t;
+
+int ipc_send(uint64_t pid, char *message, void *data, size_t size);
+int ipc_recieve(ipc_message_t **buf);
 
 #endif

@@ -5,6 +5,7 @@ add_library(proto STATIC
     src/graphics.c
     src/string.c
     src/process.c
+    src/ipc.c
 )
 
 target_include_directories(proto PUBLIC

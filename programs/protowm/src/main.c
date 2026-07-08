@@ -42,13 +42,25 @@ int pmain(char argv[16][64]) {
     back->height    = front->height;
     back->pitch     = front->pitch;
 
-    printf("resolution=%dx%d; bpp=%d\n", front->width, front->height, front->bpp);
 
     draw_rect(back, 0, 0, 100, 100, 0xFF0000);
 
     // swap buffers
     memcpy((void *)front->address, (void *)back->address, fb_size);
 
+    printf("resolution=%dx%d; bpp=%d\n", front->width, front->height, front->bpp);
+    printf("pid=%d\n", getpid());
+
+    ipc_message_t *buf = malloc(sizeof(ipc_message_t));
+    int res = ipc_recieve(&buf);
+    printf("res=%d\n", res);
+    if (buf == NULL) {
+        printf("buf is null\n");
+    } else {
+        printf("IPC recieved! sender=%d\n", buf->sender);
+    }
+
+    free(buf);
     free(back_data);
     free(back);
     free(front);

@@ -11,3 +11,7 @@ void exit() {
 void wait_for_process(int pid) {
     syscall(SYS_WAIT_FOR_PROCESS, pid, 0, 0);
 }
+
+int getpid() {
+    return syscall(SYS_GETPID, 0, 0, 0);
+}

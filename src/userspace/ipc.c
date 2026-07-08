@@ -28,24 +28,47 @@ int ipc_send(uint64_t pid, char *message, void *data, size_t size) {
             break;
         }
 
-        dest_process = g_active_processes->next;
+        dest_process = dest_process->next;
     }
+    if (dest_process == NULL) { k_free(msg); return PROTO_ERR_PROCESS_NOT_FOUND; }
 
-    ipc_queue_t q = dest_process->msg_queue;
+    ipc_queue_t *q = &dest_process->msg_queue;
 
-    LL_APPEND(msg, q.messages);
+    LL_APPEND(msg, q->messages);
+    queue_wake_all(q->waiters);
 
     return PROTO_OK;
 }
 
-int ipc_get(ipc_message_t **msg) {
+int ipc_recieve(ipc_message_t **buf) {
     if (g_current_thread == NULL || g_current_thread->process == NULL) { return PROTO_ERR_UNKNOWN; }
 
-    ipc_queue_t q = g_current_thread->process->msg_queue;
-    ipc_message_t *top_msg = q.messages;
-    LL_UNLINK(top_msg, q.messages);
+    ipc_queue_t *q = &g_current_thread->process->msg_queue;
+    ipc_message_t *top_msg = q->messages;
 
-    *msg = top_msg;
+    while (top_msg == NULL) {
+        queue_sleep(q->waiters, g_current_thread);
+    }
+
+    LL_UNLINK(top_msg, q->messages);
+    *buf = top_msg;
 
     return PROTO_OK;
+}
+
+int ipc_dispatch(char *message, void *data, size_t size) {
+    process_t *proc = g_active_processes;
+    int err = 0;
+
+    while (proc != NULL)
+    {
+        int res = ipc_send(proc->pid, message, data, size);
+        if (res != PROTO_OK) {
+            err = res;
+            break;
+        }
+        proc = proc->next;
+    }
+
+    return err;
 }

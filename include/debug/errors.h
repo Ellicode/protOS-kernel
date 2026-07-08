@@ -31,7 +31,8 @@ enum status_code_t {
     PROTO_ERR_ELF_CANNOT_LOAD           = 44,
 
     PROTO_ERR_IPC_QUEUE_FULL            = 51,
-    PROTO_ERR_IPC_QUEUE_EMPTY           = 52
+    PROTO_ERR_IPC_QUEUE_EMPTY           = 52,
+    PROTO_ERR_PROCESS_NOT_FOUND         = 53,
 };
 
 enum status_type_t {

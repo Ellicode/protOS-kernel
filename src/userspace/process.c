@@ -83,6 +83,7 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64])
     strcpy(process->pname, elf_path);
     process->kernel_stack = k_alloc(KERNEL_STACK_SIZE);
     process->cr3 = pml4;
+    process->msg_queue.waiters = k_alloc(sizeof(wait_queue_t));
 
     if (pid != NULL) {
         *pid = process->pid;

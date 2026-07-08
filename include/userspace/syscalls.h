@@ -3,7 +3,7 @@
 #ifndef SYSCALLS_H
 #define SYSCALLS_H
 
-#define NUM_SYSCALLS    11
+#define NUM_SYSCALLS    15
 
 enum {
     SYS_EXIT,
@@ -20,6 +20,10 @@ enum {
     SYS_CHDIR,
     SYS_GETCWD,
     SYS_WAIT_FOR_PROCESS,
+
+    SYS_SEND,
+    SYS_RECIEVE,
+    SYS_GETPID,
 };
 
 typedef uint64_t (*syscall_t)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);

@@ -10,6 +10,7 @@
 #include "userspace/user_fb.h"
 #include "memory/vmm.h"
 #include "utils/linked_lists.h"
+#include "userspace/ipc.h"
 
 #include "userspace/syscalls.h"
 
@@ -301,6 +302,15 @@ int sys_wait_for_process(int pid) {
     return PROTO_OK;
 }
 
+int sys_send(int pid, ipc_syscall_payload *msg) {
+    return ipc_send(pid, msg->message, msg->data, msg->size);
+}
+
+int sys_getpid() {
+    if (g_current_thread == NULL || g_current_thread->process == NULL) { return -1; }
+    return g_current_thread->process->pid;
+}
+
 void* syscall_handlers[] = {
     [SYS_EXIT]              = sys_exit,
     [SYS_READ]              = sys_read,
@@ -314,6 +324,9 @@ void* syscall_handlers[] = {
     [SYS_CHDIR]             = sys_chdir,
     [SYS_GETCWD]            = sys_getcwd,
     [SYS_WAIT_FOR_PROCESS]  = sys_wait_for_process,
+    [SYS_SEND]              = sys_send,
+    [SYS_RECIEVE]           = ipc_recieve,
+    [SYS_GETPID]            = sys_getpid,
 };
 
 void syscall_handler(idt_frame_t *frame) {

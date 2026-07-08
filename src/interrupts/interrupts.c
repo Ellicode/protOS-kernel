@@ -88,6 +88,7 @@ void isr_handler(idt_frame_t* frame) {
         } else if (c > 0) {
             stdin_data->kbd_buf[len] = c;
             stdin_data->kbd_buf[len + 1] = '\0';
+            ipc_dispatch("proto.keydown", NULL, 0);
             print_char(c);
         }
     } else if (vec_buffer == 0x80) {

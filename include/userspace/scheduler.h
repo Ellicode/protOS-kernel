@@ -4,13 +4,15 @@
 #include "userspace/process.h"
 #include "interrupts/interrupts.h"
 #include "utils/ticket_lock.h"
+#include "utils/wait_queue.h"
+
+typedef struct process_t process_t;
 
 typedef enum {
     THREAD_RUNNING,
     THREAD_SLEEPING,
     THREAD_STOPPED
 } thread_state_t;
-
 
 typedef struct Thread {
     idt_frame_t     context;
@@ -24,18 +26,6 @@ typedef struct Thread {
     struct Thread   *prev;
 } Thread;
 typedef Thread thread_t;
-
-typedef struct __thread_queue_inner {
-    struct Thread               *thread;
-
-    struct __thread_queue_inner * prev;
-    struct __thread_queue_inner * next;
-} __thread_queue_inner;
-
-typedef struct wait_queue {
-    __thread_queue_inner    *head;
-    ticketlock_t            *lock;
-} wait_queue_t;
 
 extern thread_t* g_current_thread;
 extern thread_t* g_threads;
