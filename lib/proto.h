@@ -50,7 +50,9 @@ enum {
 
     SYS_SEND,
     SYS_RECIEVE,
-    SYS_GETPID
+    SYS_GETPID,
+
+    SYS_PANIC,
 };
 
 enum {
@@ -96,6 +98,7 @@ int chdir(const char *path);
 int getcwd(char *buf, size_t size);
 int stat(uint64_t fd, dentry_t *buffer);
 int read_dir(uint64_t fd, dentry_t *entries, int *num_entries);
+int panic(char *ename);
 
 int input(char *buffer);
 void printf(const char *format, ...);
@@ -103,7 +106,7 @@ void fprintf(uint64_t fd, const char *format, ...);
 
 // PROCESS ===================================================================================
 
-int create_process(const char *elf, char argv[16][64]);
+int create_process(const char *elf, char argv[16][64], int argc);
 void exit();
 void wait_for_process(int pid);
 int getpid();
@@ -171,18 +174,14 @@ typedef struct ipc_syscall_payload {
     size_t          size;
 } ipc_syscall_payload;
 
-typedef struct ipc_message_t {
+typedef struct ipc_meta_t {
     uint64_t                sender;
     char                    name[255];
-
     uint64_t                size;
-    void                    *data;
+} ipc_meta_t;
 
-    struct ipc_message_t    *next;
-    struct ipc_message_t    *prev;
-} ipc_message_t;
 
 int ipc_send(uint64_t pid, char *message, void *data, size_t size);
-int ipc_recieve(ipc_message_t **buf);
+int ipc_recieve(ipc_meta_t *meta, void *data);
 
 #endif

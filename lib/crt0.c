@@ -1,12 +1,12 @@
 #include "proto.h"
 
-extern int pmain(char argv[16][64]);
+extern int pmain(char argv[16][64], int argc);
 
-void _start(char argv[16][64])
+void _start(char argv[16][64], int argc)
 {
     heap_init();
     
-    pmain(argv);
+    pmain(argv, argc);
 
     exit();
 }

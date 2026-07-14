@@ -40,18 +40,24 @@ int ipc_send(uint64_t pid, char *message, void *data, size_t size) {
     return PROTO_OK;
 }
 
-int ipc_recieve(ipc_message_t **buf) {
-    if (g_current_thread == NULL || g_current_thread->process == NULL) { return PROTO_ERR_UNKNOWN; }
+int ipc_recieve(ipc_meta_t *meta, void *data) {
+    if (meta == NULL || data == NULL) { return PROTO_ERR_INVALID_ARGUMENT; }
+    if (!g_current_thread || !g_current_thread->process) { return PROTO_ERR_UNKNOWN; }
 
     ipc_queue_t *q = &g_current_thread->process->msg_queue;
-    ipc_message_t *top_msg = q->messages;
 
-    while (top_msg == NULL) {
+    while (q->messages == NULL) {
         queue_sleep(q->waiters, g_current_thread);
     }
 
+    ipc_message_t *top_msg = q->messages;
     LL_UNLINK(top_msg, q->messages);
-    *buf = top_msg;
+
+    meta->sender = top_msg->sender;
+    meta->size = top_msg->size;
+    strcpy(meta->name, top_msg->name);
+
+    memcpy(data, top_msg->data, top_msg->size);
 
     return PROTO_OK;
 }

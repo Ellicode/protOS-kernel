@@ -34,6 +34,10 @@ int read_dir(uint64_t fd, dentry_t *entries, int *num_entries) {
     return syscall(SYS_READ_DIR, fd, (uint64_t)entries, (uint64_t)num_entries);
 };
 
+int panic(char *ename) {
+    return syscall(SYS_PANIC, (uint64_t)ename, 0, 0);
+}
+
 int input(char *buffer) {
     return read(0, 0, buffer);
 }

@@ -42,6 +42,6 @@ typedef struct process_t {
 
 extern process_t *g_active_processes;
 
-int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64]);
+int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64], int argc);
 
 #endif // PROCESS_H

@@ -49,6 +49,9 @@ freelist_pmm_node_t* freelist_pmm_head = NULL;
 uint64_t freelist_pmm_fill_entry = 0;
 uint64_t freelist_pmm_fill_offset = 0;
 
+static uint64_t total_usable_memory_bytes = 0; 
+static uint64_t total_lazy_loaded_bytes = 0;   
+
 void fpmm_fill(uint64_t pages) {
     uint64_t pages_added = 0;
 
@@ -85,6 +88,7 @@ void fpmm_fill(uint64_t pages) {
             node->next = freelist_pmm_head;
             freelist_pmm_head = node;
             pages_added++;
+            total_lazy_loaded_bytes += PAGE_SIZE;
             freelist_pmm_fill_offset += PAGE_SIZE;
         }
 
@@ -137,10 +141,30 @@ int fpmm_init() {
 
 // What does it fucking have to do with freelist? i have no idea
 int getmemsz() {
+    if (total_usable_memory_bytes > 0) {
+        return total_usable_memory_bytes;
+    }
+
     int accumulated_size = 0;
     for (uint64_t i = 0; i < g_lim_memmap->entry_count; i++) {
         struct limine_memmap_entry *entry = g_lim_memmap->entries[i];
         accumulated_size += entry->length;
     }
+
+    total_usable_memory_bytes = accumulated_size;
     return accumulated_size;
+}
+
+int getmemused() {
+    size_t free_count = 0;
+    freelist_pmm_node_t* current = freelist_pmm_head;
+
+    while (current != NULL) {
+        free_count++;
+        current = current->next;
+    }
+
+    size_t free = free_count * PAGE_SIZE;
+    if (total_lazy_loaded_bytes < free) { return 0; }
+    return (total_lazy_loaded_bytes - free);
 }

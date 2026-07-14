@@ -165,6 +165,7 @@ void set_color(color_t fg, color_t bg) {
 void print_char(char c) {
     if (term_graphics_init) {
         if (c == '\n') {
+            put_char(cursor_row, cursor_col, ' ');
             serial_write('\n');
             set_cursor(cursor_row+1, 0);
         } else if (c == '\b') {

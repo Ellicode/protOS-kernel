@@ -84,6 +84,9 @@ set(KERNEL_SOURCES
         src/memory/heap.c
         include/memory/heap.h
 
+        src/memory/pat.c
+        include/memory/pat.h
+
         # USERSPACE =============================================================
 
         src/userspace/scheduler.c

@@ -49,7 +49,7 @@ void k_main() {
     fill_screen(PROTO_BG);
     set_cursor(0, 0);
 
-    create_process("/System/Programs/corgi", 1, NULL, NULL);
+    create_process("/System/Programs/corgi", 1, NULL, NULL, 0);
 
     enable_interrupts();
 

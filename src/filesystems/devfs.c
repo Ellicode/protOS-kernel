@@ -133,7 +133,7 @@ int devfs_read(inode_t *inode, uint64_t size, void *buffer) {
             break;
         case DEV_ABOUT:
             int memsz = getmemsz();
-            int memused = 0;
+            int memused = getmemused();
 
             about_data_t about_data = (about_data_t) {
                 .os_name        = PROTO_NAME,

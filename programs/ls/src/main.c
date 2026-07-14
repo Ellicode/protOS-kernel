@@ -24,12 +24,13 @@ int format_size(int size, char **suffix) {
     return new_size;
 }
 
-int pmain(char argv[16][64]) {
+int pmain(char argv[16][64], int argc) {
     dentry_t entries[64] = { 0 };
     int num_entries = 0;
 
     int cwd_fd;
-    if (strcmp(argv[1], "") != 0) {
+
+    if (argc == 2) {
         cwd_fd = open(argv[1], "r");
     } else {
         cwd_fd = open(".", "r");

@@ -71,6 +71,8 @@ cp build/programs/corgi/corgi initramfs/System/Programs/corgi
 cp build/programs/protofetch/protofetch initramfs/System/Programs/protofetch
 cp build/programs/ls/ls initramfs/System/Programs/ls
 cp build/programs/protowm/protowm initramfs/System/Programs/protowm
+cp build/programs/edit/edit initramfs/System/Programs/edit
+cp build/programs/panic/panic initramfs/System/Programs/panic
 
 mkdir -p ignore-scripts
 
@@ -115,9 +117,9 @@ case $1 in
             -serial stdio \
             -no-reboot \
             -no-shutdown \
-            -display gtk,gl=on,zoom-to-fit=on \
-            -device virtio-vga-gl \
             $EXTRA_QEMU_ARGS
+            # -display gtk,gl=on,zoom-to-fit=on \
+            # -device virtio-vga-gl \
 esac
 
 echo -e "\n"

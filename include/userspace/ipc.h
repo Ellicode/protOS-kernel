@@ -18,6 +18,12 @@ typedef struct ipc_message_t {
     struct ipc_message_t    *prev;
 } ipc_message_t;
 
+typedef struct ipc_meta_t {
+    uint64_t                sender;
+    char                    name[255];
+    uint64_t                size;
+} ipc_meta_t;
+
 typedef struct ipc_queue_t {
     ipc_message_t   *messages;
     wait_queue_t    *waiters;
@@ -32,7 +38,7 @@ typedef struct ipc_syscall_payload {
 } ipc_syscall_payload;
 
 int ipc_send(uint64_t pid, char *message, void *data, size_t size);
-int ipc_recieve(ipc_message_t **buf);
+int ipc_recieve(ipc_meta_t *meta, void *data);
 int ipc_dispatch(char *message, void *data, size_t size);
 
 #endif // IPC_H

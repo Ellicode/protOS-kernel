@@ -39,5 +39,6 @@ void  fpmm_free_page(void* ptr);
 int   fpmm_init();
 
 int getmemsz();
+int getmemused();
 
 #endif // FREELIST_PMM_H

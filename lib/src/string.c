@@ -350,6 +350,11 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args) {
                     arg_str = "(null)";
                 }
             } 
+            else if (format[i] == 'c') {
+                char c = va_arg(args, char);
+                char str[2] = {c, '\0'};
+                arg_str = str;
+            }
             else if (format[i] == '%') {
                 if (written < size - 1) {
                     str[written] = '%';

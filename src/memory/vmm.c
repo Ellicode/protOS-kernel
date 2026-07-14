@@ -1,5 +1,6 @@
 #include "utils/ticket_lock.h"  
 #include "memory/freelist_pmm.h"
+#include "memory/pat.h"
 #include "graphics/console.h"
 #include "debug/logger.h"
 #include "globals.h"
@@ -223,7 +224,7 @@ void vmm_init() {
     uint64_t fb_size = g_vga_active_framebuffer->pitch * g_vga_active_framebuffer->height;
 
     for (uint64_t off = 0; off < fb_size; off += PAGE_SIZE) {
-        map_page(fb_phys + off + g_lim_hhdm->offset, fb_phys + off, F_WRITE | F_PCD, kernel_pml4);
+        map_page(fb_phys + off + g_lim_hhdm->offset, fb_phys + off, F_WRITE | F_PCD | F_CACHE_WC, kernel_pml4);
     }
 
     k_debug("Mapped framebuffer region\n");

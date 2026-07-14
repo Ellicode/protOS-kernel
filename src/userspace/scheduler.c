@@ -79,14 +79,21 @@ void queue_wake_all(wait_queue_t *wq) {
 void scheduler_tick(idt_frame_t* ctx) {
     memcpy(&g_current_thread->context, ctx, sizeof(idt_frame_t));
         
-    // if (g_current_thread->state == THREAD_RUNNING) {
-        LL_UNLINK(g_current_thread, g_threads);
-        LL_APPEND(g_current_thread, g_threads);
-    // }
+    LL_UNLINK(g_current_thread, g_threads);
+    LL_APPEND(g_current_thread, g_threads);
 
     thread_t *next = g_threads;
 
     while (next->state != THREAD_RUNNING) {
+        if (next->state == THREAD_STOPPED) {
+            LL_UNLINK(next, g_threads);
+            LL_UNLINK(next->process, g_active_processes);
+            k_free(next->process->msg_queue.waiters);
+            k_free(next->process->kernel_stack);
+            k_free(next->process);
+            k_free(next);
+        }
+
         next = next->next;
         if (next == NULL) {
             next = idle;

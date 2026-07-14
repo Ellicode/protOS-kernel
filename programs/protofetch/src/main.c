@@ -25,7 +25,7 @@ int format_size(int size, char **suffix) {
     return new_size;
 }
 
-int pmain(char argv[16][64]) {
+int pmain(char argv[16][64], int argc) {
     int about_fd = open("/Devices/about", "r");
     about_data_t *about = malloc(sizeof(about_data_t));
     int about_status = read(about_fd, 0, about);
@@ -47,10 +47,13 @@ int pmain(char argv[16][64]) {
 
         switch (i) {
             case 0:
-                printf(ANSI_BLUE "OS" ANSI_RESET ":   %s v%s", about->os_name, about->os_version);
+            OS:     
+            ARCH:   
+            MEMORY: 
+                printf(ANSI_BLUE "OS" ANSI_RESET ":     %s v%s", about->os_name, about->os_version);
                 break;
             case 1:
-                printf(ANSI_BLUE "Arch" ANSI_RESET": %s", about->os_arch);
+                printf(ANSI_BLUE "Arch" ANSI_RESET":   %s", about->os_arch);
                 break;
             case 2:
                 char *used_suffix = "B";
@@ -58,8 +61,9 @@ int pmain(char argv[16][64]) {
 
                 int used = format_size(about->mem_used, &used_suffix);
                 int size = format_size(about->mem_size, &size_suffix);
+                int percentage = about->mem_used / (about->mem_size / 100);
 
-                printf(ANSI_BLUE "Memory" ANSI_RESET": %d%s / %d%s (%d%% used)", used, used_suffix, size, size_suffix, (used / size * 100));
+                printf(ANSI_BLUE "Memory" ANSI_RESET": %d%s / %d%s (%d%% used)", used, used_suffix, size, size_suffix, percentage);
                 break;
 
             // ...
@@ -75,7 +79,7 @@ int pmain(char argv[16][64]) {
         tok = strtok(NULL, "\n");
     }
     printf("\n\n");
-
+    free(about);
     close(about_fd);
     return 0;
 }

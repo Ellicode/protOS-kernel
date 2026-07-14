@@ -18,7 +18,7 @@ void __not_implemented () {}
 
 void sys_exit()
 {
-    if (!g_current_thread || !g_current_thread->process || !g_current_thread->process->cwd) {
+    if (!g_current_thread || !g_current_thread->process) {
         // k_assert(PROTO_ERR_UNKNOWN);
         return; 
     }
@@ -201,7 +201,7 @@ int sys_close(uint64_t fd) {
     return vfs_close(fd_pointer);
 }
 
-int sys_create_process(char *path, char argv[16][64]) {    
+int sys_create_process(char *path, char argv[16][64], int argc) {    
     if (!g_current_thread || !g_current_thread->process) {
         // k_assert(PROTO_ERR_UNKNOWN);
         return PROTO_ERR_UNKNOWN; 
@@ -209,7 +209,7 @@ int sys_create_process(char *path, char argv[16][64]) {
 
     g_current_thread->state = THREAD_SLEEPING;
     int pid;
-    int ret = create_process(path, 0, &pid, argv);
+    int ret = create_process(path, 0, &pid, argv, argc);
     g_current_thread->waiting_for = pid;
 
     return ret;
@@ -303,7 +303,16 @@ int sys_wait_for_process(int pid) {
 }
 
 int sys_send(int pid, ipc_syscall_payload *msg) {
-    return ipc_send(pid, msg->message, msg->data, msg->size);
+    if (msg == NULL) { return PROTO_ERR_INVALID_ARGUMENT; }
+
+    ipc_syscall_payload *payload = k_alloc(sizeof(ipc_syscall_payload));
+
+    strncpy(payload->message, msg->message, 255);
+    payload->data = k_alloc(msg->size);
+    memcpy(payload->data, msg->data, msg->size);
+    payload->size = msg->size;
+
+    return ipc_send(pid, payload->message, payload->data, payload->size);
 }
 
 int sys_getpid() {
@@ -327,6 +336,7 @@ void* syscall_handlers[] = {
     [SYS_SEND]              = sys_send,
     [SYS_RECIEVE]           = ipc_recieve,
     [SYS_GETPID]            = sys_getpid,
+    [SYS_PANIC]             = panic,
 };
 
 void syscall_handler(idt_frame_t *frame) {

@@ -3,6 +3,7 @@
 #include "filesystems/vfs.h"
 #include "memory/heap.h"
 #include "memory/vmm.h"
+#include "memory/pat.h"
 #include "userspace/elf.h"
 #include "userspace/scheduler.h"
 #include "userspace/userspace.h"
@@ -19,7 +20,7 @@
 uint64_t curr_pid = 0;
 process_t *g_active_processes = NULL;
 
-int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64]) {
+int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64], int argc) {
     file_descriptor_t *f = vfs_open(rootfs->root, elf_path, FD_READ);
 
     if (f == NULL) {
@@ -43,17 +44,6 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64])
     vfs_close(f);
 
     uint64_t pml4 = create_user_pml4();
-    uint64_t physical_fb = (uint64_t)g_vga_active_framebuffer->address - g_lim_hhdm->offset;
-    size_t fb_size = PAGE_ROUND(g_vga_active_framebuffer->width * g_vga_active_framebuffer->height);
-    
-    // map framebuffer
-    vmm_map_phys_range(
-        pml4, 
-        USER_FRAMEBUFFER_BASE, 
-        physical_fb, 
-        fb_size, 
-        F_USER | F_WRITE | F_PCD 
-    );
 
     // map heap
     vmm_map_range(
@@ -100,7 +90,7 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64])
         process->fd_table[2] = stderr;
     } else {
         if (g_current_thread->process != NULL) {
-            memcpy(process->fd_table, g_current_thread->process->fd_table, sizeof(g_current_thread->process->fd_table));
+            memcpy((void *)process->fd_table, (void *)g_current_thread->process->fd_table, sizeof(g_current_thread->process->fd_table));
         }
     }
 
@@ -113,15 +103,18 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64])
     if (argv != NULL) {
         uint64_t user_rsp = thread->context.rsp;
 
-        user_rsp -= 64 * 16;
-
+        user_rsp -= (uint64_t)64 * 16;
         uint64_t phys = vmm_virt_to_phys(process->cr3, user_rsp);
         void *dst = (void *)(phys + g_lim_hhdm->offset);
-
-        memcpy(dst, argv, 64 * 16);
-
-        thread->context.rsp = user_rsp;
+        memcpy(dst, argv, (uint64_t)64 * 16);
         thread->context.rdi = user_rsp;
+
+        user_rsp -= 8;
+        thread->context.rsi = argc;
+
+        user_rsp &= ~0xFULL;
+        user_rsp -= 8;
+        thread->context.rsp = user_rsp;
     }
     return PROTO_OK;
 }

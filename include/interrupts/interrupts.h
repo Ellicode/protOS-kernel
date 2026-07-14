@@ -76,4 +76,6 @@ void enable_interrupts();
 void disable_interrupts();
 void restore_interrupts(int irqs);
 
+void panic(char *err);
+
 #endif

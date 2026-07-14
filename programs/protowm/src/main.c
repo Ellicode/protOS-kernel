@@ -19,13 +19,14 @@ void draw_rect(fb_info_t *fb, uint32_t x, uint32_t y, uint32_t w, uint32_t h, ui
 
     for (uint32_t row = y; row < y + h; row++) {
         for (uint32_t col = x; col < x + w; col++) {
+            if (row > fb->height || col > fb->width) { continue; }
             fb_ptr[row * fb_pitch + col] = color;
         }
     }
 }
 
 
-int pmain(char argv[16][64]) {
+int pmain(char argv[16][64], int argc) {
     fb_info_t *front = malloc(sizeof(fb_info_t));
     fetch_framebuffer(front);
     if (front == NULL) {
@@ -43,24 +44,26 @@ int pmain(char argv[16][64]) {
     back->pitch     = front->pitch;
 
 
-    draw_rect(back, 0, 0, 100, 100, 0xFF0000);
+    // draw_rect(front, 0, 0, front->width, front->height, 0xFF0000);
 
     // swap buffers
-    memcpy((void *)front->address, (void *)back->address, fb_size);
+    // memcpy((void *)front->address, (void *)back->address, fb_size);
 
     printf("resolution=%dx%d; bpp=%d\n", front->width, front->height, front->bpp);
     printf("pid=%d\n", getpid());
+    
+    ipc_meta_t *meta = malloc(sizeof(ipc_meta_t));
+    char *data = malloc(1);
 
-    ipc_message_t *buf = malloc(sizeof(ipc_message_t));
-    int res = ipc_recieve(&buf);
+    int res = ipc_recieve(meta, data);
     printf("res=%d\n", res);
-    if (buf == NULL) {
+    if (meta == NULL) {
         printf("buf is null\n");
     } else {
-        printf("IPC recieved! sender=%d\n", buf->sender);
+        printf("IPC recieved! name=%s, sender=%d, size=%d \n", meta->name, meta->sender, meta->size);
+        printf("char=%c\n", *data);
     }
 
-    free(buf);
     free(back_data);
     free(back);
     free(front);

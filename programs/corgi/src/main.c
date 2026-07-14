@@ -13,14 +13,16 @@
 #include "split.h"
 #include "corgi.h"
 
-int pmain()
+int pmain(char argv[16][64], int argc)
 {
     chdir("/");
     printf("protOS corgi v%s\n", CORGI_VERSION);
 
     char *pathbuf = malloc(128);
     char *cmdbuf = malloc(256);
-    char argv[16][64];
+    char _argv[16][64];
+
+    int pid = getpid();
 
     while (1)
     {
@@ -28,17 +30,22 @@ int pmain()
         printf("[" ANSI_BLUE "%s" ANSI_RESET "]& ", pathbuf);
 
         input(cmdbuf);
-        split_cmd(cmdbuf, argv, 64);
-
-        if (strcmp(argv[0], "cd") == 0) {
-            crg_cd(argv);
-        } else {
-            char path[256];
-            snprintf(path, 256, "/System/Programs/%s", argv[0]);
-            int pid;
-            int ret = create_process(path, argv);
-            if (ret == PROTO_ERR_FILE_NOT_FOUND) {
-                fprintf(STDERR, "(err) no such program \"%s\"\n", argv[0]);
+        int _argc = split_cmd(cmdbuf, _argv, 64);
+        if (_argc > 0) {
+            if (strcmp(_argv[0], "cd") == 0) {
+                crg_cd(_argv);
+            } else if (strcmp(_argv[0], "exit") == 0) {
+                if (pid > 1) {
+                    exit();
+                }
+            } else {
+                char path[256];
+                snprintf(path, 256, "/System/Programs/%s", _argv[0]);
+                int pid;
+                int ret = create_process(path, _argv, _argc);
+                if (ret == PROTO_ERR_FILE_NOT_FOUND) {
+                    fprintf(STDERR, "(err) no such program \"%s\"\n", _argv[0]);
+                }
             }
         }
     }

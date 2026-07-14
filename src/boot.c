@@ -9,6 +9,7 @@
 #include "memory/freelist_pmm.h"
 #include "memory/vmm.h"
 #include "memory/heap.h"
+#include "memory/pat.h"
 #include "userspace/scheduler.h"
 #include "userspace/syscalls.h"
 #include "filesystems/vfs.h"
@@ -72,6 +73,9 @@ int k_init(
         return PROTO_ERR_INIT_FAILED;
     }
     k_success("Initialized PMM.\n");
+    
+    pat_init();
+    k_success("Initialized PAT.\n");
     
     vmm_init();
     k_success("Initialized Paging.\n");

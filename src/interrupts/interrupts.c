@@ -1,3 +1,5 @@
+#include <stdarg.h>
+
 #include "debug/logger.h"
 #include "graphics/console.h"
 #include "interrupts/pic.h"
@@ -40,33 +42,56 @@ char* panic_messages[ISR_EXCEPTION_COUNT] = {
     [ISR_EXC_PAGE_FAULT]            = "Page fault"
 };
 
-void _panic_print(idt_frame_t* frame) {
-    char* p_msg = panic_messages[frame->vector];
+void _panic_stub(char *ename, int is_frame, idt_frame_t *frame) {
+    char* p_msg; 
+
+    if (is_frame == 1) {
+        p_msg = panic_messages[frame->vector];
+    } else {
+        p_msg = ename;
+    }
+
     uint64_t cr2;
     asm __volatile__ ("movq %%cr2, %0": "=R"(cr2)); 
 
-    set_color(PROTO_BLACK, PROTO_RED);
-    print_f("[");
-    print_f("PANIC");
-    print_f("]");
-    set_color(PROTO_WHITE, PROTO_BG);
-    print_f(" VEC: %18d, ERR: %18x, %s.\n", frame->vector, frame->error_code, p_msg == 0x0 ? "???" : p_msg);
-    print_f("        R8 : %18x, R9 : %18x, R10: %18x, R11: %18x\n", frame->r8, frame->r9, frame->r10, frame->r11);
-    print_f("        R12: %18x, R13: %18x, R14: %18x, R15: %18x\n", frame->r12, frame->r13, frame->r14, frame->r15);
-    print_f("        RBP: %18x, RDI: %18x, RSI: %18x, RDX: %18x\n", frame->rbp, frame->rdi, frame->rsi, frame->rdx);
-    print_f("        RCX: %18x, RBX: %18x, RAX: %18x, CR2: %18x\n", frame->rcx, frame->rbx, frame->rax, cr2);
-    print_f("        RIP: %18x, CS : %18x, RF : %18x, RSP: %18x\n", frame->rip, frame->cs, frame->rflags, frame->rsp);
-    print_f("        Something really bad has happened 3:");
+    set_cursor(0, 0);
+    term_clear_buffer();
+    fill_screen(PROTO_BLUE);
+    set_color(PROTO_BLACK, PROTO_BLUE);
+
+    print_f("\n\n    The system has been halted by a unexpected error. More debug informations can be found below.\n\n");
+   
+    print_f("    Error Name:    %s\n", p_msg == 0x0 ? "???" : p_msg);
+    
+    if (is_frame == 1) {
+        print_f("    Error Code:    %x\n", frame->error_code);
+        print_f("    Address (RIP): %x\n\n", frame->rip);
+
+        print_f("    CR2:           %x\n", cr2);
+        print_f("    CS:            %x\n", frame->cs);
+        print_f("    RSP:           %x\n", frame->rsp);
+        print_f("    RF:            %x\n", frame->rflags);
+    }
+    print_f("\n    Feel free to file a bug report with the bug tracker link below:\n");
+    print_f("    https://github.com/Ellicode/protOS-kernel/issues\n\n");
+    print_f("    ProtOS will now halt. Please reboot your computer manually by holding the power button. We apologize for the inconvenience.\n");
+
+    draw_glyph(GLYPH_KPANIC, g_vga_active_framebuffer->width-70, g_vga_active_framebuffer->height-70);
+
     for (;;) {
         __asm__ ("hlt");
     }
+}
+
+void panic(char *err) {
+    _panic_stub(err, 0, NULL);
 }
 
 void isr_handler(idt_frame_t* frame) {
     uint64_t vec_buffer = frame->vector; // context switches can switch to a different vector
 
     if (vec_buffer < ISR_EXCEPTION_COUNT) {
-        _panic_print(frame);
+        _panic_stub(NULL, 1, frame);
     } else if (vec_buffer == 32) {
         g_pit_ticks++;
         scheduler_tick(frame);
@@ -78,18 +103,24 @@ void isr_handler(idt_frame_t* frame) {
         if (stdin_data == NULL) { return; } // 3:< i gotchu
         size_t len = strlen(stdin_data->kbd_buf);
         if (c == '\n') {
-            queue_wake_all(&stdin->waiters);
-            print_char('\n');
+            ipc_dispatch("proto.keydown", &c, 1);
+            if (stdin->waiters.head != NULL) {
+                queue_wake_all(&stdin->waiters);
+                print_char('\n');
+            }
         } else if (c == '\b') {
-            if (len > 0) {
+            ipc_dispatch("proto.keydown", &c, 1);
+            if (len > 0 && stdin->waiters.head != NULL) {
                 stdin_data->kbd_buf[len - 1] = '\0';
                 print_char('\b');
             }
         } else if (c > 0) {
-            stdin_data->kbd_buf[len] = c;
-            stdin_data->kbd_buf[len + 1] = '\0';
-            ipc_dispatch("proto.keydown", NULL, 0);
-            print_char(c);
+            ipc_dispatch("proto.keydown", &c, 1);
+            if (stdin->waiters.head != NULL) {
+                stdin_data->kbd_buf[len] = c;
+                stdin_data->kbd_buf[len + 1] = '\0';
+                print_char(c);
+            }
         }
     } else if (vec_buffer == 0x80) {
         syscall_handler(frame);
