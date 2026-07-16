@@ -65,6 +65,8 @@ void ps2keyboard_init() {
         ps2_read_data();
     }
 
+    ps2_write_data(0xF4);
+
     unmask_irq(1);
 }
 

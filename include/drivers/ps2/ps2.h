@@ -7,6 +7,8 @@
 
 #define ACK                 0xFA
 
+void ps2_wait_write();
+void ps2_wait_read();
 void ps2_write_cmd(unsigned char cmd);
 void ps2_write_data(unsigned char data);
 

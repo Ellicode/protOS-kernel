@@ -29,7 +29,7 @@ void* isr_exception_handlers[ISR_EXCEPTION_COUNT] = {
 void* isr_irq_handlers[ISR_IRQ_COUNT] = {
     [ISR_IRQ_PIT]                   = isr_call_32,
     [ISR_IRQ_KEYBOARD]              = isr_call_33,
-    [ISR_IRQ_MOUSE]                 = isr_call_34,
+    [ISR_IRQ_MOUSE]                 = isr_call_44,
 };
 
 char* panic_messages[ISR_EXCEPTION_COUNT] = {
@@ -125,7 +125,7 @@ void isr_handler(idt_frame_t* frame) {
                 print_char(c);
             }
         }
-    } else if (vec_buffer == 34) {
+    } else if (vec_buffer == 44) {
         ps2mouse_read();
     } else if (vec_buffer == 0x80) {
         syscall_handler(frame);

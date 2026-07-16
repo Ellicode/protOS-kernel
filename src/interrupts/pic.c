@@ -12,7 +12,7 @@ void eoi(uint8_t irq) {
     }
 	outb(PIC1_COMMAND,PIC_EOI);
 
-    __asm__ volatile ("sti");
+    // __asm__ volatile ("sti");
 }
 
 void mask_irq(irq_t irq) {
@@ -93,9 +93,16 @@ void pic_init() {
     lo &= ~(1 << 11); 
     __asm__ volatile("wrmsr" :: "c"(0x1B), "a"(lo), "d"(hi));
 
-    // Switch to PIC mode via IMCR
     outb(0x22, 0x70);
     outb(0x23, 0x01);
 
     _pic_enable(0x20, 0x28);
+
+    uint8_t master_mask = inb(PIC1_DATA) & ~0x06; 
+    outb(PIC1_DATA, master_mask);
+
+    uint8_t slave_mask = inb(PIC2_DATA) & ~0x10;
+    outb(PIC2_DATA, slave_mask);
+    
+    k_debug("PIC Core Routing Cascades Unmasked.\n");
 }

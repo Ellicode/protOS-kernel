@@ -1,16 +1,14 @@
 #include "io.h"
+#include "interrupts/pic.h"
+
 #include "drivers/ps2/ps2.h"
 
 void ps2_wait_write() {
-    while (inb(PS2_STATUS_PORT) & (1 << 1)) {
-        // Loop while Input Buffer Full (Bit 1) is 1
-    }
+    while (inb(PS2_STATUS_PORT) & (1 << 1)) { ;; }
 }
 
 void ps2_wait_read() {
-    while (!(inb(PS2_STATUS_PORT) & (1 << 0))) {
-        // Loop while Output Buffer Full (Bit 0) is 0
-    }
+    while (!(inb(PS2_STATUS_PORT) & (1 << 0))) { ;; }
 }
 
 void ps2_write_cmd(unsigned char cmd) {
@@ -47,4 +45,6 @@ void ps2_init() {
 
     ps2_write_cmd(0xAE); // Re-enable keyboard
     ps2_write_cmd(0xA8); // Re-enable mouse
+
+    unmask_irq(2);
 }

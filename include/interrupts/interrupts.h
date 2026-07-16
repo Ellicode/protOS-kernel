@@ -4,7 +4,7 @@
 #include "interrupts/idt.h"
 
 #define ISR_EXCEPTION_COUNT          32
-#define ISR_IRQ_COUNT                3
+#define ISR_IRQ_COUNT                13
 
 typedef struct {
     uint64_t rax;
@@ -49,7 +49,7 @@ enum {
 enum {
     ISR_IRQ_PIT                     = 0,
     ISR_IRQ_KEYBOARD                = 1,
-    ISR_IRQ_MOUSE                   = 2
+    ISR_IRQ_MOUSE                   = 12
 };
 
 extern void* isr_exception_handlers[ISR_EXCEPTION_COUNT];
@@ -67,7 +67,7 @@ extern void isr_call_14();
 
 extern void isr_call_32();
 extern void isr_call_33();
-extern void isr_call_34();
+extern void isr_call_44();
 
 extern void isr_call_128();
 
