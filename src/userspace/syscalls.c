@@ -322,20 +322,28 @@ int sys_getpid() {
 
 void* syscall_handlers[] = {
     [SYS_EXIT]              = sys_exit,
+
     [SYS_READ]              = sys_read,
     [SYS_WRITE]             = sys_write,
     [SYS_OPEN]              = sys_open,
     [SYS_CLOSE]             = sys_close,
     [SYS_STAT]              = sys_stat,
     [SYS_READ_DIR]          = sys_read_dir,
+
     [SYS_CREATE_PROCESS]    = sys_create_process,
     [SYS_FETCH_FB]          = sys_fetch_fb,
     [SYS_CHDIR]             = sys_chdir,
     [SYS_GETCWD]            = sys_getcwd,
     [SYS_WAIT_FOR_PROCESS]  = sys_wait_for_process,
+    [SYS_GETPID]            = sys_getpid,
+
     [SYS_SEND]              = sys_send,
     [SYS_RECIEVE]           = ipc_recieve,
-    [SYS_GETPID]            = sys_getpid,
+    [SYS_DISPATCH]          = ipc_dispatch,
+    [SYS_CONSUME]           = ipc_consume,
+    [SYS_SUBSCRIBE]         = ipc_subscribe,
+    [SYS_UNSUBSCRIBE]       = ipc_unsubscribe,
+
     [SYS_PANIC]             = panic,
 };
 

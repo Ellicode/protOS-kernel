@@ -34,19 +34,19 @@ int pmain(char argv[16][64], int argc) {
         return 1;
     }
 
-    size_t fb_size = (front->width * front->height);
-    void* back_data = malloc(fb_size);
-    fb_info_t *back = malloc(sizeof(fb_info_t));
-    back->address = (uint64_t)back_data;
-    back->bpp       = front->bpp;
-    back->width     = front->width;
-    back->height    = front->height;
-    back->pitch     = front->pitch;
+    // size_t fb_size = (front->width * front->height);
+    // void* back_data = malloc(fb_size);
+    // fb_info_t *back = malloc(sizeof(fb_info_t));
+    // back->address = (uint64_t)back_data;
+    // back->bpp       = front->bpp;
+    // back->width     = front->width;
+    // back->height    = front->height;
+    // back->pitch     = front->pitch;
 
 
-    // draw_rect(front, 0, 0, front->width, front->height, 0xFF0000);
+    draw_rect(front, front->width - 100, front->height - 100, 100, 100, 0xFF0000);
 
-    // swap buffers
+    // // swap buffers
     // memcpy((void *)front->address, (void *)back->address, fb_size);
 
     printf("resolution=%dx%d; bpp=%d\n", front->width, front->height, front->bpp);
@@ -55,7 +55,9 @@ int pmain(char argv[16][64], int argc) {
     ipc_meta_t *meta = malloc(sizeof(ipc_meta_t));
     char *data = malloc(1);
 
-    int res = ipc_recieve(meta, data);
+    subscribe("proto.keydown");
+
+    int res = recieve(meta, data);
     printf("res=%d\n", res);
     if (meta == NULL) {
         printf("buf is null\n");
@@ -64,9 +66,11 @@ int pmain(char argv[16][64], int argc) {
         printf("char=%c\n", *data);
     }
 
-    free(back_data);
-    free(back);
-    free(front);
+    consume(meta);
+
+    // free(back_data);
+    // free(back);
+    // free(front);
 
     return 0;
 }

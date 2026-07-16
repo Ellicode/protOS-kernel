@@ -47,12 +47,18 @@ enum {
     SYS_CHDIR,
     SYS_GETCWD,
     SYS_WAIT_FOR_PROCESS,
+    SYS_GETPID,
 
     SYS_SEND,
     SYS_RECIEVE,
-    SYS_GETPID,
+    SYS_DISPATCH,
+    SYS_CONSUME,
+    SYS_SUBSCRIBE,
+    SYS_UNSUBSCRIBE,
 
     SYS_PANIC,
+
+    NUM_SYSCALLS // changes automatically
 };
 
 enum {
@@ -178,10 +184,16 @@ typedef struct ipc_meta_t {
     uint64_t                sender;
     char                    name[255];
     uint64_t                size;
+
+    void                    *msg;
 } ipc_meta_t;
 
 
-int ipc_send(uint64_t pid, char *message, void *data, size_t size);
-int ipc_recieve(ipc_meta_t *meta, void *data);
+int send(uint64_t pid, char *message, void *data, size_t size);
+int recieve(ipc_meta_t *meta, void *data);
+int consume(ipc_meta_t *meta);
+int dispatch(char *message, void *data, size_t size);
+int subscribe(char *topic);
+int unsubscribe(char *topic);
 
 #endif

@@ -5,7 +5,7 @@
 #include "graphics/console.h"
 #include "interrupts/idt.h"
 #include "interrupts/pic.h"
-#include "drivers/ps2.h"
+#include "drivers/ps2_kbd.h"
 #include "memory/freelist_pmm.h"
 #include "memory/vmm.h"
 #include "memory/heap.h"

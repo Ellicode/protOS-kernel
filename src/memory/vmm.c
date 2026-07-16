@@ -5,6 +5,7 @@
 #include "debug/logger.h"
 #include "globals.h"
 #include "string.h"
+#include "userspace/process.h"
 
 #include "memory/vmm.h"
 
@@ -257,4 +258,56 @@ uint64_t vmm_virt_to_phys(uint64_t cr3, uint64_t virt) {
     if (!pte.present) { return 0; }
 
     return (pte.addr << 12) | v.offset;
+}
+
+void destroy_addr_space(uint64_t cr3) {
+    // Locate the virtual address of the PML4
+    pt_entry_t *pml4 = (pt_entry_t *)(cr3 + g_lim_hhdm->offset);
+
+    // Only destroy user space mappings (0 to 255)
+    for (int i = 0; i < 256; i++) {
+        PageTableEntry pml4e = { .value = pml4[i] };
+        if (!pml4e.present) { continue; }
+
+        // Get virtual pointer to the PDPT
+        uint64_t pdpt_phys = pml4e.addr << 12;
+        uint64_t* pdpt = (uint64_t*)(pdpt_phys + g_lim_hhdm->offset);
+        
+        for (int j = 0; j < 512; j++) {
+            PageTableEntry pdpte = { .value = pdpt[j] };
+            if (!pdpte.present) { continue; }
+
+            // Get virtual pointer to the PD
+            uint64_t pd_phys = pdpte.addr << 12;
+            uint64_t* pd = (uint64_t*)(pd_phys + g_lim_hhdm->offset);
+            
+            for (int k = 0; k < 512; k++) {
+                PageTableEntry pde = { .value = pd[k] };
+                if (!pde.present) { continue; }
+
+                // Get virtual pointer to the PT
+                uint64_t pt_phys = pde.addr << 12;
+                uint64_t* pt = (uint64_t*)(pt_phys + g_lim_hhdm->offset);
+                
+                for (int l = 0; l < 512; l++) {
+                    PageTableEntry pte = { .value = pt[l] };
+                    if (!pte.present) { continue; }
+                                    
+                    uint64_t va =
+                        ((uint64_t)i << 39) |
+                        ((uint64_t)j << 30) |
+                        ((uint64_t)k << 21) |
+                        ((uint64_t)l << 12);
+
+                    if (va >= USER_FRAMEBUFFER_BASE && va < USER_FRAMEBUFFER_BASE + PAGE_ROUND(g_vga_active_framebuffer->height * g_vga_active_framebuffer->pitch)) { continue; }
+
+                    m_pmm_free_p((void *)(pte.addr << 12));
+                }
+                m_pmm_free_p((void *)pt_phys);
+            }
+            m_pmm_free_p((void *)pd_phys);
+        }
+        m_pmm_free_p((void *)pdpt_phys);
+    }
+    m_pmm_free_p((void *)(cr3 & ~0xFFFULL)); 
 }

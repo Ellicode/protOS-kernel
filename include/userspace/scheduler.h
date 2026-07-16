@@ -38,6 +38,7 @@ void queue_wake_all(wait_queue_t *wq);
 thread_t* create_kernel_thread(void (*fn)());
 thread_t* create_user_thread(process_t *process, uint64_t entry_point);
 void exit_thread(thread_t* thread);
-void scheduler_yield();
+
+extern void scheduler_yield(void);
 
 #endif // SCHEDULER_H

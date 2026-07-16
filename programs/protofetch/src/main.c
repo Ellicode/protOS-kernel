@@ -47,9 +47,6 @@ int pmain(char argv[16][64], int argc) {
 
         switch (i) {
             case 0:
-            OS:     
-            ARCH:   
-            MEMORY: 
                 printf(ANSI_BLUE "OS" ANSI_RESET ":     %s v%s", about->os_name, about->os_version);
                 break;
             case 1:
@@ -63,14 +60,13 @@ int pmain(char argv[16][64], int argc) {
                 int size = format_size(about->mem_size, &size_suffix);
                 int percentage = about->mem_used / (about->mem_size / 100);
 
-                printf(ANSI_BLUE "Memory" ANSI_RESET": %d%s / %d%s (%d%% used)", used, used_suffix, size, size_suffix, percentage);
+                printf(ANSI_BLUE "Memory" ANSI_RESET": %d%s / %d%s (%d%% used - %d bytes)", used, used_suffix, size, size_suffix, percentage, about->mem_used);
                 break;
 
             // ...
 
             case PROTOFETCH_ROWS - 1:
                 printf(ANSI_RED SWATCH_SYMBOL ANSI_GREEN SWATCH_SYMBOL ANSI_YELLOW SWATCH_SYMBOL ANSI_BLUE SWATCH_SYMBOL ANSI_MAGENTA SWATCH_SYMBOL ANSI_CYAN SWATCH_SYMBOL ANSI_RESET SWATCH_SYMBOL);
-
             default:
                 break;
         }

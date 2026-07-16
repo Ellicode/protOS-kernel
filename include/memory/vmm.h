@@ -61,5 +61,6 @@ void *vmm_map_range(uint64_t cr3, uint64_t virt_start, size_t size, uint64_t fla
 void *vmm_map_phys_range(uint64_t cr3, uint64_t virt_start, uint64_t phys_start, size_t size, uint64_t flags);
 uint64_t vmm_virt_to_phys(uint64_t cr3, uint64_t virt);
 uint64_t create_user_pml4();
+void destroy_addr_space(uint64_t cr3);
 
 #endif // VMM_H

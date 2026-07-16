@@ -49,6 +49,20 @@ enum ProtoColors {
     PROTO_BG      = 0x1e1e2e,
 };
 
+// OLDSKOOL ============================
+// enum ProtoColors {
+//     PROTO_RED     = 0xFF0000,
+//     PROTO_GREEN   = 0x00FF00,
+//     PROTO_YELLOW  = 0xFFFF00,
+//     PROTO_BLUE    = 0x0000FF,
+//     PROTO_MAGENTA = 0xFF00FF,
+//     PROTO_CYAN    = 0x00FFFF,
+//     PROTO_WHITE   = 0xFFFFFF,
+//     PROTO_GREY    = 0x999999,
+//     PROTO_BLACK   = 0x000000,
+//     PROTO_BG      = 0x000000,
+// };
+
 
 typedef struct {
     char     ch;

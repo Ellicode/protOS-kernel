@@ -7,9 +7,9 @@
 #include "interrupts/pic.h"
 #include "debug/logger.h"
 
-#include "drivers/ps2_csa.h"
+#include "drivers/ps2_kbd_csa.h"
 
-#include "drivers/ps2.h"
+#include "drivers/ps2_kbd.h"
 
 uint8_t shift_pressed  = 0;
 uint8_t alt_gr_pressed = 0;

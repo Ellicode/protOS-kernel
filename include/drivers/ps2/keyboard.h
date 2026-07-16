@@ -1,5 +1,5 @@
-#ifndef PS2_H
-#define PS2_H
+#ifndef PS2_KEYBOARD_H
+#define PS2_KEYBOARD_H
 
 #define PS2_COMMAND_PORT 0x64
 #define PS2_STATUS_PORT  0x64
@@ -8,4 +8,4 @@
 char get_ps2_scancode();
 void ps2_init();
 
-#endif // PS2_H
+#endif // PS2_KEYBOARD_H

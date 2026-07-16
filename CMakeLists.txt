@@ -70,8 +70,8 @@ set(KERNEL_SOURCES
 
         # DRIVERS ===============================================================
 
-        src/drivers/ps2.c
-        include/drivers/ps2.h
+        src/drivers/ps2/keyboard.c
+        include/drivers/ps2/keyboard.h
 
         # MEMORY ================================================================
 
@@ -91,6 +91,8 @@ set(KERNEL_SOURCES
 
         src/userspace/scheduler.c
         include/userspace/scheduler.h
+
+        src/userspace/yield.asm
 
         src/userspace/elf.c
         include/userspace/elf.h

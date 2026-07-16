@@ -41,19 +41,6 @@ void scheduler_init() {
     g_current_thread    = idle;
 }
 
-__attribute__((naked)) void scheduler_yield() {
-    asm volatile (
-        "pushq %rbp;"
-        "mov %rsp, %rbp;"
-        "pushf;"
-        "sti;"
-        "int $0x20;"
-        "popf;"
-        "popq %rbp;"
-        "ret;"
-    );
-}
-
 void queue_sleep(wait_queue_t *wq, thread_t *thread) {
     __thread_queue_inner *thread_item = k_alloc(sizeof(__thread_queue_inner));
     thread_item->thread = thread;
@@ -76,6 +63,24 @@ void queue_wake_all(wait_queue_t *wq) {
     }
 }
 
+void destroy_thread(thread_t *t) {
+    int lock1r = ticketlock_lock(&threads_lock);
+
+    process_t *proc = t->process;   // save before free
+    LL_UNLINK(t, g_threads);
+    k_free(t);
+
+    if (proc) {
+        LL_UNLINK(proc, g_active_processes);
+        destroy_addr_space(proc->cr3);   // otherwise there would be a huge 5mb memory leak
+        k_free(proc->kernel_stack);
+        k_free(proc->msg_queue.waiters);
+        k_free(proc);
+    }
+
+    ticketlock_unlock(&threads_lock, lock1r);
+}
+
 void scheduler_tick(idt_frame_t* ctx) {
     memcpy(&g_current_thread->context, ctx, sizeof(idt_frame_t));
         
@@ -85,16 +90,13 @@ void scheduler_tick(idt_frame_t* ctx) {
     thread_t *next = g_threads;
 
     while (next->state != THREAD_RUNNING) {
-        if (next->state == THREAD_STOPPED) {
-            LL_UNLINK(next, g_threads);
-            LL_UNLINK(next->process, g_active_processes);
-            k_free(next->process->msg_queue.waiters);
-            k_free(next->process->kernel_stack);
-            k_free(next->process);
-            k_free(next);
+        thread_t *temp = next;
+        next = next->next;
+
+        if (temp->state == THREAD_STOPPED) {
+            destroy_thread(temp);
         }
 
-        next = next->next;
         if (next == NULL) {
             next = idle;
             break;
