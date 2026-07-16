@@ -73,6 +73,12 @@ set(KERNEL_SOURCES
         src/drivers/ps2/keyboard.c
         include/drivers/ps2/keyboard.h
 
+        src/drivers/ps2/mouse.c
+        include/drivers/ps2/mouse.h
+
+        src/drivers/ps2/ps2.c
+        include/drivers/ps2/ps2.h
+
         # MEMORY ================================================================
 
         src/memory/vmm.c

@@ -5,7 +5,9 @@
 #include "graphics/console.h"
 #include "interrupts/idt.h"
 #include "interrupts/pic.h"
-#include "drivers/ps2_kbd.h"
+#include "drivers/ps2/keyboard.h"
+#include "drivers/ps2/mouse.h"
+#include "drivers/ps2/ps2.h"
 #include "memory/freelist_pmm.h"
 #include "memory/vmm.h"
 #include "memory/heap.h"
@@ -96,7 +98,9 @@ int k_init(
 
     // 8) INITIALIZE PS2 KEYBOARD ====================================================
     ps2_init();
-    k_success("Initialized PS2 Keyboard.\n");
+    ps2keyboard_init();
+    ps2mouse_init();
+    k_success("Initialized PS2 Keyboard and Mice.\n");
 
     vfs_init();
     k_success("Initialized VFS.\n");

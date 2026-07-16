@@ -6,15 +6,16 @@
 #include "graphics/console.h"
 #include "interrupts/pic.h"
 #include "debug/logger.h"
+#include "drivers/ps2/ps2.h"
 
-#include "drivers/ps2_kbd_csa.h"
+#include "drivers/ps2/scansets/csa.h"
 
-#include "drivers/ps2_kbd.h"
+#include "drivers/ps2/keyboard.h"
 
 uint8_t shift_pressed  = 0;
 uint8_t alt_gr_pressed = 0;
 
-char get_ps2_scancode() {
+char ps2keyboard_read() {
     if (g_kbd_enable == 1) {
         uint8_t scancode = inb(PS2_DATA_PORT);
         uint8_t key = scancode & 0x7F;
@@ -49,51 +50,19 @@ char get_ps2_scancode() {
     return '\0';
 }
 
-void ps2_init() {
-    outb(PS2_COMMAND_PORT, 0xAD);
-    io_wait();
-    outb(PS2_COMMAND_PORT, 0xA7);
-    io_wait();
-
-    inb(PS2_DATA_PORT);
-    io_wait();
-
-    outb(PS2_COMMAND_PORT, 0x20);
-    io_wait();
-
-    uint8_t status = inb(PS2_DATA_PORT);
-    io_wait();
-    status |=1;
-    status &= ~(1 << 1);
-
-    outb(PS2_COMMAND_PORT, 0x60);
-    io_wait();
-    outb(PS2_DATA_PORT, status);
-    io_wait();
-
-    outb(PS2_COMMAND_PORT, 0xAE);
-    io_wait();
-
-    outb(PS2_DATA_PORT, 0xFF);
-    io_wait();
-
-    int timeout = 1000;
-    uint8_t response;
-    while (timeout--) {
-        if ((inb(PS2_STATUS_PORT) & 1) != 0) {
-            response = inb(PS2_DATA_PORT);
-            if (response == 0xFA) { break; }
+void ps2keyboard_init() {
+    ps2_write_data(0xFF); 
+    
+    if (ps2_read_data() == ACK) {
+        unsigned char bat_res = ps2_read_data();
+        if (bat_res != 0xAA) {
         }
-        // pit_sleep_ms(1);
     }
 
-    outb(PS2_DATA_PORT, 0xF0);
-    io_wait();
-    outb(PS2_DATA_PORT, 0x02);
-    io_wait();
-
-    while ((inb(PS2_STATUS_PORT) & 1) != 0) {
-        inb(PS2_DATA_PORT);
+    ps2_write_data(0xF0);
+    if (ps2_read_data() == ACK) {
+        ps2_write_data(0x02);  
+        ps2_read_data();
     }
 
     unmask_irq(1);

@@ -3,7 +3,8 @@
 #include "debug/logger.h"
 #include "graphics/console.h"
 #include "interrupts/pic.h"
-#include "drivers/ps2_kbd.h"
+#include "drivers/ps2/keyboard.h"
+#include "drivers/ps2/mouse.h"
 #include "io.h"
 #include "globals.h"
 #include "string.h"
@@ -27,7 +28,8 @@ void* isr_exception_handlers[ISR_EXCEPTION_COUNT] = {
 
 void* isr_irq_handlers[ISR_IRQ_COUNT] = {
     [ISR_IRQ_PIT]                   = isr_call_32,
-    [ISR_IRQ_KEYBOARD]              = isr_call_33
+    [ISR_IRQ_KEYBOARD]              = isr_call_33,
+    [ISR_IRQ_MOUSE]                 = isr_call_34,
 };
 
 char* panic_messages[ISR_EXCEPTION_COUNT] = {
@@ -98,32 +100,33 @@ void isr_handler(idt_frame_t* frame) {
         g_pit_ticks++;
         scheduler_tick(frame);
     } else if (vec_buffer == 33) {
-        char c = get_ps2_scancode();
+        char c = ps2keyboard_read();
         devfs_node_t *stdin = g_stdin->fs_data;
         stdin_data_t *stdin_data = stdin->extra_data;
 
         if (stdin_data == NULL) { return; } // 3:< i gotchu
         size_t len = strlen(stdin_data->kbd_buf);
+        ipc_dispatch("proto.keydown", &c, 1);
+
         if (c == '\n') {
-            ipc_dispatch("proto.keydown", &c, 1);
             if (stdin->waiters.head != NULL) {
                 queue_wake_all(&stdin->waiters);
                 print_char('\n');
             }
         } else if (c == '\b') {
-            ipc_dispatch("proto.keydown", &c, 1);
             if (len > 0 && stdin->waiters.head != NULL) {
                 stdin_data->kbd_buf[len - 1] = '\0';
                 print_char('\b');
             }
         } else if (c > 0) {
-            ipc_dispatch("proto.keydown", &c, 1);
             if (stdin->waiters.head != NULL) {
                 stdin_data->kbd_buf[len] = c;
                 stdin_data->kbd_buf[len + 1] = '\0';
                 print_char(c);
             }
         }
+    } else if (vec_buffer == 34) {
+        ps2mouse_read();
     } else if (vec_buffer == 0x80) {
         syscall_handler(frame);
     } else {
