@@ -30,7 +30,7 @@ int pmain(char argv[16][64], int argc) {
     about_data_t *about = malloc(sizeof(about_data_t));
     int about_status = read(about_fd, 0, about);
 
-    if (about_status != PROTO_OK) {
+    if (about_status == -1) {
         fprintf(STDERR, "(err) could not open required devices (%d)\n", about_status);
         return 1;
     }

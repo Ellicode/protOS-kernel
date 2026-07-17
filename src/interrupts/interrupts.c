@@ -106,7 +106,7 @@ void isr_handler(idt_frame_t* frame) {
 
         if (stdin_data == NULL) { return; } // 3:< i gotchu
         size_t len = strlen(stdin_data->kbd_buf);
-        ipc_dispatch("proto.keydown", &c, 1);
+        ipc_dispatch("proto.keyboard.keydown", &c, 1);
 
         if (c == '\n') {
             if (stdin->waiters.head != NULL) {

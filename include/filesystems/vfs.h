@@ -40,12 +40,14 @@ struct vfs_ops_t
     int (*read)(
         inode_t *inode,
         uint64_t size,
+        uint64_t offset,
         void *buffer
     );
 
     int (*write)(
         inode_t *inode,
         uint64_t size,
+        uint64_t offset,
         const void *buffer
     );
 

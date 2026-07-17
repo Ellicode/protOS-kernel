@@ -11,6 +11,7 @@
 #define PAGE_ALIGN(x) ALIGN_UP(x, PAGE_SIZE)
 #define PAGE_ROUND(x) ROUND_UP(x, PAGE_SIZE)
 
+#define CLAMP(val, min, max) ((val) < (min) ? (min) : ((val) > (max) ? (max) : (val)))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 static inline void hcf(void) {

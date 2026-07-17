@@ -108,16 +108,16 @@ int devfs_create_dir(inode_t *dir, char *name, inode_t **result) {
     return PROTO_OK;
 }
 
-int devfs_read(inode_t *inode, uint64_t size, void *buffer) {
+int devfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
     if (inode == NULL) {
         // k_assert(PROTO_ERR_INVALID_ARGUMENT);
-        return PROTO_ERR_INVALID_ARGUMENT;
+        return -1;
     }
 
     devfs_node_t *node = inode->fs_data;
     if (node == NULL) {
         // k_assert(PROTO_ERR_UNKNOWN);
-        return PROTO_ERR_UNKNOWN;
+        return -1;
     }
 
     switch (node->dev_type)
@@ -129,7 +129,8 @@ int devfs_read(inode_t *inode, uint64_t size, void *buffer) {
             memset(stdin_data->kbd_buf, 0, sizeof(stdin_data->kbd_buf)); // clean junk ew
             break;
         case DEV_STATIC:
-            memcpy(buffer, node->extra_data, node->size);
+            if (offset >= node->size) { break; }
+            memcpy(buffer, (const char*)node->extra_data + offset, node->size - offset);
             break;
         case DEV_ABOUT:
             int memsz = getmemsz();
@@ -147,10 +148,10 @@ int devfs_read(inode_t *inode, uint64_t size, void *buffer) {
             break;
         default: // No match
             // k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
-            return PROTO_ERR_FILE_UNSUPPORTED_OP;
+            return -1;
     }
 
-    return PROTO_OK;
+    return size;
 }
 
 int devfs_stat(inode_t *inode, dentry_t *buffer) {
@@ -170,15 +171,15 @@ int devfs_stat(inode_t *inode, dentry_t *buffer) {
     return PROTO_OK;
 }
 
-int devfs_write(inode_t *inode, uint64_t size, const void *buffer) {
+int devfs_write(inode_t *inode, uint64_t size, uint64_t offset, const void *buffer) {
     if (inode == NULL) {
         // k_assert(PROTO_ERR_INVALID_ARGUMENT);
-        return PROTO_ERR_INVALID_ARGUMENT;
+        return -1;
     }
     devfs_node_t *node = inode->fs_data;
     if (node == NULL) {
         // k_assert(PROTO_ERR_UNKNOWN);
-        return PROTO_ERR_UNKNOWN;
+        return -1;
     }
 
     switch (node->dev_type)

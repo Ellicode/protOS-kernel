@@ -188,6 +188,13 @@ typedef struct ipc_meta_t {
     void                    *msg;
 } ipc_meta_t;
 
+typedef struct mouse_move_packet_t {
+    int x;
+    int y;
+
+    int vel_x;
+    int vel_y;
+} mouse_move_packet_t;
 
 int send(uint64_t pid, char *message, void *data, size_t size);
 int recieve(ipc_meta_t *meta, void *data);

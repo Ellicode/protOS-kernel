@@ -1,6 +1,9 @@
 add_executable(protowm
     $<TARGET_OBJECTS:crt0>
     src/main.c
+
+    include/graphics.h
+    src/graphics.c
 )
 
 target_include_directories(protowm PRIVATE include)

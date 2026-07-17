@@ -90,21 +90,26 @@ int tarfs_stat(inode_t *inode, dentry_t *buffer) {
     return PROTO_OK;
 }
 
-int tarfs_read(inode_t *inode, uint64_t size, void *buffer) {
+int tarfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
     if (inode == NULL) {
         // k_assert(PROTO_ERR_INVALID_ARGUMENT);
-        return PROTO_ERR_INVALID_ARGUMENT;
+        return -1;
     }
 
     ustar_node_t *node = (ustar_node_t *)inode->fs_data;
     if (node == NULL) {
         // k_assert(PROTO_ERR_UNKNOWN);
-        return PROTO_ERR_UNKNOWN;
+        return -1;
     }
-    void *data = (void *)node->offset;
-    memcpy(buffer, data, size);
+    if (offset >= node->size) { return 0; } // EOF
+    
+    uint64_t remaining = node->size - offset;
+    uint64_t to_read = (size < remaining) ? size : remaining;
 
-    return PROTO_OK;
+    void *data = (void *)(node->offset + offset);
+    memcpy(buffer, data, to_read);
+
+    return to_read;
 }
 
 int tarfs_read_dir(inode_t *dir, dentry_t *entries, int *num_entries) {

@@ -14,8 +14,15 @@ int ipc_send(uint64_t pid, char *message, void *data, size_t size) {
     ipc_message_t *msg = k_alloc(sizeof(ipc_message_t));
     if (msg == NULL) { return PROTO_ERR_OUT_OF_MEMORY; }
 
+    void *payload = k_alloc(size);
+    if (payload == NULL) {
+        k_free(msg);
+        return PROTO_ERR_OUT_OF_MEMORY;
+    }
+    memcpy(payload, data, size);
+
     strncpy(msg->name, message, 255);
-    msg->data           = data;
+    msg->data           = payload;
     msg->size           = size;
 
     if (g_current_thread != NULL && g_current_thread->process != NULL) {
@@ -68,7 +75,8 @@ int ipc_recieve(ipc_meta_t *meta, void *data) {
 
 int ipc_consume(ipc_meta_t *meta) {
     k_free(meta->msg);
-
+    k_free(meta->msg->data);
+    
     return PROTO_OK;
 }
 

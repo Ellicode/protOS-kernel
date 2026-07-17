@@ -4,7 +4,7 @@ int pmain(char argv[16][64], int argc) {
     ipc_meta_t *ev_meta = malloc(sizeof(ipc_meta_t));
     char *ev_data = malloc(1);
 
-    subscribe("proto.keydown");
+    subscribe("proto.keyboard.keydown");
 
     while (1)
     {

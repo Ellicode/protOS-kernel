@@ -36,7 +36,7 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
     }
 
     uint64_t ret = vfs_read(f, size, buffer);
-    if (ret != 0) {
+    if (ret == -1) {
         // k_assert(PROTO_ERR_ELF_CORRUPTED);
         return PROTO_ERR_ELF_CORRUPTED;
     }

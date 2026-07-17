@@ -1,37 +1,24 @@
 #include <proto.h>
 
-void putpixel(fb_info_t *fb, uint32_t x, uint32_t y, uint32_t color) {
-    if (fb == NULL) { return; }
-    if (x >= fb->width || y >= fb->height) { return; }
+#include "graphics.h"
 
-    volatile uint32_t *fb_ptr = (uint32_t *)fb->address;
-    fb_ptr[y * (fb->pitch / 4) + x] = color;
-}
+#define BG_COLOR 0x008888
 
-void draw_rect(fb_info_t *fb, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t color)
-{
-    if (fb == NULL) { return; }
-
-    volatile uint32_t *fb_ptr = (uint32_t *)fb->address;
-    
-    // Pitch is in bytes, so divide by 4 to use with a uint32_t pointer
-    uint32_t fb_pitch = fb->pitch / 4;
-
-    for (uint32_t row = y; row < y + h; row++) {
-        for (uint32_t col = x; col < x + w; col++) {
-            if (row > fb->height || col > fb->width) { continue; }
-            fb_ptr[row * fb_pitch + col] = color;
-        }
-    }
-}
-
+int prev_x = 0;
+int prev_y = 0;
 
 int pmain(char argv[16][64], int argc) {
     fb_info_t *front = malloc(sizeof(fb_info_t));
     fetch_framebuffer(front);
+
     if (front == NULL) {
-        fprintf(STDERR, "No fb\n");
+        fprintf(STDERR, "Requested framebuffer is null\n");
         return 1;
+    }
+
+    bmp_t *cursor = load_bitmap("/System/Assets/Cursor.bmp");
+    if (cursor == NULL) {
+        fprintf(STDERR, "failed to load cursor bmp\n");
     }
 
     // size_t fb_size = (front->width * front->height);
@@ -44,7 +31,7 @@ int pmain(char argv[16][64], int argc) {
     // back->pitch     = front->pitch;
 
 
-    draw_rect(front, front->width - 100, front->height - 100, 100, 100, 0xFF0000);
+    draw_rect(front, 0, 0, front->width, front->height, BG_COLOR);
 
     // // swap buffers
     // memcpy((void *)front->address, (void *)back->address, fb_size);
@@ -53,24 +40,45 @@ int pmain(char argv[16][64], int argc) {
     printf("pid=%d\n", getpid());
     
     ipc_meta_t *meta = malloc(sizeof(ipc_meta_t));
-    char *data = malloc(1);
+    char *data = malloc(256);
 
-    subscribe("proto.keydown");
+    subscribe("proto.keyboard.keydown");
+    subscribe("proto.mouse.move");
 
-    int res = recieve(meta, data);
-    printf("res=%d\n", res);
-    if (meta == NULL) {
-        printf("buf is null\n");
-    } else {
-        printf("IPC recieved! name=%s, sender=%d, size=%d \n", meta->name, meta->sender, meta->size);
-        printf("char=%c\n", *data);
+    while (1) {
+        memset(data, 0, 256);
+        int res = recieve(meta, data);
+        
+        if (res != PROTO_OK) {
+            fprintf(STDERR, "recieve failed with code %d", res);
+            consume(meta);
+            break;
+        }
+
+        if (strcmp(meta->name, "proto.mouse.move") == 0) {
+            mouse_move_packet_t pkt;
+            memcpy(&pkt, data, sizeof(pkt));
+
+            draw_rect(front, prev_x, prev_y, cursor->width, cursor->height, BG_COLOR);
+            draw_bitmap(front, cursor, pkt.x, pkt.y);
+
+            prev_x = pkt.x;
+            prev_y = pkt.y;
+        } else if (strcmp(meta->name, "proto.keyboard.keydown") == 0) {
+            char c = *data;
+            printf("%c", c);
+        } else {
+            printf("unknown event \"%s\"\n", meta->name);
+        }
+
+        consume(meta);
     }
-
-    consume(meta);
 
     // free(back_data);
     // free(back);
-    // free(front);
+    free(meta);
+    free(front);
+    free_bitmap(cursor);
 
     return 0;
 }

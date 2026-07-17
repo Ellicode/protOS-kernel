@@ -89,33 +89,41 @@ file_descriptor_t *vfs_open(inode_t *cwd, char *path, uint8_t flags) {
 
     fd->flags = flags;
     fd->inode = inode;
-
+    fd->curr_offset = 0;
+    
     return fd;
 }
 
 int vfs_read(file_descriptor_t *fd, size_t size, void *buffer) {
     inode_t *inode = fd->inode;
     if (inode == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
-        return PROTO_ERR_INVALID_ARGUMENT;
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return -1;
     }
 
     if (!inode->parent_sb->ops || !inode->parent_sb->ops->read) {
-        // k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
-        return PROTO_ERR_FILE_UNSUPPORTED_OP;
+        k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
+        return -1;
     }
 
     if (inode->type != INODE_FILE) {
-        // k_assert(PROTO_ERR_IS_A_DIRECTORY);
-        return PROTO_ERR_IS_A_DIRECTORY;
+        k_assert(PROTO_ERR_IS_A_DIRECTORY);
+        return -1;
     }
 
     if (!(fd->flags & FD_READ)) {
-        // k_assert(PROTO_ERR_FILE_UNAUTHORIZED_OP);
-        return PROTO_ERR_FILE_UNAUTHORIZED_OP;
+        k_assert(PROTO_ERR_FILE_UNAUTHORIZED_OP);
+        return -1;
     }
 
-    return inode->parent_sb->ops->read(fd->inode, size, buffer);
+    if (fd->curr_offset > inode->size) {
+        fd->curr_offset = inode->size;
+    }
+
+    int ret = inode->parent_sb->ops->read(inode, size, fd->curr_offset, buffer);
+    if (ret > 0) { fd->curr_offset += ret; }
+
+    return ret;
 }
 
 int vfs_read_dir(file_descriptor_t *fd, dentry_t *entries, int *num_entries) {
@@ -140,7 +148,7 @@ int vfs_read_dir(file_descriptor_t *fd, dentry_t *entries, int *num_entries) {
         return PROTO_ERR_FILE_UNAUTHORIZED_OP;
     }
 
-    return inode->parent_sb->ops->read_dir(fd->inode, entries, num_entries);
+    return inode->parent_sb->ops->read_dir(inode, entries, num_entries);
 }
 
 int vfs_stat(file_descriptor_t *fd, dentry_t *buffer) {
@@ -155,32 +163,40 @@ int vfs_stat(file_descriptor_t *fd, dentry_t *buffer) {
         return PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
     
-    return inode->parent_sb->ops->stat(fd->inode, buffer);
+    return inode->parent_sb->ops->stat(inode, buffer);
 }
 
 int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer) {
     inode_t *inode = fd->inode;
     if (inode == NULL) {
         // k_assert(PROTO_ERR_INVALID_ARGUMENT);
-        return PROTO_ERR_INVALID_ARGUMENT;
+        return -1;
     }
 
     if (!inode->parent_sb->ops || !inode->parent_sb->ops->write) {
         // k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
-        return PROTO_ERR_FILE_UNSUPPORTED_OP;
+        return -1;
     }
 
     if (inode->type != INODE_FILE) {
         // k_assert(PROTO_ERR_IS_A_DIRECTORY);
-        return PROTO_ERR_IS_A_DIRECTORY;
+        return -1;
     }
 
     if (!(fd->flags & FD_WRITE)) {
         // k_assert(PROTO_ERR_FILE_UNAUTHORIZED_OP);
-        return PROTO_ERR_FILE_UNAUTHORIZED_OP;
+        return -1;
     }
 
-    return inode->parent_sb->ops->write(fd->inode, size, buffer);
+
+    if (fd->curr_offset > inode->size) {
+        fd->curr_offset = inode->size;
+    }
+
+    int ret = inode->parent_sb->ops->write(inode, size, fd->curr_offset, buffer);
+    if (ret > 0) { fd->curr_offset += ret; }
+
+    return ret;
 }
 
 int vfs_close(file_descriptor_t *fd) {
