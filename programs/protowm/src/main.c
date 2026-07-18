@@ -18,32 +18,17 @@ int pmain(char argv[16][64], int argc) {
 
     bmp_t *cursor = load_bitmap("/System/Assets/Cursor.bmp");
     if (cursor == NULL) {
-        fprintf(STDERR, "failed to load cursor bmp\n");
+        fprintf(STDERR, "Failed to load cursor bitmap\n");
     }
 
-    // size_t fb_size = (front->width * front->height);
-    // void* back_data = malloc(fb_size);
-    // fb_info_t *back = malloc(sizeof(fb_info_t));
-    // back->address = (uint64_t)back_data;
-    // back->bpp       = front->bpp;
-    // back->width     = front->width;
-    // back->height    = front->height;
-    // back->pitch     = front->pitch;
-
-
     draw_rect(front, 0, 0, front->width, front->height, BG_COLOR);
-
-    // // swap buffers
-    // memcpy((void *)front->address, (void *)back->address, fb_size);
-
-    printf("resolution=%dx%d; bpp=%d\n", front->width, front->height, front->bpp);
-    printf("pid=%d\n", getpid());
     
     ipc_meta_t *meta = malloc(sizeof(ipc_meta_t));
     char *data = malloc(256);
 
     subscribe("proto.keyboard.keydown");
     subscribe("proto.mouse.move");
+    subscribe("proto.mouse.down");
 
     while (1) {
         memset(data, 0, 256);

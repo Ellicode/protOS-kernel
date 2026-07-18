@@ -51,7 +51,7 @@ int ipc_send(uint64_t pid, char *message, void *data, size_t size) {
 
 int ipc_recieve(ipc_meta_t *meta, void *data) {
     if (meta == NULL || data == NULL) { return PROTO_ERR_INVALID_ARGUMENT; }
-    if (!g_current_thread || !g_current_thread->process) { return PROTO_ERR_UNKNOWN; }
+    if (!g_current_thread || !g_current_thread->process) { return PROTO_ERR_INVALID_CONTEXT; }
 
     ipc_queue_t *q = &g_current_thread->process->msg_queue;
 
@@ -76,7 +76,6 @@ int ipc_recieve(ipc_meta_t *meta, void *data) {
 int ipc_consume(ipc_meta_t *meta) {
     k_free(meta->msg);
     k_free(meta->msg->data);
-    
     return PROTO_OK;
 }
 
@@ -107,9 +106,7 @@ int ipc_dispatch(char *message, void *data, size_t size) {
 }
 
 int ipc_subscribe(char *topic) {
-    if (g_current_thread == NULL || g_current_thread->process == NULL) {
-        return PROTO_ERR_UNKNOWN;
-    }
+    if (g_current_thread == NULL || g_current_thread->process == NULL) { return PROTO_ERR_INVALID_CONTEXT; }
 
     ipc_sub_t *curr = g_current_thread->process->msg_queue.subscriptions;
     while (curr != NULL) {
@@ -120,7 +117,7 @@ int ipc_subscribe(char *topic) {
     }
 
     ipc_sub_t *sub = k_alloc(sizeof(ipc_sub_t));
-    if (sub == NULL) { return PROTO_ERR_UNKNOWN; }
+    if (sub == NULL) { return PROTO_ERR_OUT_OF_MEMORY; }
 
     strncpy(sub->topic, topic, 255);
 
@@ -130,9 +127,7 @@ int ipc_subscribe(char *topic) {
 }
 
 int ipc_unsubscribe(char *topic) {
-    if (g_current_thread == NULL || g_current_thread->process == NULL) {
-        return PROTO_ERR_UNKNOWN;
-    }
+    if (g_current_thread == NULL || g_current_thread->process == NULL) { return PROTO_ERR_INVALID_CONTEXT; }
 
     ipc_sub_t *sub = g_current_thread->process->msg_queue.subscriptions;
 

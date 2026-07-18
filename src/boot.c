@@ -37,18 +37,15 @@ int k_init(
     g_lim_kaddr = kaddr;
     g_lim_modules = modules;
 
-    // 1) INITIALIZE SERIAL OUTPUT ===================================================
     if (serial_init() != PROTO_OK) {
         k_assert(PROTO_ERR_INIT_FAILED);
         return PROTO_ERR_INIT_FAILED;
     }
     k_success("Initialized serial output.\n");
 
-    // 2) INITIALIZE GRAPHICS ========================================================
     graphics_init(fb);
     k_success("Initialized graphics.\n");
 
-    // 2.5) CHECK LIMINE MODULES =====================================================
     if (modules == NULL || modules->module_count == 0) {
         k_warning("No modules loaded!\n");
     } else {
@@ -61,15 +58,13 @@ int k_init(
         }
     }
 
-    // 3) INITIALIZE GDT =============================================================
     gdt_init();
     k_success("Initialized GDT.\n");
 
-    // 4) INITIALIZE IDT =============================================================
     idt_init();
     k_success("Initialized IDT.\n");
 
-    // 5) INITIALIZE PAGING ==========================================================
+    
     if (fpmm_init() != PROTO_OK) {
         k_assert(PROTO_ERR_INIT_FAILED);
         return PROTO_ERR_INIT_FAILED;
@@ -88,19 +83,16 @@ int k_init(
     terminal_init();
     k_success("Initialized Terminal Output.\n");
 
-    // 6) INITIALIZE PIC =============================================================
     pic_init();
     k_success("Initialized PIC.\n");
 
-    // 7) INITIALIZE PIT =============================================================
-    pit_init(100);
-    k_success("Initialized PIT.\n");
-
-    // 8) INITIALIZE PS2 KEYBOARD ====================================================
     ps2_init();
     ps2keyboard_init();
     ps2mouse_init();
     k_success("Initialized PS2 Keyboard and Mice.\n");
+
+    pit_init(100);
+    k_success("Initialized PIT.\n");
 
     vfs_init();
     k_success("Initialized VFS.\n");

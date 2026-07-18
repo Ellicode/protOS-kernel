@@ -19,7 +19,7 @@ void __not_implemented () {}
 void sys_exit()
 {
     if (!g_current_thread || !g_current_thread->process) {
-        // k_assert(PROTO_ERR_UNKNOWN);
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
         return; 
     }
     
@@ -43,8 +43,8 @@ void sys_exit()
 
 int sys_open(char *path, char *flags) {
     if (!g_current_thread || !g_current_thread->process || !g_current_thread->process->cwd) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return -1; 
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return -PROTO_ERR_INVALID_CONTEXT; 
     }
 
     process_t *proc = g_current_thread->process;
@@ -76,59 +76,60 @@ int sys_open(char *path, char *flags) {
     }
 
     if (descriptor_idx == -1) {
-        // k_assert(PROTO_ERR_MAX_FD_REACHED);
-        return -1;
-    }    
+        k_assert(PROTO_ERR_MAX_FD_REACHED);
+        return -PROTO_ERR_MAX_FD_REACHED;
+    }
 
     file_descriptor_t *desc = vfs_open(proc->cwd, path, flags_int);
     if (desc == NULL) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return -1;
+        k_assert(PROTO_ERR_UNKNOWN);
+        return -PROTO_ERR_UNKNOWN;
     }
 
     proc->fd_table[descriptor_idx] = desc;
+
     return descriptor_idx;
 }
 
 int sys_read(uint64_t fd, size_t size, void *buffer) {
     if (!g_current_thread || !g_current_thread->process) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return -1; 
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return -PROTO_ERR_INVALID_CONTEXT; 
     }
 
     process_t *proc = g_current_thread->process;
 
     if (fd >= PROCESS_MAX_FDS) {
-        // k_assert(PROTO_ERR_MAX_FD_REACHED);
-        return -1;
+        k_assert(PROTO_ERR_MAX_FD_REACHED);
+        return -PROTO_ERR_MAX_FD_REACHED;
     }
 
     file_descriptor_t *fd_pointer = proc->fd_table[fd];
 
     if (fd_pointer == NULL) {
-        // k_assert(PROTO_ERR_INVALID_FD);
-        return -1; 
+        k_assert(PROTO_ERR_INVALID_FD);
+        return -PROTO_ERR_INVALID_FD; 
     }
     return vfs_read(fd_pointer, size, buffer);
 }
 
 int sys_read_dir(uint64_t fd, dentry_t *entries, int *num_entries) {
     if (!g_current_thread || !g_current_thread->process) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return PROTO_ERR_UNKNOWN; 
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return PROTO_ERR_INVALID_CONTEXT; 
     }
 
     process_t *proc = g_current_thread->process;
 
     if (fd >= PROCESS_MAX_FDS) {
-        // k_assert(PROTO_ERR_MAX_FD_REACHED);
+        k_assert(PROTO_ERR_MAX_FD_REACHED);
         return PROTO_ERR_MAX_FD_REACHED;
     }
 
     file_descriptor_t *fd_pointer = proc->fd_table[fd];
 
     if (fd_pointer == NULL) {
-        // k_assert(PROTO_ERR_INVALID_FD);
+        k_assert(PROTO_ERR_INVALID_FD);
         return PROTO_ERR_INVALID_FD; 
     }
     return vfs_read_dir(fd_pointer, entries, num_entries);
@@ -136,43 +137,43 @@ int sys_read_dir(uint64_t fd, dentry_t *entries, int *num_entries) {
 
 int sys_write(uint64_t fd, size_t size, const void *buffer) {
     if (!g_current_thread || !g_current_thread->process) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return -1; 
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return -PROTO_ERR_INVALID_CONTEXT; 
     }
 
     process_t *proc = g_current_thread->process;
 
     if (fd >= PROCESS_MAX_FDS) {
-        // k_assert(PROTO_ERR_MAX_FD_REACHED);
-        return -1;
+        k_assert(PROTO_ERR_MAX_FD_REACHED);
+        return -PROTO_ERR_MAX_FD_REACHED;
     }
 
     file_descriptor_t *fd_pointer = proc->fd_table[fd];
 
     if (fd_pointer == NULL) {
-        // k_assert(PROTO_ERR_INVALID_FD);
-        return -1; 
+        k_assert(PROTO_ERR_INVALID_FD);
+        return -PROTO_ERR_INVALID_FD; 
     }
     return vfs_write(fd_pointer, size, buffer);
 }
 
 int sys_stat(uint64_t fd, dentry_t *buffer) {
     if (!g_current_thread || !g_current_thread->process) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return PROTO_ERR_UNKNOWN; 
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return PROTO_ERR_INVALID_CONTEXT; 
     }
 
     process_t *proc = g_current_thread->process;
 
     if (fd >= PROCESS_MAX_FDS) {
-        // k_assert(PROTO_ERR_MAX_FD_REACHED);
+        k_assert(PROTO_ERR_MAX_FD_REACHED);
         return PROTO_ERR_MAX_FD_REACHED;
     }
 
     file_descriptor_t *fd_pointer = proc->fd_table[fd];
 
     if (fd_pointer == NULL) {
-        // k_assert(PROTO_ERR_INVALID_FD);
+        k_assert(PROTO_ERR_INVALID_FD);
         return PROTO_ERR_INVALID_FD; 
     }
     return vfs_stat(fd_pointer, buffer);
@@ -180,21 +181,21 @@ int sys_stat(uint64_t fd, dentry_t *buffer) {
 
 int sys_close(uint64_t fd) {
     if (!g_current_thread || !g_current_thread->process) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return PROTO_ERR_UNKNOWN; 
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return PROTO_ERR_INVALID_CONTEXT; 
     }
 
     process_t *proc = g_current_thread->process;
 
     if (fd >= PROCESS_MAX_FDS) {
-        // k_assert(PROTO_ERR_MAX_FD_REACHED);
+        k_assert(PROTO_ERR_MAX_FD_REACHED);
         return PROTO_ERR_MAX_FD_REACHED;
     }
 
     file_descriptor_t *fd_pointer = proc->fd_table[fd];
 
     if (fd_pointer == NULL) {
-        // k_assert(PROTO_ERR_INVALID_FD);
+        k_assert(PROTO_ERR_INVALID_FD);
         return PROTO_ERR_INVALID_FD; 
     }
 
@@ -203,30 +204,32 @@ int sys_close(uint64_t fd) {
 
 int sys_create_process(char *path, char argv[16][64], int argc) {    
     if (!g_current_thread || !g_current_thread->process) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return PROTO_ERR_UNKNOWN; 
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return PROTO_ERR_INVALID_CONTEXT; 
     }
 
-    g_current_thread->state = THREAD_SLEEPING;
     int pid;
     int ret = create_process(path, 0, &pid, argv, argc);
+    
     if (ret == PROTO_OK) {
+        g_current_thread->state = THREAD_SLEEPING;
         g_current_thread->waiting_for = pid;
     }
+
     return ret;
 }
 
 int sys_chdir(char *path) {
     if (!g_current_thread || !g_current_thread->process) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return PROTO_ERR_UNKNOWN; 
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return PROTO_ERR_INVALID_CONTEXT; 
     }
 
     process_t *proc = g_current_thread->process;
 
     inode_t *newcwd = vfs_lookup(proc->cwd, path);
     if (newcwd == NULL) {
-        // k_assert(PROTO_ERR_FILE_NOT_FOUND);
+        k_assert(PROTO_ERR_FILE_NOT_FOUND);
         return PROTO_ERR_FILE_NOT_FOUND;
     }
 
@@ -240,7 +243,8 @@ int sys_chdir(char *path) {
 
 int sys_getcwd(char *user_buf, size_t user_buf_size) {
     if (!g_current_thread || !g_current_thread->process || !user_buf) {
-        return PROTO_ERR_UNKNOWN; 
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return PROTO_ERR_INVALID_CONTEXT; 
     }
 
     process_t *proc = g_current_thread->process;
@@ -281,7 +285,8 @@ int sys_getcwd(char *user_buf, size_t user_buf_size) {
 
     size_t final_len = strlen(path_accumulator) + 1;
     if (final_len > user_buf_size) {
-        return PROTO_ERR_OUT_OF_MEMORY; // ERANGE
+        k_assert(PROTO_ERR_OUT_OF_MEMORY);
+        return PROTO_ERR_OUT_OF_MEMORY;
     }
     memcpy(user_buf, path_accumulator, final_len);
 
@@ -290,7 +295,8 @@ int sys_getcwd(char *user_buf, size_t user_buf_size) {
 
 int sys_wait_for_process(int pid) {
     if (!g_current_thread) {
-        return PROTO_ERR_UNKNOWN; 
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return PROTO_ERR_INVALID_CONTEXT; 
     }
 
     g_current_thread->state = THREAD_SLEEPING;
@@ -352,7 +358,7 @@ void syscall_handler(idt_frame_t *frame) {
     uint64_t syscall_id = frame->rax;
 
     if (syscall_id > NUM_SYSCALLS - 1) {
-        // k_assert(PROTO_ERR_SYSCALL_OUT_OF_BOUNDS);
+        k_assert(PROTO_ERR_SYSCALL_OUT_OF_BOUNDS);
         frame->rax = PROTO_ERR_SYSCALL_OUT_OF_BOUNDS;
         return;
     }

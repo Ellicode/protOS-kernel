@@ -43,8 +43,11 @@ int pmain(char argv[16][64], int argc)
                 snprintf(path, 256, "/System/Programs/%s", _argv[0]);
                 int pid;
                 int ret = create_process(path, _argv, _argc);
+
                 if (ret == PROTO_ERR_FILE_NOT_FOUND) {
-                    fprintf(STDERR, "(err) no such program \"%s\"\n", _argv[0]);
+                    fprintf(STDERR, "[ERROR] Cannot find command \"%s\"\n", _argv[0]);
+                } else {
+                    fprintf(STDERR, "[ERROR] Failed to launch program \"%s\" (status=%d)\n", _argv[0], ret);
                 }
             }
         }

@@ -11,7 +11,8 @@
 
 uint64_t sys_fetch_fb(fb_info_t *info) {
     if (g_current_thread->process == NULL) {
-        return PROTO_ERR_UNKNOWN;
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return PROTO_ERR_INVALID_CONTEXT;
     }
 
     uint64_t physical_fb = (uint64_t)g_vga_active_framebuffer->address - g_lim_hhdm->offset;

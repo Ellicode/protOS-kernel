@@ -20,14 +20,16 @@ enum status_code_t {
 
     PROTO_ERR_INIT_FAILED               = 21,
     PROTO_ERR_OUT_OF_MEMORY             = 22,
+    PROTO_ERR_INVALID_ARGUMENT          = 23,
+    PROTO_ERR_SYSCALL_OUT_OF_BOUNDS     = 24,
+    PROTO_ERR_INVALID_CONTEXT           = 25,
 
-    PROTO_ERR_INVALID_ARGUMENT          = 31,
-    PROTO_ERR_SYSCALL_OUT_OF_BOUNDS     = 32,
+    PROTO_ERR_ELF_INVALID_HDR           = 31,
+    PROTO_ERR_ELF_UNSUPPORTED           = 32,
+    PROTO_ERR_ELF_CORRUPTED             = 33,
+    PROTO_ERR_ELF_CANNOT_LOAD           = 34,
 
-    PROTO_ERR_ELF_INVALID_HDR           = 41,
-    PROTO_ERR_ELF_UNSUPPORTED           = 42,
-    PROTO_ERR_ELF_CORRUPTED             = 43,
-    PROTO_ERR_ELF_CANNOT_LOAD           = 44,
+    PROTO_ERR_PROCESS_NOT_FOUND         = 41,
 };
 
 // SYSCALL ===================================================================================

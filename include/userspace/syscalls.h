@@ -32,7 +32,7 @@ enum {
     NUM_SYSCALLS // changes automatically
 };
 
-typedef uint64_t (*syscall_t)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+typedef int (*syscall_t)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
 void syscall_handler(idt_frame_t *frame);
 

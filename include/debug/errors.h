@@ -5,6 +5,7 @@
 
 #include "debug/logger.h"
 #include "graphics/console.h"
+#include "interrupts/interrupts.h"
 
 enum status_code_t {
     PROTO_OK                            = 0,
@@ -21,18 +22,16 @@ enum status_code_t {
 
     PROTO_ERR_INIT_FAILED               = 21,
     PROTO_ERR_OUT_OF_MEMORY             = 22,
+    PROTO_ERR_INVALID_ARGUMENT          = 23,
+    PROTO_ERR_SYSCALL_OUT_OF_BOUNDS     = 24,
+    PROTO_ERR_INVALID_CONTEXT           = 25,
 
-    PROTO_ERR_INVALID_ARGUMENT          = 31,
-    PROTO_ERR_SYSCALL_OUT_OF_BOUNDS     = 32,
+    PROTO_ERR_ELF_INVALID_HDR           = 31,
+    PROTO_ERR_ELF_UNSUPPORTED           = 32,
+    PROTO_ERR_ELF_CORRUPTED             = 33,
+    PROTO_ERR_ELF_CANNOT_LOAD           = 34,
 
-    PROTO_ERR_ELF_INVALID_HDR           = 41,
-    PROTO_ERR_ELF_UNSUPPORTED           = 42,
-    PROTO_ERR_ELF_CORRUPTED             = 43,
-    PROTO_ERR_ELF_CANNOT_LOAD           = 44,
-
-    PROTO_ERR_IPC_QUEUE_FULL            = 51,
-    PROTO_ERR_IPC_QUEUE_EMPTY           = 52,
-    PROTO_ERR_PROCESS_NOT_FOUND         = 53,
+    PROTO_ERR_PROCESS_NOT_FOUND         = 41,
 };
 
 enum status_type_t {
@@ -45,14 +44,20 @@ extern int status_types[];
 extern char* status_messages[];
 extern char* status_hints[];
 
-#define k_assert(e) do {                            \
-    if (status_types[e] == PROTO_STATUS_ERROR || status_types[e] == PROTO_STATUS_CRITICAL) {  \
-        k_error(status_messages[e]);                \
-        print_f(".\n");                             \
-        if (status_hints[e] != NULL) {              \
-            print_f("(tip!) %s.\n");                \
-        }                                           \
-    }                                               \
+#if (PROTO_DEBUG == 1)
+#define k_assert(e) do {                                    \
+    if (status_types[e] == PROTO_STATUS_ERROR) {            \
+        k_error(status_messages[e]);                        \
+        print_f(".\n");                                     \
+        if (status_hints[e] != NULL) {                      \
+            set_color(PROTO_GREY, PROTO_BG);                \
+            print_f("   (tip!) %s.\n", status_hints[e]);    \
+            set_color(PROTO_WHITE, PROTO_BG);               \
+        }                                                   \
+    } else if (status_types[e] == PROTO_STATUS_CRITICAL) {  \
+        panic(status_messages[e]);                          \
+    }                                                       \
 } while (0)
+#endif
 
 #endif // ERRORS_H

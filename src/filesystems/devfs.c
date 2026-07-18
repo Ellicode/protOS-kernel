@@ -43,7 +43,7 @@ int devfs_lookup(inode_t *dir, char *name, inode_t **result) {
 
     if (current == NULL) {
         *result = NULL;
-        // k_assert(PROTO_ERR_FILE_NOT_FOUND);
+        k_assert(PROTO_ERR_FILE_NOT_FOUND);
         return PROTO_ERR_FILE_NOT_FOUND;
     }
 
@@ -53,7 +53,7 @@ int devfs_lookup(inode_t *dir, char *name, inode_t **result) {
 
 int devfs_create(inode_t *dir, char *name, inode_t **result) {
     if (dir == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return PROTO_ERR_INVALID_ARGUMENT;
     }
 
@@ -79,14 +79,14 @@ int devfs_create(inode_t *dir, char *name, inode_t **result) {
 
 int devfs_create_dir(inode_t *dir, char *name, inode_t **result) {
     if (dir == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return PROTO_ERR_INVALID_ARGUMENT;
     }
 
     inode_t *res;
 
     if (devfs_lookup(dir, name, &res) == PROTO_OK) {
-        // k_assert(PROTO_ERR_ALREADY_EXISTS);
+        k_assert(PROTO_ERR_ALREADY_EXISTS);
         return PROTO_ERR_ALREADY_EXISTS; // Folder already exists
     }
 
@@ -110,14 +110,14 @@ int devfs_create_dir(inode_t *dir, char *name, inode_t **result) {
 
 int devfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
     if (inode == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
-        return -1;
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return -PROTO_ERR_INVALID_ARGUMENT;
     }
 
     devfs_node_t *node = inode->fs_data;
     if (node == NULL) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return -1;
+        k_assert(PROTO_ERR_UNKNOWN);
+        return -PROTO_ERR_UNKNOWN;
     }
 
     switch (node->dev_type)
@@ -127,11 +127,17 @@ int devfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
             queue_sleep(&node->waiters, g_current_thread);
             strcpy(buffer, stdin_data->kbd_buf);
             memset(stdin_data->kbd_buf, 0, sizeof(stdin_data->kbd_buf)); // clean junk ew
-            break;
+            return size;
         case DEV_STATIC:
-            if (offset >= node->size) { break; }
-            memcpy(buffer, (const char*)node->extra_data + offset, node->size - offset);
-            break;
+            if (offset >= node->size) { return PROTO_EOF; }
+            
+            uint64_t remaining = node->size - offset;
+            uint64_t to_read = (size < remaining) ? size : remaining;
+
+            void *data = (void *)(node->extra_data + offset);
+            memcpy(buffer, data, to_read);
+            
+            return to_read;
         case DEV_ABOUT:
             int memsz = getmemsz();
             int memused = getmemused();
@@ -147,21 +153,19 @@ int devfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
             memcpy(buffer, &about_data, sizeof(about_data_t));
             break;
         default: // No match
-            // k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
-            return -1;
+            k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
+            return -PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
-
-    return size;
 }
 
 int devfs_stat(inode_t *inode, dentry_t *buffer) {
     if (inode == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return PROTO_ERR_INVALID_ARGUMENT;
     }
     devfs_node_t *node = (devfs_node_t *)inode->fs_data;
     if (node == NULL) {
-        // k_assert(PROTO_ERR_UNKNOWN);
+        k_assert(PROTO_ERR_UNKNOWN);
         return PROTO_ERR_UNKNOWN;
     }
     strcpy(buffer->name, node->name);
@@ -173,31 +177,29 @@ int devfs_stat(inode_t *inode, dentry_t *buffer) {
 
 int devfs_write(inode_t *inode, uint64_t size, uint64_t offset, const void *buffer) {
     if (inode == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
-        return -1;
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return -PROTO_ERR_INVALID_ARGUMENT;
     }
     devfs_node_t *node = inode->fs_data;
     if (node == NULL) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return -1;
+        k_assert(PROTO_ERR_UNKNOWN);
+        return -PROTO_ERR_UNKNOWN;
     }
 
     switch (node->dev_type)
     {
         case DEV_STDOUT:
             print(buffer);
-            break;
+            return size;
         case DEV_STDERR:
             set_color(PROTO_RED, PROTO_BG);
             print(buffer);
             set_color(PROTO_WHITE, PROTO_BG);
-            break;
+            return size;
         default: // No match
-            // k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
-            return PROTO_ERR_FILE_UNSUPPORTED_OP;
+            k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
+            return -PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
-
-    return PROTO_OK;
 }
 
 superblock_t *devfs_init() {

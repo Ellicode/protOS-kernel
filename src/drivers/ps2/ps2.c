@@ -22,7 +22,7 @@ void ps2_write_data(unsigned char data) {
 }
 
 unsigned char ps2_read_data() {
-    ps2_wait_read();
+    // ps2_wait_read();
     return inb(PS2_DATA_PORT);
 }
 

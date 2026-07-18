@@ -65,7 +65,7 @@ int tarfs_lookup(inode_t *dir, char *name, inode_t **result) {
 
     if (current == NULL) {
         *result = NULL;
-        // k_assert(PROTO_ERR_FILE_NOT_FOUND);
+        k_assert(PROTO_ERR_FILE_NOT_FOUND);
         return PROTO_ERR_FILE_NOT_FOUND;
     }
 
@@ -75,12 +75,12 @@ int tarfs_lookup(inode_t *dir, char *name, inode_t **result) {
 
 int tarfs_stat(inode_t *inode, dentry_t *buffer) {
     if (inode == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return PROTO_ERR_INVALID_ARGUMENT;
     }
     ustar_node_t *node = (ustar_node_t *)inode->fs_data;
     if (node == NULL) {
-        // k_assert(PROTO_ERR_UNKNOWN);
+        k_assert(PROTO_ERR_UNKNOWN);
         return PROTO_ERR_UNKNOWN;
     }
     strcpy(buffer->name, node->name);
@@ -92,16 +92,16 @@ int tarfs_stat(inode_t *inode, dentry_t *buffer) {
 
 int tarfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
     if (inode == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
-        return -1;
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return -PROTO_ERR_INVALID_ARGUMENT;
     }
 
     ustar_node_t *node = (ustar_node_t *)inode->fs_data;
     if (node == NULL) {
-        // k_assert(PROTO_ERR_UNKNOWN);
-        return -1;
+        k_assert(PROTO_ERR_UNKNOWN);
+        return -PROTO_ERR_UNKNOWN;
     }
-    if (offset >= node->size) { return 0; } // EOF
+    if (offset >= node->size) { return PROTO_EOF; }
     
     uint64_t remaining = node->size - offset;
     uint64_t to_read = (size < remaining) ? size : remaining;
@@ -114,13 +114,13 @@ int tarfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
 
 int tarfs_read_dir(inode_t *dir, dentry_t *entries, int *num_entries) {
     if (dir == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return PROTO_ERR_INVALID_ARGUMENT;
     }
 
     ustar_node_t *node = (ustar_node_t *)dir->fs_data;
     if (node == NULL) {
-        // k_assert(PROTO_ERR_UNKNOWN);
+        k_assert(PROTO_ERR_UNKNOWN);
         return PROTO_ERR_UNKNOWN;
     }
     if (node->type != INODE_FOLDER) {

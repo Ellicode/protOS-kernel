@@ -38,14 +38,16 @@ char *status_messages[] = {
     
     [PROTO_ERR_INIT_FAILED]             = "Initialization failed",
     [PROTO_ERR_OUT_OF_MEMORY]           = "Out of memory",
-
     [PROTO_ERR_INVALID_ARGUMENT]        = "Invalid argument",
     [PROTO_ERR_SYSCALL_OUT_OF_BOUNDS]   = "Syscall ID out of bounds",
-    
+    [PROTO_ERR_INVALID_CONTEXT]         = "Invalid context",
+
     [PROTO_ERR_ELF_INVALID_HDR]         = "Invalid ELF Header",
     [PROTO_ERR_ELF_UNSUPPORTED]         = "Unsupported platform",
     [PROTO_ERR_ELF_CORRUPTED]           = "Corrupted ELF executable",
     [PROTO_ERR_ELF_CANNOT_LOAD]         = "Cannot load ELF executable",
+
+    [PROTO_ERR_PROCESS_NOT_FOUND]       = "Process not found",
 };
 
 char *status_hints[] = {
@@ -62,12 +64,14 @@ char *status_hints[] = {
     
     [PROTO_ERR_INIT_FAILED]             = NULL,
     [PROTO_ERR_OUT_OF_MEMORY]           = "RAM?!!!! IN THIS ECONOMY?!!!!",
-
     [PROTO_ERR_INVALID_ARGUMENT]        = "Verify for the correct type and null-check your argument first!",
     [PROTO_ERR_SYSCALL_OUT_OF_BOUNDS]   = "So you're not using my libc, huh?",
-    
+    [PROTO_ERR_INVALID_CONTEXT]         = NULL,
+
     [PROTO_ERR_ELF_INVALID_HDR]         = "Try rebuilding your executable again!",
     [PROTO_ERR_ELF_UNSUPPORTED]         = "Did you build it for x86_64?",
     [PROTO_ERR_ELF_CORRUPTED]           = "Try rebuilding your executable again!",
     [PROTO_ERR_ELF_CANNOT_LOAD]         = NULL,
+
+    [PROTO_ERR_PROCESS_NOT_FOUND]       = NULL,
 };

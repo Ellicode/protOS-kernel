@@ -24,20 +24,22 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
     file_descriptor_t *f = vfs_open(rootfs->root, elf_path, FD_READ);
 
     if (f == NULL) {
-        // k_assert(PROTO_ERR_FILE_NOT_FOUND);
+        k_assert(PROTO_ERR_FILE_NOT_FOUND);
         return PROTO_ERR_FILE_NOT_FOUND;
     }
 
     size_t size = f->inode->size;
     char *buffer = k_alloc(size);
     if (buffer == NULL) {
-        // k_assert(PROTO_ERR_OUT_OF_MEMORY);
+        vfs_close(f);
+        k_assert(PROTO_ERR_OUT_OF_MEMORY);
         return PROTO_ERR_OUT_OF_MEMORY;
     }
 
     uint64_t ret = vfs_read(f, size, buffer);
-    if (ret == -1) {
-        // k_assert(PROTO_ERR_ELF_CORRUPTED);
+    if (ret < PROTO_OK) {
+        vfs_close(f);
+        k_assert(PROTO_ERR_ELF_CORRUPTED);
         return PROTO_ERR_ELF_CORRUPTED;
     }
 
@@ -57,7 +59,7 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
     k_free(buffer);
 
     if (entry == 1) {
-        // k_assert(PROTO_ERR_ELF_CANNOT_LOAD);
+        k_assert(PROTO_ERR_ELF_CANNOT_LOAD);
         return PROTO_ERR_ELF_CANNOT_LOAD;
     }
     

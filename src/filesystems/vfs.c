@@ -83,14 +83,14 @@ file_descriptor_t *vfs_open(inode_t *cwd, char *path, uint8_t flags) {
 
     file_descriptor_t *fd = k_alloc(sizeof(file_descriptor_t));
     if (fd == NULL) {
-        // k_error("Cannot allocate file descriptor\n");
+        k_assert(PROTO_ERR_OUT_OF_MEMORY);
         return NULL;
     }
 
     fd->flags = flags;
     fd->inode = inode;
     fd->curr_offset = 0;
-    
+
     return fd;
 }
 
@@ -98,22 +98,22 @@ int vfs_read(file_descriptor_t *fd, size_t size, void *buffer) {
     inode_t *inode = fd->inode;
     if (inode == NULL) {
         k_assert(PROTO_ERR_INVALID_ARGUMENT);
-        return -1;
+        return -PROTO_ERR_INVALID_ARGUMENT;
     }
 
     if (!inode->parent_sb->ops || !inode->parent_sb->ops->read) {
         k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
-        return -1;
+        return -PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
 
     if (inode->type != INODE_FILE) {
         k_assert(PROTO_ERR_IS_A_DIRECTORY);
-        return -1;
+        return -PROTO_ERR_IS_A_DIRECTORY;
     }
 
     if (!(fd->flags & FD_READ)) {
         k_assert(PROTO_ERR_FILE_UNAUTHORIZED_OP);
-        return -1;
+        return -PROTO_ERR_FILE_UNAUTHORIZED_OP;
     }
 
     if (fd->curr_offset > inode->size) {
@@ -129,22 +129,22 @@ int vfs_read(file_descriptor_t *fd, size_t size, void *buffer) {
 int vfs_read_dir(file_descriptor_t *fd, dentry_t *entries, int *num_entries) {
     inode_t *inode = fd->inode;
     if (inode == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return PROTO_ERR_INVALID_ARGUMENT;
     }
 
     if (!inode->parent_sb->ops || !inode->parent_sb->ops->read) {
-        // k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
+        k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
         return PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
 
     if (inode->type != INODE_FOLDER) {
-        // k_assert(PROTO_ERR_NOT_A_DIRECTORY);
+        k_assert(PROTO_ERR_NOT_A_DIRECTORY);
         return PROTO_ERR_NOT_A_DIRECTORY;
     }
 
     if (!(fd->flags & FD_READ)) {
-        // k_assert(PROTO_ERR_FILE_UNAUTHORIZED_OP);
+        k_assert(PROTO_ERR_FILE_UNAUTHORIZED_OP);
         return PROTO_ERR_FILE_UNAUTHORIZED_OP;
     }
 
@@ -154,12 +154,12 @@ int vfs_read_dir(file_descriptor_t *fd, dentry_t *entries, int *num_entries) {
 int vfs_stat(file_descriptor_t *fd, dentry_t *buffer) {
     inode_t *inode = fd->inode;
     if (inode == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return PROTO_ERR_INVALID_ARGUMENT;
     }
 
     if (!inode->parent_sb->ops || !inode->parent_sb->ops->stat) {
-        // k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
+        k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
         return PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
     
@@ -169,23 +169,23 @@ int vfs_stat(file_descriptor_t *fd, dentry_t *buffer) {
 int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer) {
     inode_t *inode = fd->inode;
     if (inode == NULL) {
-        // k_assert(PROTO_ERR_INVALID_ARGUMENT);
-        return -1;
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return -PROTO_ERR_INVALID_ARGUMENT;
     }
 
     if (!inode->parent_sb->ops || !inode->parent_sb->ops->write) {
-        // k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
-        return -1;
+        k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
+        return -PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
 
     if (inode->type != INODE_FILE) {
-        // k_assert(PROTO_ERR_IS_A_DIRECTORY);
-        return -1;
+        k_assert(PROTO_ERR_IS_A_DIRECTORY);
+        return -PROTO_ERR_IS_A_DIRECTORY;
     }
 
     if (!(fd->flags & FD_WRITE)) {
-        // k_assert(PROTO_ERR_FILE_UNAUTHORIZED_OP);
-        return -1;
+        k_assert(PROTO_ERR_FILE_UNAUTHORIZED_OP);
+        return -PROTO_ERR_FILE_UNAUTHORIZED_OP;
     }
 
 
@@ -207,7 +207,7 @@ int vfs_close(file_descriptor_t *fd) {
 int vfs_mount(superblock_t *sb, char *path) {
     inode_t *mountpoint = vfs_lookup(rootfs->root, path);
     if (mountpoint == NULL || mountpoint->type != INODE_FOLDER) {
-        // k_assert(PROTO_ERR_FILE_NOT_FOUND);
+        k_assert(PROTO_ERR_FILE_NOT_FOUND);
         return PROTO_ERR_FILE_NOT_FOUND;
     }
 

@@ -112,6 +112,8 @@ struct superblock_t {
 #define FD_READ  0x01
 #define FD_WRITE 0x02
 
+#define PROTO_EOF 0
+
 #define PATH_DELIM "/\\" // so people can use paths with / AND \ !
 
 extern superblock_t *rootfs;

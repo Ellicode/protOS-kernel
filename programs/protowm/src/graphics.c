@@ -2,6 +2,8 @@
 
 void putpixel(fb_info_t *fb, uint32_t x, uint32_t y, uint32_t color) {
     if (fb == NULL) { return; }
+
+    if (x < 0 || y < 0) { return; }
     if (x >= fb->width || y >= fb->height) { return; }
 
     volatile uint32_t *fb_ptr = (uint32_t *)fb->address;
@@ -25,12 +27,17 @@ void draw_rect(fb_info_t *fb, uint32_t x, uint32_t y, uint32_t w, uint32_t h, ui
     }
 }
 
+void draw_box(fb_info_t *fb, uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
+
+}
+
 static inline uint32_t min_u32(uint32_t a, uint32_t b) { return (a < b) ? a : b; }
 
 void putpixel_a(fb_info_t *fb, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
-    if (!fb) return;
-    if (x < 0 || y < 0) return;
-    if ((uint32_t)x >= fb->width || (uint32_t)y >= fb->height) return;
+    if (fb == NULL) { return; }
+
+    if (x < 0 || y < 0) { return; }
+    if (x >= fb->width || y >= fb->height) { return; }
 
     volatile uint32_t *fb_ptr = (uint32_t *)fb->address;
     uint32_t idx = (uint32_t)y * (fb->pitch / 4) + (uint32_t)x;
@@ -39,7 +46,7 @@ void putpixel_a(fb_info_t *fb, int x, int y, uint8_t r, uint8_t g, uint8_t b, ui
         fb_ptr[idx] = (r << 16) | (g << 8) | b;
         return;
     }
-    if (a == 0) return;
+    if (a == 0) { return; }
 
     uint32_t bg_pixel = fb_ptr[idx];
     uint8_t bg_r = (bg_pixel >> 16) & 0xFF;
@@ -54,10 +61,10 @@ void putpixel_a(fb_info_t *fb, int x, int y, uint8_t r, uint8_t g, uint8_t b, ui
 }
 
 bmp_t *load_bitmap(const char *path) {
-    if (!path) return NULL;
+    if (path == NULL) { return NULL; }
 
     int fd = open(path, "r");
-    if (fd < 0) return NULL;
+    if (fd < 0) { return NULL; }
 
     uint8_t file_hdr[14];
     if (read(fd, 14, file_hdr) < 0) { close(fd); return NULL; }
@@ -136,7 +143,7 @@ bmp_t *load_bitmap(const char *path) {
     if (!bmp->data) { free(bmp); close(fd); return NULL; }
 
     uint32_t row_raw = (bpp == 24) ? (bmp->width * 3) : (bmp->width * 4);
-    uint32_t row_padded = (row_raw + 3) & ~3u; // BMP rows are 4-byte aligned
+    uint32_t row_padded = (row_raw + 3) & ~3U; // BMP rows are 4-byte aligned
     uint8_t *row = malloc(row_padded);
     if (!row) { free(bmp->data); free(bmp); close(fd); return NULL; }
 

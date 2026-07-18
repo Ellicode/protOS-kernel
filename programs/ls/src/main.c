@@ -35,9 +35,15 @@ int pmain(char argv[16][64], int argc) {
     } else {
         cwd_fd = open(".", "r");
     }
+
+    if (cwd_fd < PROTO_OK) {
+        fprintf(STDERR, "[ERROR] No such directory.\n");
+        return 1;
+    }
+
     int read_status = read_dir(cwd_fd, entries, &num_entries);
     if (read_status != PROTO_OK) {
-        fprintf(STDERR, "(err) read_dir failed with status=%d\n", read_status);
+        fprintf(STDERR, "[ERROR] Cannot read directory (status %d)\n", read_status);
         return 1;
     }
 
