@@ -202,6 +202,36 @@ int devfs_write(inode_t *inode, uint64_t size, uint64_t offset, const void *buff
     }
 }
 
+int devfs_read_dir(inode_t *dir, dentry_t *entries, int *num_entries) {
+    if (dir == NULL) {
+        k_assert(PROTO_ERR_INVALID_ARGUMENT);
+        return PROTO_ERR_INVALID_ARGUMENT;
+    }
+
+    devfs_node_t *node = (devfs_node_t *)dir->fs_data;
+    if (node == NULL) {
+        k_assert(PROTO_ERR_UNKNOWN);
+        return PROTO_ERR_UNKNOWN;
+    }
+    if (node->type != INODE_FOLDER) {
+        return PROTO_ERR_NOT_A_DIRECTORY;
+    }
+
+    *num_entries = 0;
+    devfs_node_t *entry = node->child;
+    while (entry != NULL) {
+        entries[*num_entries].inode = &entry->inode;
+        strcpy(entries[*num_entries].name, entry->name);
+        entries[*num_entries].size = entry->size;
+        entries[*num_entries].type = entry->type;
+        
+        entry = entry->next;
+        *num_entries += 1;
+    }
+
+    return PROTO_OK;
+}
+
 superblock_t *devfs_init() {
     devfs_root                          = k_alloc(sizeof(devfs_node_t));
     devfs_root->type                    = INODE_FOLDER;
@@ -214,6 +244,7 @@ superblock_t *devfs_init() {
     devfs_superblock->ops->lookup       = devfs_lookup;
     devfs_superblock->ops->create       = devfs_create;
     devfs_superblock->ops->create_dir   = devfs_create_dir;
+    devfs_superblock->ops->read_dir     = devfs_read_dir;
     devfs_superblock->ops->write        = devfs_write;
     devfs_superblock->ops->read         = devfs_read;
     devfs_superblock->ops->stat         = devfs_stat;
