@@ -1,66 +1,8 @@
-#include "graphics.h"
+#include <proto/core.h>
+#include <proto/graphics.h>
 
-void putpixel(fb_info_t *fb, uint32_t x, uint32_t y, uint32_t color) {
-    if (fb == NULL) { return; }
-
-    if (x < 0 || y < 0) { return; }
-    if (x >= fb->width || y >= fb->height) { return; }
-
-    volatile uint32_t *fb_ptr = (uint32_t *)fb->address;
-    fb_ptr[y * (fb->pitch / 4) + x] = color;
-}
-
-void draw_rect(fb_info_t *fb, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t color)
-{
-    if (fb == NULL) { return; }
-
-    volatile uint32_t *fb_ptr = (uint32_t *)fb->address;
-    
-    // Pitch is in bytes, so divide by 4 to use with a uint32_t pointer
-    uint32_t fb_pitch = fb->pitch / 4;
-
-    for (uint32_t row = y; row < y + h; row++) {
-        for (uint32_t col = x; col < x + w; col++) {
-            if (row > fb->height || col > fb->width) { continue; }
-            fb_ptr[row * fb_pitch + col] = color;
-        }
-    }
-}
-
-void draw_box(fb_info_t *fb, uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
-
-}
-
-static inline uint32_t min_u32(uint32_t a, uint32_t b) { return (a < b) ? a : b; }
-
-void putpixel_a(fb_info_t *fb, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
-    if (fb == NULL) { return; }
-
-    if (x < 0 || y < 0) { return; }
-    if (x >= fb->width || y >= fb->height) { return; }
-
-    volatile uint32_t *fb_ptr = (uint32_t *)fb->address;
-    uint32_t idx = (uint32_t)y * (fb->pitch / 4) + (uint32_t)x;
-
-    if (a == 255) {
-        fb_ptr[idx] = (r << 16) | (g << 8) | b;
-        return;
-    }
-    if (a == 0) { return; }
-
-    uint32_t bg_pixel = fb_ptr[idx];
-    uint8_t bg_r = (bg_pixel >> 16) & 0xFF;
-    uint8_t bg_g = (bg_pixel >> 8) & 0xFF;
-    uint8_t bg_b = bg_pixel & 0xFF;
-
-    uint8_t out_r = ((r * a) + (bg_r * (255 - a))) / 255;
-    uint8_t out_g = ((g * a) + (bg_g * (255 - a))) / 255;
-    uint8_t out_b = ((b * a) + (bg_b * (255 - a))) / 255;
-
-    fb_ptr[idx] = (out_r << 16) | (out_g << 8) | out_b;
-}
-
-bmp_t *load_bitmap(const char *path) {
+// fuck it i will vibecode ts T-T
+bmp_t *bmp_load(const char *path) {
     if (path == NULL) { return NULL; }
 
     int fd = open(path, "r");
@@ -170,24 +112,12 @@ bmp_t *load_bitmap(const char *path) {
     return bmp;
 }
 
-void draw_bitmap(fb_info_t *fb, bmp_t *bmp, int x, int y) {
-    if (!fb || !bmp || !bmp->data) { return; }
-
-    for (uint32_t row = 0; row < bmp->height; row++) {
-        for (uint32_t col = 0; col < bmp->width; col++) {
-            uint32_t pixel = bmp->data[row * bmp->width + col];
-
-            uint8_t a = (pixel >> 24) & 0xFF;
-            uint8_t r = (pixel >> 16) & 0xFF;
-            uint8_t g = (pixel >> 8) & 0xFF;
-            uint8_t b = pixel & 0xFF;
-
-            putpixel_a(fb, x + (int)col, y + (int)row, r, g, b, a);
-        }
-    }
+void bmp_draw(fb_info_t *fb, bmp_t *bmp, int x, int y) {
+    if (fb == NULL || bmp == NULL || bmp->data == NULL) { return; }
+    draw_img(fb, bmp->data, x, y, bmp->width, bmp->height);
 }
 
-void free_bitmap(bmp_t *bmp) {
+void bmp_free(bmp_t *bmp) {
     if (!bmp) { return; }
     free(bmp->data);
     free(bmp);

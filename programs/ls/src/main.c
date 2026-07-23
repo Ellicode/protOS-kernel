@@ -1,4 +1,5 @@
-#include <proto.h>
+#include <proto/core.h>
+
 #include "ls.h"
 
 char *names[] = {

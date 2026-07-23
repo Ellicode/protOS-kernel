@@ -1,6 +1,6 @@
 #include <stdarg.h>
+#include <proto/core.h>
 
-#include "proto.h"
 // MEMORY RELATED FUNCTIONS ====================================================================
 
 void* memmove(void* dstptr, const void* srcptr, size_t size) {

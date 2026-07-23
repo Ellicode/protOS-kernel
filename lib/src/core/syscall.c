@@ -1,4 +1,4 @@
-#include "proto.h"
+#include <proto/core.h>
 
 uint64_t syscall(uint64_t num, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
     uint64_t ret;

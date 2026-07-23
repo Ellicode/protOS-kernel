@@ -1,6 +1,5 @@
 #include <stdarg.h>
-
-#include "proto.h"
+#include <proto/core.h>
 
 int read(uint64_t fd, size_t size, void *buffer) {
     return syscall(SYS_READ, fd, (uint64_t)size, (uint64_t)buffer);
@@ -27,7 +26,7 @@ int getcwd(char *buf, size_t size) {
 };
 
 int stat(uint64_t fd, dentry_t *buffer) {
-    return syscall(SYS_GETCWD, fd, (uint64_t)buffer, 0);
+    return syscall(SYS_STAT, fd, (uint64_t)buffer, 0);
 };
 
 int read_dir(uint64_t fd, dentry_t *entries, int *num_entries) {

@@ -1,4 +1,4 @@
-#include "proto.h"
+#include <proto/core.h>
 
 heap_item_t *heap_base = NULL;
 uint64_t     heap_size = HEAP_MIN_SIZE;

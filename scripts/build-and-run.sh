@@ -73,6 +73,7 @@ cp build/programs/ls/ls initramfs/System/Programs/ls
 cp build/programs/protowm/protowm initramfs/System/Programs/protowm
 cp build/programs/edit/edit initramfs/System/Programs/edit
 cp build/programs/panic/panic initramfs/System/Programs/panic
+cp build/programs/read/read initramfs/System/Programs/read
 
 mkdir -p ignore-scripts
 

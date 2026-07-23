@@ -1,4 +1,4 @@
-#include <proto.h>
+#include <proto/core.h>
 
 #include "split.h"
 

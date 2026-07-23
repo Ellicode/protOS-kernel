@@ -1,4 +1,4 @@
-#include <proto.h>
+#include <proto/core.h>
 
 void crg_cd(char argv[16][64]) {
     int res = chdir(argv[1]);

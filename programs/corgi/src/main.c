@@ -7,7 +7,7 @@
  * */
 
 #include <stdint.h>
-#include <proto.h>
+#include <proto/core.h>
 
 #include "tools.h"
 #include "split.h"

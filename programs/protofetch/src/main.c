@@ -1,6 +1,6 @@
 #include "protofetch.h"
 
-#include <proto.h>
+#include <proto/core.h>
 
 char *names[] = {
     "KiB",

@@ -1,4 +1,4 @@
-#include "proto.h"
+#include <proto/core.h>
 
 extern int pmain(char argv[16][64], int argc);
 

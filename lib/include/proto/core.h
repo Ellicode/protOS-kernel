@@ -1,9 +1,13 @@
-#ifndef PROTO_H
-#define PROTO_H
+#ifndef PROTO_CORE_H
+#define PROTO_CORE_H
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>
+
+/*****************************************************************************
+ * Error codes
+ *****************************************************************************/
 
 enum status_code_t {
     PROTO_OK                            = 0,
@@ -32,7 +36,9 @@ enum status_code_t {
     PROTO_ERR_PROCESS_NOT_FOUND         = 41,
 };
 
-// SYSCALL ===================================================================================
+/*****************************************************************************
+ * Syscall numbers
+ *****************************************************************************/
 
 enum {
     SYS_EXIT,
@@ -80,7 +86,9 @@ typedef struct about_data_t {
 
 uint64_t syscall(uint64_t num, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 
-// IO ========================================================================================
+/*****************************************************************************
+ * Input-Output operations
+ *****************************************************************************/
 
 typedef struct dentry_t dentry_t;
 
@@ -94,7 +102,7 @@ struct dentry_t {
     char                name[256];
     uint64_t            size;
     inode_type_t        type;
-    void                *inode;
+    void                *k_inode;
 };
 
 
@@ -112,26 +120,18 @@ int input(char *buffer);
 void printf(const char *format, ...);
 void fprintf(uint64_t fd, const char *format, ...);
 
-// PROCESS ===================================================================================
+/*****************************************************************************
+ * Process management
+ *****************************************************************************/
 
 int create_process(const char *elf, char argv[16][64], int argc);
 void exit();
 void wait_for_process(int pid);
 int getpid();
 
-// GRAPHICS ==================================================================================
-
-typedef struct __attribute__((packed)) {
-    uint64_t address;
-    uint64_t width;
-    uint64_t height;
-    uint64_t pitch;
-    uint64_t bpp;
-} fb_info_t;
-
-int fetch_framebuffer(fb_info_t *fb);
-
-// STRING ====================================================================================
+/*****************************************************************************
+ * String operations
+ *****************************************************************************/
 
 int memcmp(const void*, const void*, size_t);
 void* memcpy(void* __restrict, const void* __restrict, size_t);
@@ -152,7 +152,9 @@ char *hex_to_string(uint64_t value);
 int vsnprintf(char *str, size_t size, const char *format, va_list args);
 int snprintf(char *str, size_t size, const char *format, ...);
 
-// MALLOC ===================================================================================
+/*****************************************************************************
+ * Malloc and other heap-related operations
+ *****************************************************************************/
 
 typedef struct HeapItem {
     size_t size;
@@ -174,35 +176,4 @@ void heap_init();
 void *malloc(size_t size);
 int free(void *ptr);
 
-// IPC ======================================================================================
-
-typedef struct ipc_syscall_payload {
-    char            *message;
-    void            *data;
-    size_t          size;
-} ipc_syscall_payload;
-
-typedef struct ipc_meta_t {
-    uint64_t                sender;
-    char                    name[255];
-    uint64_t                size;
-
-    void                    *msg;
-} ipc_meta_t;
-
-typedef struct mouse_move_packet_t {
-    int x;
-    int y;
-
-    int vel_x;
-    int vel_y;
-} mouse_move_packet_t;
-
-int send(uint64_t pid, char *message, void *data, size_t size);
-int recieve(ipc_meta_t *meta, void *data);
-int consume(ipc_meta_t *meta);
-int dispatch(char *message, void *data, size_t size);
-int subscribe(char *topic);
-int unsubscribe(char *topic);
-
-#endif
+#endif // PROTO_CORE_H
