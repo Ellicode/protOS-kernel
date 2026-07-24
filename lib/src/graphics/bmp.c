@@ -113,8 +113,11 @@ bmp_t *bmp_load(const char *path) {
 }
 
 void bmp_draw(fb_info_t *fb, bmp_t *bmp, int x, int y) {
-    if (fb == NULL || bmp == NULL || bmp->data == NULL) { return; }
-    draw_img(fb, bmp->data, x, y, bmp->width, bmp->height);
+    if (bmp == NULL || bmp->data == NULL) { 
+        draw_notex(fb, x, y, 32, 32);
+        return; 
+    }
+    draw_img_a(fb, bmp->data, x, y, bmp->width, bmp->height);
 }
 
 void bmp_free(bmp_t *bmp) {

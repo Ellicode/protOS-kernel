@@ -4,6 +4,7 @@ add_executable(protowm
     src/init.c
     src/cursor.c
     src/globals.c
+    src/window.c
 )
 
 target_include_directories(protowm PRIVATE include)

@@ -4,9 +4,16 @@
 
 #include "init.h"
 #include "cursor.h"
+#include "window.h"
 #include "globals.h"
 
 void handle_event(ev_meta_t *meta, void *data) {
+    memset(data, 0, 256);
+    int res = recieve(meta, data);
+    if (res != PROTO_OK) {
+        fprintf(STDERR, "[ERROR] Recieve failed with code %d", res);
+    }
+
     if (strcmp(meta->name, "proto.mouse.move") == 0) {
         mouse_move_packet_t pkt;
         memcpy(&pkt, data, sizeof(pkt));
@@ -17,8 +24,9 @@ void handle_event(ev_meta_t *meta, void *data) {
         if (*c == 'q') {
             exit();
         }
-        printf("%c", *c);
     }
+
+    consume(meta);
 }
 
 int pmain(char argv[16][64], int argc) {
@@ -27,21 +35,12 @@ int pmain(char argv[16][64], int argc) {
     ev_meta_t *meta = malloc(sizeof(ev_meta_t));
     char *data = malloc(256);
 
-    // draw_rect(g_fb, 100, 10, 100, 20, 0x8aadf4);
-    // draw_rect(g_fb, 100, 30, 100, 20, 0xf5bde6);
-    // draw_rect(g_fb, 100, 50, 100, 20, 0xFFFFFF);
-    // draw_rect(g_fb, 100, 70, 100, 20, 0xf5bde6);
-    // draw_rect(g_fb, 100, 90, 100, 20, 0x8aadf4);
-
+    window_t *win = create_window(100, 100, 500, 200, "My Window");
+    draw_rect(win->fb, 0, 0, 50, 50, 0xFF0000);
+    draw_window(win);
+    
     while (1) {
-        memset(data, 0, 256);
-        int res = recieve(meta, data);
-        if (res != PROTO_OK) {
-            fprintf(STDERR, "[ERROR] Recieve failed with code %d", res);
-            break;
-        }
         handle_event(meta, data);
-        consume(meta);
     }
 
     free(meta);

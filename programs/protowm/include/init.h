@@ -2,7 +2,7 @@
 #define INIT_H
 
 #define BG_COLOR        0x8839ef
-#define CURSOR_PATH     "/System/Assets/Cursor.bmp"
+#define CURSOR_PATH     "/System/Assets/Images/cursor.bmp"
 
 int wm_init();
 

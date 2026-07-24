@@ -10,6 +10,7 @@ uint32_t *cursor_prev = NULL;
 
 void init_cursor() {
     cursor_prev = malloc((size_t)CURSOR_WIDTH * CURSOR_HEIGHT * sizeof(uint32_t));
+    capture_rect(g_fb, cursor_prev, 0, 0, CURSOR_WIDTH, CURSOR_HEIGHT);
 }
 
 void draw_cursor(int x, int y) {

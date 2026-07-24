@@ -4,3 +4,4 @@
 
 fb_info_t    *g_fb = NULL;
 bmp_t        *g_cursor_bmp = NULL;
+font_t       *g_small_font = NULL;
