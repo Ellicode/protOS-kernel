@@ -26,7 +26,7 @@ void draw_img(fb_info_t *fb, const uint32_t *img, int x, int y, int w, int h);
 void draw_img_a(fb_info_t *fb, const uint32_t *img, int x, int y, int w, int h);
 void capture_rect(fb_info_t *fb, uint32_t *buf, int x, int y, int w, int h);
 void draw_notex(fb_info_t *fb, int x, int y, int w, int h);
-void draw_box(fb_info_t *fb, int x, int y, int w, int h, uint32_t color, int border);
+void draw_box(fb_info_t *fb, int x, int y, int w, int h, uint32_t color, int border, char fill);
 
 /*****************************************************************************
  * BMP file support

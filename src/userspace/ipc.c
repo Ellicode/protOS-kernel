@@ -49,7 +49,7 @@ int ipc_send(uint64_t pid, char *message, void *data, size_t size) {
     return PROTO_OK;
 }
 
-int ipc_recieve(ipc_meta_t *meta, void *data) {
+int ipc_receive(ipc_meta_t *meta, void *data) {
     if (meta == NULL || data == NULL) { return PROTO_ERR_INVALID_ARGUMENT; }
     if (!g_current_thread || !g_current_thread->process) { return PROTO_ERR_INVALID_CONTEXT; }
 

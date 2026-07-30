@@ -30,10 +30,12 @@ void check_cursor_collision(int x, int y) {
 }
 
 void handle_event(ev_meta_t *meta, void *data) {
+    if (meta == NULL) return;
+
     memset(data, 0, 256);
-    int res = recieve(meta, data);
+    int res = receive(meta, data);
     if (res != PROTO_OK) {
-        fprintf(STDERR, "[ERROR] Recieve failed with code %d", res);
+        fprintf(STDERR, "[ERROR] Receive failed with code %d", res);
     }
 
     if (strcmp(meta->name, "proto.mouse.move") == 0) {
@@ -44,6 +46,14 @@ void handle_event(ev_meta_t *meta, void *data) {
             invert_rect_o(g_fb, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
             dragging_win->x += pkt.vel_x;
             dragging_win->y += pkt.vel_y;
+            if (dragging_win->x < 0)
+                dragging_win->x = 0;
+            if (dragging_win->y < 0)
+                dragging_win->y = 0;
+            if (dragging_win->x + dragging_win->owidth > g_fb->width)
+                dragging_win->x = (int)g_fb->width - dragging_win->owidth;
+            if (dragging_win->y + dragging_win->oheight > g_fb->height)
+                dragging_win->y = (int)g_fb->height - dragging_win->oheight;
             last_mouse_x = pkt.x;
             last_mouse_y = pkt.y;
             invert_rect_o(g_fb, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
@@ -62,7 +72,8 @@ void handle_event(ev_meta_t *meta, void *data) {
     } else if (strcmp(meta->name, "proto.mouse.up") == 0) {
         if (dragging_win) {
             invert_rect_o(g_fb, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
-            capture_rect(g_fb, dragging_win->under, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
+            // already done in draw window
+            //capture_rect(g_fb, dragging_win->under, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
             draw_window(dragging_win, 0);
             _draw_cursor_impl(last_mouse_x, last_mouse_y);
             last_mouse_x = 0;
@@ -71,7 +82,7 @@ void handle_event(ev_meta_t *meta, void *data) {
         is_mouse_down = 0;
         dragging_win = NULL;
     } else if (strcmp(meta->name, "proto.keyboard.keydown") == 0) {
-        exit();
+        //exit();
     }
 
     consume(meta);
