@@ -1,6 +1,6 @@
 #include "debug/serial.h"
 #include "debug/errors.h"
-#include "io.h"
+#include "utils/utils.h"
 
 // SOURCE CODE FROM THE OSDEV WIKI:
 // https://osdev.wiki/wiki/Serial_Ports

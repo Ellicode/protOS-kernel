@@ -1,10 +1,13 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
+#include <stdbool.h>
+
 #include "../limine/limine.h"
 #include "graphics/graphics.h"
 
-#include "fonts/niji-pixel-bold-16.h"
+#include "fonts/ter-u14b.h"
+// #include "fonts/niji-pixel-bold-16.h"
 // #include "fonts/niji-pixel-regular-16.h"
 
 // PASTEL ============================
@@ -22,18 +25,18 @@
 // };
 
 // VIBRANT ============================
-// enum ProtoColors {
-//     PROTO_RED     = 0xfb2c36,
-//     PROTO_GREEN   = 0x00a63e,
-//     PROTO_YELLOW  = 0xd08700,
-//     PROTO_BLUE    = 0x155dfc,
-//     PROTO_MAGENTA = 0xc800de,
-//     PROTO_CYAN    = 0x0092b8,
-//     PROTO_WHITE   = 0xFFFFFF,
-//     PROTO_GREY    = 0x777777,
-//     PROTO_BLACK   = 0x000000,
-//     PROTO_BG      = 0x000000,
-// };
+enum ProtoColors {
+    PROTO_RED     = 0xef4444,
+    PROTO_GREEN   = 0x22c55e,
+    PROTO_YELLOW  = 0xeab308,
+    PROTO_BLUE    = 0x3b82f6,
+    PROTO_MAGENTA = 0xd946ef,
+    PROTO_CYAN    = 0x06b6d4,
+    PROTO_WHITE   = 0xFFFFFF,
+    PROTO_GREY    = 0x6b7280,
+    PROTO_BLACK   = 0x000000,
+    PROTO_BG      = 0x000000,
+};
 
 // MOCHA ============================
 // enum ProtoColors {
@@ -50,19 +53,18 @@
 // };
 
 // OLDSKOOL ============================
-enum ProtoColors {
-    PROTO_RED     = 0xFF0000,
-    PROTO_GREEN   = 0x00FF00,
-    PROTO_YELLOW  = 0xFFFF00,
-    PROTO_BLUE    = 0x0000FF,
-    PROTO_MAGENTA = 0xFF00FF,
-    PROTO_CYAN    = 0x00FFFF,
-    PROTO_WHITE   = 0xFFFFFF,
-    PROTO_GREY    = 0x999999,
-    PROTO_BLACK   = 0x000000,
-    PROTO_BG      = 0x000000,
-};
-
+// enum ProtoColors {
+//     PROTO_RED     = 0xFF0000,
+//     PROTO_GREEN   = 0x00FF00,
+//     PROTO_YELLOW  = 0xFFFF00,
+//     PROTO_BLUE    = 0x0000FF,
+//     PROTO_MAGENTA = 0xFF00FF,
+//     PROTO_CYAN    = 0x00FFFF,
+//     PROTO_WHITE   = 0xFFFFFF,
+//     PROTO_GREY    = 0x999999,
+//     PROTO_BLACK   = 0x000000,
+//     PROTO_BG      = 0x000000,
+// };
 
 typedef struct {
     char     ch;
@@ -79,13 +81,15 @@ typedef struct {
 #define ANSI_WHITE   "\x1b[37m"
 #define ANSI_RESET   "\x1b[0m"
 
-extern uint64_t cursor_row;
-extern uint64_t cursor_col;
-extern color_t current_fg;
-extern color_t current_bg;
-extern uint64_t term_rows;
-extern uint64_t term_cols;
-extern uint64_t term_graphics_init;
+extern int          g_cursor_row;
+extern int          g_cursor_col;
+extern color_t      g_current_fg;
+extern color_t      g_current_bg;
+extern int          g_term_rows;
+extern int          g_term_cols;
+extern bool         g_term_graphics_init;
+
+extern bool         g_kbd_enable;
 
 void term_clear_buffer();
 void terminal_init();

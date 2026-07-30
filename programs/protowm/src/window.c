@@ -11,6 +11,8 @@ void refresh_window(window_t *win) {
     draw_img(g_fb, (uint32_t *)win->fb->address, win->x+WIN_PADDING, win->y+TITLEBAR_HEIGHT, win->width, win->height);
 }
 
+// TODO: refresh_window_rect
+
 void draw_window(window_t *win, int moving) {
     capture_rect(g_fb, win->under, win->x, win->y, win->width, win->height);
 

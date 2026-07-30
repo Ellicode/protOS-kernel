@@ -3,31 +3,27 @@
 
 #include <stdint.h>
 
-enum {
+typedef enum {
     GDT_ENTRY_DPL_KERNEL        = 0,
     GDT_ENTRY_DPL_USER          = 3
-};
-typedef uint8_t gdt_dpl_t;
+} gdt_dpl_t;
 
-enum {
+typedef enum {
     GDT_ENTRY_SEG_SYSTEM        = 0,
     GDT_ENTRY_SEG_CODE_DATA     = 1
-};
-typedef uint8_t gdt_type_t;
+} gdt_type_t;
 
-enum {
+typedef enum {
     GDT_ENTRY_GRANULARITY_BYTE  = 0,
     GDT_ENTRY_GRANULARITY_PAGES = 1
-};
-typedef uint8_t gdt_gran_t;
+} gdt_gran_t;
 
-enum {
+typedef enum {
     GDT_ENTRY_SIZE_16           = 0,
     GDT_ENTRY_SIZE_32           = 1
-};
-typedef uint8_t gdt_size_t;
+} gdt_size_t;
 
-enum {
+typedef enum {
     GDT_ENTRY_PRESENT           = 1,
     GDT_ENTRY_EXECUTABLE        = 1,
     GDT_ENTRY_EXPAND_DOWN       = 1,
@@ -40,13 +36,13 @@ enum {
 
 typedef union {
     struct {
-        uint8_t    accessed       : 1;
-        uint8_t    read_write     : 1;
-        uint8_t    direction      : 1;
-        uint8_t    executable     : 1;
-        gdt_type_t type           : 1;
-        gdt_dpl_t  dpl            : 2;
-        uint8_t    present        : 1;
+        uint8_t         accessed       : 1;
+        uint8_t         read_write     : 1;
+        uint8_t         direction      : 1;
+        uint8_t         executable     : 1;
+        gdt_type_t      type           : 1;
+        gdt_dpl_t       dpl            : 2;
+        uint8_t         present        : 1;
     } __attribute__((packed));
     uint8_t value;
 } GDTEntryAccessByte;
@@ -54,16 +50,16 @@ typedef uint8_t access_byte_t;
 
 typedef union {
     struct {
-        uint16_t      limit_low;
-        uint16_t      base_low;
-        uint8_t       base_mid;
-        access_byte_t access_byte;
-        uint8_t       limit_high  : 4;
-        uint8_t       _reserved   : 1;
-        uint8_t       longa       : 1;
-        uint8_t       db          : 1;
-        uint8_t       granuality  : 1;
-        uint8_t       base_high;
+        uint16_t        limit_low;
+        uint16_t        base_low;
+        uint8_t         base_mid;
+        access_byte_t   access_byte;
+        uint8_t         limit_high  : 4;
+        uint8_t         _reserved   : 1;
+        uint8_t         longa       : 1;
+        uint8_t         db          : 1;
+        gdt_gran_t      granuality  : 1;
+        uint8_t         base_high;
     } __attribute__((packed));
     uint64_t value;
 } GDTEntry;
@@ -114,13 +110,12 @@ typedef uint64_t gdt_entry_t;
 #define GDT_ENTRY_BASE  0x00000
 #define GDT_ENTRY_LIMIT 0xFFFFF
 
-typedef struct {
+typedef struct gdtr_t {
     uint16_t limit;
     uint64_t base;
-} __attribute__((packed)) GDTR;
-typedef GDTR gdtr_t;
+} __attribute__((packed)) gdtr_t;
 
-typedef struct {
+typedef struct tss_entry_t {
     uint32_t reserved0;
 
     uint64_t rsp0;
@@ -139,10 +134,9 @@ typedef struct {
 
     uint16_t reserved2;
     uint16_t iopb;
-} __attribute__((packed)) TSSEntry;
-typedef TSSEntry tss_entry_t;
+} __attribute__((packed)) tss_entry_t;
 
-extern tss_entry_t tss __attribute__((aligned(0x1000)));
+extern tss_entry_t g_tss __attribute__((aligned(0x1000)));
 
 #define GDT_OFFSET_KERNEL_CODE (1*8)
 #define GDT_OFFSET_KERNEL_DATA (2*8)

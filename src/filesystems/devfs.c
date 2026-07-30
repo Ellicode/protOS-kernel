@@ -57,20 +57,17 @@ int devfs_create(inode_t *dir, char *name, inode_t **result) {
         return PROTO_ERR_INVALID_ARGUMENT;
     }
 
-    inode_t *res;
-
     devfs_node_t *parent_node = dir->fs_data;
     devfs_node_t *node = k_alloc(sizeof(devfs_node_t));
-    
-    node->type              = INODE_FILE;
-    node->next              = parent_node->child;
     strcpy(node->name, name);
+    node->type              = INODE_FILE;
     node->parent            = parent_node;
     node->inode.type        = INODE_FILE;
     node->inode.fs_data     = node;
     node->inode.parent_sb   = devfs_superblock;
-
     node->inode.id          = devfs_next_id++;
+
+    node->next              = parent_node->child;
     parent_node->child      = node;
     (*result) = &node->inode;
 
@@ -92,16 +89,15 @@ int devfs_create_dir(inode_t *dir, char *name, inode_t **result) {
 
     devfs_node_t *parent_node = dir->fs_data;
     devfs_node_t *node = k_alloc(sizeof(devfs_node_t));
-    
-    node->type              = INODE_FOLDER;
-    node->next              = parent_node->child;
     strcpy(node->name, name);
+    node->type              = INODE_FOLDER;
     node->parent            = parent_node;
     node->inode.type        = INODE_FOLDER;
     node->inode.fs_data     = node;
     node->inode.parent_sb   = devfs_superblock;
-
     node->inode.id          = devfs_next_id++;
+    
+    node->next              = parent_node->child;
     parent_node->child      = node;
     (*result) = &node->inode;
 
@@ -151,11 +147,13 @@ int devfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
                 .mem_used       = memused
             };
             memcpy(buffer, &about_data, sizeof(about_data_t));
-            break;
+            return sizeof(about_data_t);
         default: // No match
             k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
             return -PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
+
+    return -PROTO_ERR_UNKNOWN;
 }
 
 int devfs_stat(inode_t *inode, dentry_t *buffer) {

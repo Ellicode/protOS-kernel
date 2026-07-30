@@ -58,3 +58,11 @@ void fprintf(uint64_t fd, const char *format, ...) {
     va_end(args);
     write(fd, 0, buffer);
 }
+
+void set_cursor(int row, int col) {
+    syscall(SYS_SET_CURSOR, row, col, 0);
+}
+
+void clear() {
+    syscall(SYS_CLEAR, 0, 0, 0);
+}

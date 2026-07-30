@@ -15,7 +15,7 @@
 
 #include "userspace/process.h"
 
-uint64_t curr_pid = 0;
+int curr_pid = 0;
 process_t *g_active_processes = NULL;
 
 int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64], int argc) {
@@ -53,7 +53,7 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
         F_USER | F_WRITE
     );
     
-    uint64_t entry = elf_load(buffer, size, pml4);
+    uint64_t entry = elf_load(buffer, pml4);
     k_free(buffer);
 
     if (entry == 1) {
@@ -94,7 +94,7 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
         }
     }
 
-    tss.rsp0 = (uint64_t)process->kernel_stack + KERNEL_STACK_SIZE;
+    g_tss.rsp0 = (uint64_t)process->kernel_stack + KERNEL_STACK_SIZE;
 
     LL_APPEND(process, g_active_processes);
 

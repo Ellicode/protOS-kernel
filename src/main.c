@@ -1,3 +1,11 @@
+/********************************************************************************
+ * @file        main.c
+ * @brief       Main entry point of the ProtOS kernel.
+ * 
+ * @author      Elliot Laborieux
+ * @copyright   Copyright (c) 2026 Ellicode
+ ********************************************************************************/
+
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -15,7 +23,7 @@
 #include "userspace/userspace.h"
 #include "userspace/process.h"
 
-// LIMINE REQUESTS ==============================================================================
+// MARK: Limine requests
 
 __attribute__((used, section(".limine_requests"))) static volatile uint64_t limine_base_revision[] = LIMINE_BASE_REVISION(5);
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_framebuffer_request framebuffer_request = {
@@ -41,20 +49,23 @@ __attribute__((used, section(".limine_requests"))) static volatile struct limine
 __attribute__((used, section(".limine_requests_start"))) static volatile uint64_t limine_requests_start_marker[] = LIMINE_REQUESTS_START_MARKER;
 __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
 
-
-// =============================================================================================
+// MARK: Methods
 
 void k_main() {
+    // Clear the buffer and homes the cursor to the origin [0, 0]
     term_clear_buffer();
     fill_screen(PROTO_BG);
     set_cursor(0, 0);
 
+    // TODO: Add a proper init system instead of loading the shell executable
     create_process("/System/Programs/corgi", 1, NULL, NULL, 0);
 
+    // Enable interrupts
     enable_interrupts();
 
+    // Halt until the dawn of time... :3
     for (;;) {
-        __asm__ ("hlt");
+        __asm__ volatile ("hlt");
     }
 }
 
@@ -65,8 +76,7 @@ void k_early_main() {
     }
     
     // Ensure we got a framebuffer.
-    if (framebuffer_request.response == NULL
-     || framebuffer_request.response->framebuffer_count < 1) {
+    if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
         hcf();
     }
 
@@ -76,9 +86,10 @@ void k_early_main() {
     struct limine_executable_address_response *kaddr = address_request.response;
     struct limine_module_response *modules = module_request.response;
 
+    // Run init script
     if (k_init(framebuffer, memmap, hhdm, kaddr, modules) == PROTO_OK) {
         k_main();
     } else {
-        k_error("Init script returned non-zero status code. The system will reboot now...");
+        panic("Init script returned non-zero status code.");
     }
 }

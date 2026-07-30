@@ -46,17 +46,17 @@ int k_init(
     graphics_init(fb);
     k_success("Initialized graphics.\n");
 
-    if (modules == NULL || modules->module_count == 0) {
-        k_warning("No modules loaded!\n");
-    } else {
-        for (uint64_t i = 0; i < modules->module_count; i++) {
-            k_info("Module: ");
-            print_f("%s @ %x (%d bytes)\n",
-                modules->modules[i]->path,
-                modules->modules[i]->address,
-                modules->modules[i]->size);
-        }
-    }
+    // if (modules == NULL || modules->module_count == 0) {
+    //     k_warning("No modules loaded!\n");
+    // } else {
+    //     for (uint64_t i = 0; i < modules->module_count; i++) {
+    //         k_info("Module: ");
+    //         print_f("%s @ %x (%d bytes)\n",
+    //             modules->modules[i]->path,
+    //             modules->modules[i]->address,
+    //             modules->modules[i]->size);
+    //     }
+    // }
 
     gdt_init();
     k_success("Initialized GDT.\n");
@@ -118,13 +118,11 @@ int k_init(
     // k_info("Reclaimed ");
     // print_f("%dMB from bootloader reclaimable memory\n", space_reclaimed / (uint64_t)(1024 * 1024));
 
-    // DONE! =========================================================================
-
     k_info("Welcome to ");
     set_color(PROTO_BG, PROTO_BLUE);
-    print_f("ProtOS");
+    print_f("ProtOS ");
     set_color(PROTO_WHITE, PROTO_BG);
-    print_f("! System will halt...\n");
+    print_f(":3\n");
 
     return PROTO_OK;
 }

@@ -17,9 +17,6 @@ set(KERNEL_SOURCES
     src/string.c
     include/string.h
 
-    src/io.c
-    include/io.h
-
     src/globals.c
     include/globals.h
 
@@ -32,7 +29,9 @@ set(KERNEL_SOURCES
     src/pit.c
     include/pit.h
 
+    src/utils/utils.c
     include/utils/utils.h
+
     include/utils/linked_lists.h
     include/utils/ticket_lock.h
 
@@ -60,6 +59,9 @@ set(KERNEL_SOURCES
     include/interrupts/idt.h
 
     src/interrupts/interrupt-stub.asm
+
+    src/interrupts/panic.c
+    include/interrupts/panic.h
 
     src/interrupts/pic.c
     include/interrupts/pic.h

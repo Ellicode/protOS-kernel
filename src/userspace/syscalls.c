@@ -11,6 +11,7 @@
 #include "memory/vmm.h"
 #include "utils/linked_lists.h"
 #include "userspace/ipc.h"
+#include "interrupts/panic.h"
 
 #include "userspace/syscalls.h"
 
@@ -273,7 +274,7 @@ int sys_getcwd(char *user_buf, size_t user_buf_size) {
                 snprintf(temp, sizeof(temp), "/%s%s", statbuf.name, path_accumulator);
                 strncpy(path_accumulator, temp, sizeof(path_accumulator));
             }
-            vfs_close(fd); // Proper resource teardown
+            vfs_close(fd);
         }
 
         cwd = parent;
@@ -327,7 +328,17 @@ int sys_getpid() {
     return g_current_thread->process->pid;
 }
 
-void* syscall_handlers[] = {
+void sys_set_cursor(int row, int col) {
+    set_cursor(row, col);
+}
+
+void sys_clear() {
+    term_clear_buffer();
+    fill_screen(PROTO_BG);
+    set_cursor(0, 0);
+}
+
+void *syscall_handlers[] = {
     [SYS_EXIT]              = sys_exit,
 
     [SYS_READ]              = sys_read,
@@ -341,7 +352,6 @@ void* syscall_handlers[] = {
     [SYS_FETCH_FB]          = sys_fetch_fb,
     [SYS_CHDIR]             = sys_chdir,
     [SYS_GETCWD]            = sys_getcwd,
-    [SYS_WAIT_FOR_PROCESS]  = sys_wait_for_process,
     [SYS_GETPID]            = sys_getpid,
 
     [SYS_SEND]              = sys_send,
@@ -350,6 +360,9 @@ void* syscall_handlers[] = {
     [SYS_CONSUME]           = ipc_consume,
     [SYS_SUBSCRIBE]         = ipc_subscribe,
     [SYS_UNSUBSCRIBE]       = ipc_unsubscribe,
+
+    [SYS_SET_CURSOR]        = sys_set_cursor,
+    [SYS_CLEAR]             = sys_clear,
 
     [SYS_PANIC]             = panic,
 };

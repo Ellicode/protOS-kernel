@@ -14,45 +14,15 @@
 #define CLAMP(val, min, max) ((val) < (min) ? (min) : ((val) > (max) ? (max) : (val)))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-#if defined(__INTELLISENSE__)
-static inline void hcf(void) {
-    for (;;) {}
-}
+typedef uint16_t port_t;
+typedef uint32_t msr_id_t;
 
-static inline uint64_t rdmsr(uint32_t msr_id) {
-    (void)msr_id;
-    return 0;
-}
+void outb(port_t port, uint8_t value);
+uint8_t inb(port_t port);
+void io_wait();
 
-static inline void wrmsr(uint32_t msr_id, uint64_t msr_value) {
-    (void)msr_id;
-    (void)msr_value;
-}
-#else
-static inline void hcf(void) {
-    for (;;) {
-        __asm__ ("hlt");
-    }
-}
-
-static inline uint64_t rdmsr(uint32_t msr_id) {
-    uint32_t low;
-    uint32_t high;
-    __asm__ volatile ("rdmsr" : "=a"(low), "=d"(high) : "c"(msr_id));
-    
-    return ((uint64_t)high << 32) | low;
-}
-
-static inline void wrmsr(uint32_t msr_id, uint64_t msr_value) {
-    uint32_t low = (uint32_t)(msr_value & 0xFFFFFFFF);
-    uint32_t high = (uint32_t)(msr_value >> 32);
-    __asm__ volatile ("wrmsr" :: "c"(msr_id), "a"(low), "d"(high));
-}
-#endif
-
-
-// static void panic_test(void) {
-//     __asm__ volatile ("ud2"); // Trigger invalid opcode error
-// }
+void hcf();
+uint64_t rdmsr(msr_id_t id);
+void wrmsr(msr_id_t id, uint64_t value);
 
 #endif // UTILS_H

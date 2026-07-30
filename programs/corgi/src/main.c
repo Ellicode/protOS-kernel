@@ -27,7 +27,7 @@ int pmain(char argv[16][64], int argc)
     while (1)
     {
         getcwd(pathbuf, 128);
-        printf("[" ANSI_BLUE "%s" ANSI_RESET "]& ", pathbuf);
+        printf(ANSI_CYAN "%s" ANSI_RESET " & ", pathbuf);
 
         input(cmdbuf);
         int _argc = split_cmd(cmdbuf, _argv, 64);
@@ -38,6 +38,8 @@ int pmain(char argv[16][64], int argc)
                 if (pid > 1) {
                     exit();
                 }
+            } else if (strcmp(_argv[0], "clr") == 0 || strcmp(_argv[0], "clear") == 0 || strcmp(_argv[0], "cls") == 0) {
+                clear();
             } else {
                 char path[256];
                 snprintf(path, 256, "/System/Programs/%s", _argv[0]);

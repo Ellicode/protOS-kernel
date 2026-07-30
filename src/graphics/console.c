@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include "debug/serial.h"
 #include "string.h"
@@ -9,13 +10,14 @@
 
 #include "graphics/console.h"
 
-uint64_t cursor_row         = 0;
-uint64_t cursor_col         = 0;
-color_t current_fg          = PROTO_WHITE;
-color_t current_bg          = PROTO_BG;
-uint64_t term_rows          = PROTO_BG;
-uint64_t term_cols          = PROTO_BG;
-uint64_t term_graphics_init = 0;
+int g_cursor_row                = 0;
+int g_cursor_col                = 0;
+color_t g_current_fg            = PROTO_WHITE;
+color_t g_current_bg            = PROTO_BG;
+int g_term_rows                 = PROTO_BG;
+int g_term_cols                 = PROTO_BG;
+bool g_term_graphics_init       = 0;
+bool g_kbd_enable               = true;
 
 const color_t ANSI_PALETTE[16] = {
     PROTO_BLACK, // 0: Black
@@ -40,31 +42,31 @@ const color_t ANSI_PALETTE[16] = {
 cell_t *grid;
 
 void term_clear_buffer() {
-    for (uint64_t i = 0; i < term_rows * term_cols; i++) {
+    for (uint64_t i = 0; i < g_term_rows * g_term_cols; i++) {
         grid[i].ch = ' ';
-        grid[i].fg = current_fg;
-        grid[i].bg = current_bg;
+        grid[i].fg = g_current_fg;
+        grid[i].bg = g_current_bg;
     }
 }
 
 void terminal_init() {
-    term_cols = g_vga_active_framebuffer->width / (FONT_WIDTH + FONT_KERNING);
-    term_rows = g_vga_active_framebuffer->height / FONT_HEIGHT;
+    g_term_cols = g_framebuffer->width / (FONT_WIDTH + FONT_KERNING);
+    g_term_rows = g_framebuffer->height / FONT_HEIGHT;
 
-    grid = k_alloc(sizeof(cell_t) * term_rows * term_cols);
+    grid = k_alloc(sizeof(cell_t) * g_term_rows * g_term_cols);
     if (grid == NULL) {
         return;
     }
 
     term_clear_buffer();
 
-    cursor_row = 0;
-    cursor_col = 0;
-    term_graphics_init = 1;
+    g_cursor_row = 0;
+    g_cursor_col = 0;
+    g_term_graphics_init = true;
 }
 
 cell_t *cell_at(int row, int col) {
-    return &grid[row * term_cols + col];
+    return &grid[row * g_term_cols + col];
 }
 
 void render_char(int row, int col) {
@@ -76,14 +78,14 @@ void render_char(int row, int col) {
     color_t fg = cell->fg;
     color_t bg = cell->bg;
 
-    if (row == cursor_row && col == cursor_col) {
+    if (row == g_cursor_row && col == g_cursor_col) {
         color_t tmp = fg;
         fg = bg;
         bg = tmp;
     }
 
-    uint32_t *fb_ptr = g_vga_active_framebuffer->address;
-    uint32_t fb_pitch = g_vga_active_framebuffer->pitch / 4;
+    uint32_t *fb_ptr = g_framebuffer->address;
+    uint32_t fb_pitch = g_framebuffer->pitch / 4;
 
     for (int r = 0; r < FONT_HEIGHT; r++) {
         // Force flip the array reading layout vertically
@@ -105,12 +107,12 @@ void render_char(int row, int col) {
 }
 
 void put_char(int row, int col, char c) {
-    if (term_graphics_init) {
+    if (g_term_graphics_init == true) {
         cell_t *cell = cell_at(row, col);
         
         cell->ch = c;
-        cell->fg = current_fg;
-        cell->bg = current_bg;
+        cell->fg = g_current_fg;
+        cell->bg = g_current_bg;
 
         render_char(row, col);
     } 
@@ -118,8 +120,8 @@ void put_char(int row, int col, char c) {
 }
 
 void _term_refresh() {
-    for (uint64_t row = 0; row < term_rows; row++) {
-        for (uint64_t col = 0; col < term_cols; col++) {
+    for (int row = 0; row < g_term_rows; row++) {
+        for (int col = 0; col < g_term_cols; col++) {
             render_char(row, col);
         }
     }
@@ -127,97 +129,97 @@ void _term_refresh() {
 
 void scroll_terminal() {
     // shift cell data up by one row
-    memmove(&grid[0], &grid[term_cols], sizeof(cell_t) * term_cols * (term_rows - 1));
+    memmove(&grid[0], &grid[g_term_cols], sizeof(cell_t) * g_term_cols * (g_term_rows - 1));
 
     // clear the last row in the cell buffer
-    uint64_t last_row = term_rows - 1;
-    for (uint64_t col = 0; col < term_cols; col++) {
+    uint64_t last_row = g_term_rows - 1;
+    for (int col = 0; col < g_term_cols; col++) {
         cell_t *cell = cell_at(last_row, col);
         cell->ch = ' ';
-        cell->fg = current_fg;
-        cell->bg = current_bg;
+        cell->fg = g_current_fg;
+        cell->bg = g_current_bg;
     }
 
     // Scroll framebuffer pixels up by one character row using a single memmove
-    uint32_t *fb_ptr = g_vga_active_framebuffer->address;
-    uint32_t fb_pitch = g_vga_active_framebuffer->pitch / 4;
-    uint32_t scroll_rows = (uint32_t)(term_rows - 1) * FONT_HEIGHT;
+    uint32_t *fb_ptr = g_framebuffer->address;
+    uint32_t fb_pitch = g_framebuffer->pitch / 4;
+    uint32_t scroll_rows = (uint32_t)(g_term_rows - 1) * FONT_HEIGHT;
     memmove(fb_ptr,
             fb_ptr + FONT_HEIGHT * fb_pitch,
             sizeof(uint32_t) * fb_pitch * scroll_rows);
 
     // Only re-render the newly cleared last row
-    for (uint64_t col = 0; col < term_cols; col++) {
+    for (int col = 0; col < g_term_cols; col++) {
         render_char(last_row, col);
     }
 }
 
 void set_cursor(int row, int col) {
-    if (row >= term_rows) {
+    if (row >= g_term_rows) {
         scroll_terminal();
-        row = term_rows - 1;
+        row = g_term_rows - 1;
     }
 
-    int old_row = cursor_row;
-    int old_col = cursor_col;
+    int old_row = g_cursor_row;
+    int old_col = g_cursor_col;
 
-    cursor_row = row;
-    cursor_col = col;
+    g_cursor_row = row;
+    g_cursor_col = col;
 
     render_char(old_row, old_col);
-    render_char(cursor_row, cursor_col);
+    render_char(g_cursor_row, g_cursor_col);
 }
 
 void set_color(color_t fg, color_t bg) {
-    current_fg = fg;
-    current_bg = bg;
+    g_current_fg = fg;
+    g_current_bg = bg;
 }
 
 void print_char(char c) {
-    if (term_graphics_init) {
+    if (g_term_graphics_init) {
         if (c == '\n') {
-            put_char(cursor_row, cursor_col, ' ');
+            put_char(g_cursor_row, g_cursor_col, ' ');
             serial_write('\n');
-            set_cursor(cursor_row+1, 0);
+            set_cursor(g_cursor_row+1, 0);
         } else if (c == '\b') {
             serial_write('\b');
-            put_char(cursor_row, cursor_col-1, ' ');
+            put_char(g_cursor_row, g_cursor_col-1, ' ');
             serial_write('\b');
-            set_cursor(cursor_row, cursor_col-1);
+            set_cursor(g_cursor_row, g_cursor_col-1);
         } else {
             // Update the cell data first, before moving the cursor.
             // This way set_cursor's re-render of the old position draws the
             // character correctly (non-inverted) in a single pass, avoiding
             // the previous pattern of 3 render_char calls per typed character.
-            cell_t *cell = cell_at(cursor_row, cursor_col);
+            cell_t *cell = cell_at(g_cursor_row, g_cursor_col);
             cell->ch = c;
-            cell->fg = current_fg;
-            cell->bg = current_bg;
+            cell->fg = g_current_fg;
+            cell->bg = g_current_bg;
             serial_write(c);
 
-            uint64_t new_col = cursor_col + 1;
-            uint64_t new_row = cursor_row;
-            if (new_col >= term_cols) {
+            int new_col = g_cursor_col + 1;
+            int new_row = g_cursor_row;
+            if (new_col >= g_term_cols) {
                 new_col = 0;
                 new_row++;
             }
             set_cursor(new_row, new_col);
         }
     } else {
-        put_char(cursor_row, cursor_col, c); // we don't care about the row and col since we're outputting via serial
+        put_char(g_cursor_row, g_cursor_col, c); // we don't care about the row and col since we're outputting via serial
     }
 }
 
 void print_ansi() {
     const char *ansi_code = ANSI_RESET;
 
-    if (current_fg == PROTO_RED)         { ansi_code = ANSI_RED; }
-    else if (current_fg == PROTO_YELLOW) { ansi_code = ANSI_YELLOW; }
-    else if (current_fg == PROTO_GREEN)  { ansi_code = ANSI_GREEN; }
-    else if (current_fg == PROTO_CYAN)   { ansi_code = ANSI_CYAN; }
-    else if (current_fg == PROTO_BLUE)   { ansi_code = ANSI_BLUE; }
-    else if (current_fg == PROTO_MAGENTA){ ansi_code = ANSI_MAGENTA; }
-    else if (current_fg == PROTO_WHITE)  { ansi_code = ANSI_WHITE; };
+    if (g_current_fg == PROTO_RED)         { ansi_code = ANSI_RED; }
+    else if (g_current_fg == PROTO_YELLOW) { ansi_code = ANSI_YELLOW; }
+    else if (g_current_fg == PROTO_GREEN)  { ansi_code = ANSI_GREEN; }
+    else if (g_current_fg == PROTO_CYAN)   { ansi_code = ANSI_CYAN; }
+    else if (g_current_fg == PROTO_BLUE)   { ansi_code = ANSI_BLUE; }
+    else if (g_current_fg == PROTO_MAGENTA){ ansi_code = ANSI_MAGENTA; }
+    else if (g_current_fg == PROTO_WHITE)  { ansi_code = ANSI_WHITE; };
 
     // First print the color ansi code
     for (size_t c = 0; ansi_code[c] != '\0'; c++) {
@@ -247,17 +249,17 @@ void print(const char *str) {
 
                     if (param == 0) {
                         // Reset to defaults
-                        current_fg = ANSI_PALETTE[7]; 
-                        current_bg = ANSI_PALETTE[0];
+                        g_current_fg = ANSI_PALETTE[7]; 
+                        g_current_bg = ANSI_PALETTE[0];
                     } else if (param >= 30 && param <= 37) {
                         // Foreground colors
-                        current_fg = ANSI_PALETTE[param - 30];
+                        g_current_fg = ANSI_PALETTE[param - 30];
                     } else if (param >= 40 && param <= 47) {
                         // Background colors
-                        current_bg = ANSI_PALETTE[param - 40];
+                        g_current_bg = ANSI_PALETTE[param - 40];
                     }
 
-                    set_color(current_fg, current_bg);
+                    set_color(g_current_fg, g_current_bg);
 
                     print_ansi();
 

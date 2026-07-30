@@ -25,7 +25,7 @@ typedef enum{
 } process_type_t;
 
 typedef struct process_t {
-    uint64_t            pid;
+    int                 pid;
     char                pname[255];
     process_type_t      ptype;
 

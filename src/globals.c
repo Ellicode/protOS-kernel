@@ -1,15 +1,19 @@
-#include "globals.h"
+/********************************************************************************
+ * @file        globals.c
+ * @brief       Global limine variables and methods.
+ * 
+ * @author      Elliot Laborieux
+ * @copyright   Copyright (c) 2026 Ellicode
+ ********************************************************************************/
 
-uint64_t g_pit_frequency                    = 0;
-uint64_t g_pit_ticks                        = 0;
+#include "limine/limine.h"
 
-uint8_t g_kbd_enable                        = 1;
+// VARIABLES
 
-struct limine_framebuffer *g_vga_active_framebuffer;
-struct limine_hhdm_response *g_lim_hhdm;
-struct limine_memmap_response *g_lim_memmap;
-struct limine_executable_address_response *g_lim_kaddr;
-struct limine_module_response *g_lim_modules;
+struct limine_hhdm_response                 *g_lim_hhdm;
+struct limine_memmap_response               *g_lim_memmap;
+struct limine_executable_address_response   *g_lim_kaddr;
+struct limine_module_response               *g_lim_modules;
 
 // METHODS 
 

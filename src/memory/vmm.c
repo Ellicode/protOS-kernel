@@ -221,8 +221,8 @@ void vmm_init() {
     k_debug("Mapped HHDM region\n");
 
     // Map framebuffer
-    uint64_t fb_phys = (uint64_t)g_vga_active_framebuffer->address - g_lim_hhdm->offset;
-    uint64_t fb_size = g_vga_active_framebuffer->pitch * g_vga_active_framebuffer->height;
+    uint64_t fb_phys = (uint64_t)g_framebuffer->address - g_lim_hhdm->offset;
+    uint64_t fb_size = g_framebuffer->pitch * g_framebuffer->height;
 
     for (uint64_t off = 0; off < fb_size; off += PAGE_SIZE) {
         map_page(fb_phys + off + g_lim_hhdm->offset, fb_phys + off, F_WRITE | F_PWT, kernel_pml4);
@@ -299,7 +299,7 @@ void destroy_addr_space(uint64_t cr3) {
                         ((uint64_t)k << 21) |
                         ((uint64_t)l << 12);
 
-                    if (va >= USER_FRAMEBUFFER_BASE && va < USER_FRAMEBUFFER_BASE + PAGE_ROUND(g_vga_active_framebuffer->height * g_vga_active_framebuffer->pitch)) { continue; }
+                    if (va >= USER_FRAMEBUFFER_BASE && va < USER_FRAMEBUFFER_BASE + PAGE_ROUND(g_framebuffer->height * g_framebuffer->pitch)) { continue; }
 
                     m_pmm_free_p((void *)(pte.addr << 12));
                 }

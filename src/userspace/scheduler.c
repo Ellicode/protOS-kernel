@@ -106,7 +106,7 @@ void scheduler_tick(idt_frame_t* ctx) {
     if (next->process != NULL) {
         if (g_current_thread->process == NULL ||
             next->process->cr3 != g_current_thread->process->cr3) {
-            tss.rsp0 = (uint64_t)next->process->kernel_stack + KERNEL_STACK_SIZE;
+            g_tss.rsp0 = (uint64_t)next->process->kernel_stack + KERNEL_STACK_SIZE;
             _load_cr3(next->process->cr3);
         }
     } else {

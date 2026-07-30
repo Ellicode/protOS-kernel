@@ -7,6 +7,8 @@ enum Glyph {
     GLYPH_KPANIC
 };
 
+extern struct limine_framebuffer *g_framebuffer;
+
 typedef uint8_t glyph_t;
 typedef uint64_t color_t;
 

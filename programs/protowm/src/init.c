@@ -43,7 +43,7 @@ int wm_init() {
     g_small_font = font_load("/System/Assets/Fonts/npsmall8.fmp");
 
     draw_rect(g_fb, 0, 0, g_fb->width, g_fb->height, BG_COLOR);
-    
+
     init_cursor();
     
     return 0;

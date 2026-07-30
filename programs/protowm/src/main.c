@@ -87,6 +87,7 @@ int pmain(char argv[16][64], int argc) {
 
     window_t *win = create_window(100, 100, 500, 350, "A simple window");
     draw_rect(win->fb, 0, 0, 50, 50, 0xFF0000);
+    font_print(win->fb, g_small_font, "Hello, world", 0, 75, 0xFFFFFF);
     refresh_window(win);
     
     while (1) {
@@ -96,6 +97,7 @@ int pmain(char argv[16][64], int argc) {
     free(meta);
     free(g_fb);
     bmp_free(g_cursor_bmp);
+    free(g_small_font);
 
     return 0;
 }

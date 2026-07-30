@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "../gdt.h"
+#include "gdt.h"
 
 enum {
     IDT_GATE_TYPE_INTERRUPT = 0b1110,

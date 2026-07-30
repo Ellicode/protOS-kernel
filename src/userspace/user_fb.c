@@ -15,8 +15,8 @@ uint64_t sys_fetch_fb(fb_info_t *info) {
         return PROTO_ERR_INVALID_CONTEXT;
     }
 
-    uint64_t physical_fb = (uint64_t)g_vga_active_framebuffer->address - g_lim_hhdm->offset;
-    size_t fb_size = PAGE_ROUND(g_vga_active_framebuffer->height * g_vga_active_framebuffer->pitch);
+    uint64_t physical_fb = (uint64_t)g_framebuffer->address - g_lim_hhdm->offset;
+    size_t fb_size = PAGE_ROUND(g_framebuffer->height * g_framebuffer->pitch);
     
     // map framebuffer
     vmm_map_phys_range(
@@ -28,10 +28,10 @@ uint64_t sys_fetch_fb(fb_info_t *info) {
     );
 
     info->address = USER_FRAMEBUFFER_BASE;
-    info->width   = g_vga_active_framebuffer->width;
-    info->height  = g_vga_active_framebuffer->height;
-    info->pitch   = g_vga_active_framebuffer->pitch;
-    info->bpp     = g_vga_active_framebuffer->bpp;
+    info->width   = g_framebuffer->width;
+    info->height  = g_framebuffer->height;
+    info->pitch   = g_framebuffer->pitch;
+    info->bpp     = g_framebuffer->bpp;
 
     return PROTO_OK;
 }

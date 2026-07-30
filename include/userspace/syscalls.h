@@ -17,7 +17,6 @@ enum {
     SYS_FETCH_FB,
     SYS_CHDIR,
     SYS_GETCWD,
-    SYS_WAIT_FOR_PROCESS,
     SYS_GETPID,
 
     SYS_SEND,
@@ -26,6 +25,9 @@ enum {
     SYS_CONSUME,
     SYS_SUBSCRIBE,
     SYS_UNSUBSCRIBE,
+
+    SYS_SET_CURSOR,
+    SYS_CLEAR,
 
     SYS_PANIC,
 

@@ -18,7 +18,7 @@ enum ustar_file_types {
     USTAR_PIPE = '6'
 };
 
-struct {
+typedef struct {
     char file_name[100];
     char modes[8];
     char owner_id[8];
@@ -36,7 +36,7 @@ struct {
     char dev_minor[8];
     char filename_prefix[155];
     char __pad[12]; // the structure is 512 bytes
-} __attribute__((packed)) typedef ustar_header_t;
+} __attribute__((packed)) ustar_header_t;
 
 struct ustar_node_t {
     char                    name[256];

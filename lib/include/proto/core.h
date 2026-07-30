@@ -60,7 +60,6 @@ enum {
     SYS_FETCH_FB,
     SYS_CHDIR,
     SYS_GETCWD,
-    SYS_WAIT_FOR_PROCESS,
     SYS_GETPID,
 
     SYS_SEND,
@@ -69,6 +68,9 @@ enum {
     SYS_CONSUME,
     SYS_SUBSCRIBE,
     SYS_UNSUBSCRIBE,
+
+    SYS_SET_CURSOR,
+    SYS_CLEAR,
 
     SYS_PANIC,
 
@@ -126,13 +128,15 @@ int input(char *buffer);
 void printf(const char *format, ...);
 void fprintf(uint64_t fd, const char *format, ...);
 
+void set_cursor(int row, int col);
+void clear();
+
 /*****************************************************************************
  * Process management
  *****************************************************************************/
 
 int create_process(const char *elf, char argv[16][64], int argc);
 void exit();
-void wait_for_process(int pid);
 int getpid();
 
 /*****************************************************************************

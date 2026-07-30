@@ -50,7 +50,7 @@ void load_phdr(elf_header_t* ehdr, elf_program_header_t* phdr, uint64_t load_bas
     }
 }
 
-uint64_t elf_load(char *data, size_t size, uint64_t cr3)
+uint64_t elf_load(char *data, uint64_t cr3)
 {
     elf_header_t *ehdr = (elf_header_t *)data;
 

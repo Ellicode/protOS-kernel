@@ -74,7 +74,7 @@ int pmain(char argv[16][64], int argc) {
 
         tok = strtok(NULL, "\n");
     }
-    printf("\n\n");
+    printf("\n");
     free(about);
     close(about_fd);
     return 0;

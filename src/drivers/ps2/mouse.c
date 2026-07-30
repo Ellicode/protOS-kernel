@@ -64,8 +64,8 @@ void ps2mouse_read() {
         int rel_x = (int)dx;
         int rel_y = (int)dy;
 
-        int screen_width = g_vga_active_framebuffer->width;
-        int screen_height = g_vga_active_framebuffer->height;
+        int screen_width = g_framebuffer->width;
+        int screen_height = g_framebuffer->height;
 
         abs_x = CLAMP(abs_x + rel_x, 0, screen_width - 1);
         abs_y = CLAMP(abs_y - rel_y, 0, screen_height - 1);

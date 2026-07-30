@@ -1,19 +1,40 @@
+/********************************************************************************
+ * @file        gdt.c
+ * @brief       Global Descriptor Table (GDT) setup utilites.
+ * 
+ * @author      Elliot Laborieux
+ * @copyright   Copyright (c) 2026 Ellicode
+ ********************************************************************************/
+
 #include "graphics/console.h"
 #include "debug/logger.h"
+#include "utils/utils.h"
 
 #include "gdt.h"
 
 gdt_entry_t gdt[7];
 gdtr_t gdtr;
-tss_entry_t tss __attribute__((aligned(0x1000))) = {0};
+tss_entry_t g_tss __attribute__((aligned(PAGE_SIZE))) = {0};
 
+/**
+ * Generates a GDT descriptor with the correct parameters
+ * 
+ * @param base      A 64-bit value containing the linear address where the segment begins.
+ * @param limit     A 20-bit value, tells the maximum addressable unit, either in 1 byte units, or in 4KiB pages.
+ * @param access    The access byte object of the descriptor
+ * @param longa     Long-mode code flag. If set, the descriptor defines a 64-bit code segment
+ * @param db        Size flag. If clear, the descriptor defines a 16-bit protected mode segment. If set, it defines a 32-bit protected mode segment.
+ * @param gran      Granularity flag, indicates the size the Limit value is scaled by. If clear, the Limit is in 1 Byte blocks (byte granularity). If set, the Limit is in 4 KiB blocks (page granularity).
+ * 
+ * @return Formatted GDT entry integer.
+ */
 gdt_entry_t _gdt_generate_descriptor(
-    uint64_t base, 
-    uint64_t limit,
-    GDTEntryAccessByte access,
-    uint8_t longa,
-    uint8_t db,
-    uint8_t gran
+    uint64_t            base, 
+    uint64_t            limit,
+    GDTEntryAccessByte  access,
+    bool                longa,
+    bool                db,
+    bool                gran
 ) {
     GDTEntry descriptor = (GDTEntry) { 0 };
 
@@ -42,7 +63,7 @@ gdt_entry_t _gdt_generate_descriptor(
 }
 
 static void _tss_generate() {
-    tss.iopb = sizeof(TSSEntry);
+    g_tss.iopb = sizeof(tss_entry_t);
 }
 
 void _gdt_post_init() {
@@ -68,30 +89,61 @@ void _gdt_post_init() {
     __asm__ volatile ("ltr %0" :: "r"((uint16_t)GDT_OFFSET_TSS));
 }
 
+/**
+ * Initializes the GDT with correct kernel/user code/data segments
+ */
 void gdt_init() {
     // Generate null descriptor
     gdt[0] = _gdt_generate_descriptor(0, 0, GDT_NULL_ENTRY, 0, 0, 0);
 
     // Generate kernel code segment
-    gdt[1] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R0_CODE, 1, 0, 1);
+    gdt[1] = _gdt_generate_descriptor(
+        GDT_ENTRY_BASE, 
+        GDT_ENTRY_LIMIT, 
+        GDT_R0_CODE, 
+        1, 
+        0, 
+        GDT_ENTRY_GRANULARITY_PAGES
+    );
 
     // Generate kernel data segment
-    gdt[2] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R0_DATA, 0, 1, 1);
+    gdt[2] = _gdt_generate_descriptor(
+        GDT_ENTRY_BASE, 
+        GDT_ENTRY_LIMIT, 
+        GDT_R0_DATA, 
+        0, 
+        1, 
+        GDT_ENTRY_GRANULARITY_PAGES
+    );
 
     // Generate user code segment
-    gdt[3] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R3_CODE, 1, 0, 1);
+    gdt[3] = _gdt_generate_descriptor(
+        GDT_ENTRY_BASE, 
+        GDT_ENTRY_LIMIT, 
+        GDT_R3_CODE, 
+        1, 
+        0, 
+        GDT_ENTRY_GRANULARITY_PAGES
+    );
 
     // Generate user data segment
-    gdt[4] = _gdt_generate_descriptor(GDT_ENTRY_BASE, GDT_ENTRY_LIMIT, GDT_R3_DATA, 0, 1, 1);
+    gdt[4] = _gdt_generate_descriptor(
+        GDT_ENTRY_BASE, 
+        GDT_ENTRY_LIMIT, 
+        GDT_R3_DATA, 
+        0, 
+        1, 
+        GDT_ENTRY_GRANULARITY_PAGES
+    );
 
 
     // Generate TSS segment
     _tss_generate();
 
-    intptr_t addr = (uintptr_t)&tss;
+    intptr_t addr = (uintptr_t)&g_tss;
     uint64_t lower  = (uint64_t)addr & 0xFFFFFFFF;
     uint64_t higher = (uint64_t)addr >> 32;
-    uint64_t limit = sizeof(tss) - 1;
+    uint64_t limit = sizeof(g_tss) - 1;
 
     gdt[5] = _gdt_generate_descriptor(lower, limit, (GDTEntryAccessByte) {{
         GDT_ACCESSED,
@@ -118,6 +170,7 @@ void gdt_init() {
         print_f("%x, limit: %x\n", gdtr.base, gdtr.limit);
     #endif
 
+    // Load GDT to the GDTR register
     __asm__ volatile (
         "lgdt %0"
         :
