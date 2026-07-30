@@ -9,7 +9,7 @@ int pmain(char argv[16][64], int argc) {
 
     while (1)
     {
-        int res = recieve(ev_meta, ev_data);
+        int res = receive(ev_meta, ev_data);
         if (ev_data != NULL && res == PROTO_OK) {
             char c = *ev_data;
             if (c == 'q') { break; }

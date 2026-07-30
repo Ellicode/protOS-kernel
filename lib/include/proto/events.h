@@ -19,7 +19,7 @@ typedef struct ev_meta_t {
 } ev_meta_t;
 
 int send(uint64_t pid, char *message, void *data, size_t size);
-int recieve(ev_meta_t *meta, void *data);
+int receive(ev_meta_t *meta, void *data);
 int consume(ev_meta_t *meta);
 int dispatch(char *message, void *data, size_t size);
 int subscribe(char *topic);

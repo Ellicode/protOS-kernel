@@ -64,7 +64,7 @@ enum {
     SYS_GETPID,
 
     SYS_SEND,
-    SYS_RECIEVE,
+    SYS_RECEIVE,
     SYS_DISPATCH,
     SYS_CONSUME,
     SYS_SUBSCRIBE,

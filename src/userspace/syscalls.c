@@ -345,7 +345,7 @@ void* syscall_handlers[] = {
     [SYS_GETPID]            = sys_getpid,
 
     [SYS_SEND]              = sys_send,
-    [SYS_RECIEVE]           = ipc_recieve,
+    [SYS_RECEIVE]           = ipc_receive,
     [SYS_DISPATCH]          = ipc_dispatch,
     [SYS_CONSUME]           = ipc_consume,
     [SYS_SUBSCRIBE]         = ipc_subscribe,

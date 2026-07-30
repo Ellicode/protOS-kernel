@@ -146,10 +146,10 @@ target_compile_definitions(kernel PUBLIC
 
 target_compile_options(kernel PRIVATE
     $<$<COMPILE_LANGUAGE:C>:-m64>
-    $<$<COMPILE_LANGUAGE:C>:-mcmodel=kernel>
     $<$<COMPILE_LANGUAGE:C>:-ffreestanding>
     $<$<COMPILE_LANGUAGE:C>:-fno-stack-protector>
     $<$<COMPILE_LANGUAGE:C>:-mno-red-zone>
+    $<$<COMPILE_LANGUAGE:C>:-no-pie>
     $<$<COMPILE_LANGUAGE:C>:-Wall>
     $<$<COMPILE_LANGUAGE:C>:-Wextra>
     $<$<COMPILE_LANGUAGE:C>:-g>

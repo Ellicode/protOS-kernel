@@ -169,10 +169,10 @@ void invert_rect_o(fb_info_t *fb, int x, int y, int w, int h) {
     }
 }
 
-void draw_box(fb_info_t *fb, int x, int y, int w, int h, uint32_t color, int border) {
+void draw_box(fb_info_t *fb, int x, int y, int w, int h, uint32_t color, int border, char fill) {
     if (!fb || !fb->address || w <= 0 || h <= 0) { return; }
 
-    draw_rect(fb, x, y, w, h, color);
+    if (fill) draw_rect(fb, x, y, w, h, color);
 
     if (border <= 0) { return; }
     if (border > w / 2) { border = w / 2; }
@@ -224,6 +224,27 @@ void draw_box(fb_info_t *fb, int x, int y, int w, int h, uint32_t color, int bor
     }
 }
 
+void draw_img(fb_info_t * fb, const uint32_t * img, int x, int y, int w, int h) {
+    if (!fb || !img || !fb->address || w <= 0 || h <= 0 ||
+        x >= fb->width || y >= fb->height || x < 0 || y < 0) { return; }
+
+    if (x + w > fb->width) {
+        w = (int)fb->width - x;
+    }
+    if (y + h > fb->height) {
+        h = (int)fb->height - y;
+    }
+
+    uint32_t *fb_ptr = (void*)fb->address;
+
+    for (int row = y; row < y + h; row++) {
+        uint32_t *dst = fb_ptr + row * fb->pitch/4 + x;
+        const uint32_t *src = img + (row-y) * w;
+
+        memcpy(dst, src, w * sizeof(uint32_t));
+    }
+}
+/*
 void draw_img(fb_info_t *fb, const uint32_t *img, int x, int y, int w, int h) {
     if (!fb || !fb->address || !img) {
         draw_notex(fb, x, y, w, h);
@@ -265,6 +286,7 @@ void draw_img(fb_info_t *fb, const uint32_t *img, int x, int y, int w, int h) {
         }
     }
 }
+*/
 
 void draw_img_a(fb_info_t *fb, const uint32_t *img, int x, int y, int w, int h) {
     if (!fb || !fb->address || !img) {
@@ -328,26 +350,22 @@ void draw_img_a(fb_info_t *fb, const uint32_t *img, int x, int y, int w, int h) 
 }
 
 void capture_rect(fb_info_t *fb, uint32_t *buf, int x, int y, int w, int h) {
-    if (!fb || !buf || !fb->address || w <= 0 || h <= 0) { return; }
+    if (!fb || !buf || !fb->address || w <= 0 || h <= 0 ||
+        x >= fb->width || y >= fb->height || x < 0 || y < 0) { return; }
 
-    volatile uint32_t *fb_ptr = (volatile uint32_t *)fb->address;
-    uint32_t pitch = fb->pitch / 4;
+    if (x + w > fb->width) {
+        w = (int)fb->width - x;
+    }
+    if (y + h > fb->height) {
+        h = (int)fb->height - y;
+    }
 
-    for (int row = 0; row < h; row++) {
-        int sy = y + row;
-        if (sy < 0 || sy >= (int)fb->height) {
-            continue;
-        }
+    const uint32_t *fb_ptr = (void*)fb->address;
 
-        uint32_t *dst = buf + (size_t)row * (size_t)w;
-        for (int col = 0; col < w; col++) {
-            int sx = x + col;
-            if (sx >= 0 && sx < (int)fb->width) {
-                dst[col] = fb_ptr[(uint32_t)sy * pitch + (uint32_t)sx];
-            } else {
-                dst[col] = 0;
-            }
-        }
+    for (int row = y; row < y + h; row++) {
+        uint32_t *dst = buf + (row-y) * w;
+        const uint32_t *src = fb_ptr + row * fb->pitch / 4 + x;
+        memcpy(dst, src, w * sizeof(uint32_t));
     }
 }
 

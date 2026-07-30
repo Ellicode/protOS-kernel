@@ -1,5 +1,7 @@
 build/
 .trash/
+.vscode/
+.vscode/*
 
 ignore-scripts/esp/efi/boot/BOOTX64.EFI
 ignore-scripts/esp/boot/initramfs.tar
@@ -7,3 +9,4 @@ ignore-scripts/esp/kernel.elf
 ignore-scripts/esp/NvVars
 
 initramfs/System/Programs/
+initramfs/System/Programs/*

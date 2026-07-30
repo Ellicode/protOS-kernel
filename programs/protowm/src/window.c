@@ -12,12 +12,13 @@ void refresh_window(window_t *win) {
 }
 
 void draw_window(window_t *win, int moving) {
-    capture_rect(g_fb, win->under, win->x, win->y, win->width, win->height);
+    capture_rect(g_fb, win->under, win->x, win->y, win->owidth, win->oheight);
 
     if (moving == 1) {
         draw_rect_o(g_fb, win->x, win->y, win->owidth, win->oheight, 0xFFFFFF);
     } else {
-        draw_box(g_fb, win->x, win->y, win->owidth, win->oheight, WIN_BACKGROUND, 2);
+        draw_rect(g_fb, win->x, win->y, win->owidth, TITLEBAR_HEIGHT, WIN_BACKGROUND);
+        draw_box(g_fb, win->x, win->y, win->owidth, win->oheight, WIN_BACKGROUND, 2, 0);
         font_print(g_fb, g_small_font, win->name, win->x+5, win->y+(TITLEBAR_HEIGHT-g_small_font->height)/2, WIN_FOREGROUND);
         refresh_window(win);
     }
