@@ -20,10 +20,13 @@ int fetch_framebuffer(fb_info_t *fb);
 void putpixel(fb_info_t *fb, int x, int y, uint32_t color);
 void putpixel_a(fb_info_t *fb, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 void draw_rect(fb_info_t *fb, int x, int y, int w, int h, uint32_t color);
+void draw_rect_o(fb_info_t *fb, int x, int y, int w, int h, uint32_t color);
+void invert_rect_o(fb_info_t *fb, int x, int y, int w, int h);
 void draw_img(fb_info_t *fb, const uint32_t *img, int x, int y, int w, int h);
 void draw_img_a(fb_info_t *fb, const uint32_t *img, int x, int y, int w, int h);
 void capture_rect(fb_info_t *fb, uint32_t *buf, int x, int y, int w, int h);
 void draw_notex(fb_info_t *fb, int x, int y, int w, int h);
+void draw_box(fb_info_t *fb, int x, int y, int w, int h, uint32_t color, int border);
 
 /*****************************************************************************
  * BMP file support
@@ -61,5 +64,24 @@ typedef struct font_t {
 font_t *font_load(char *path);
 void font_putc(fb_info_t *fb, font_t *fnt, char c, int x, int y, uint32_t fg);
 void font_print(fb_info_t *fb, font_t *fnt, char *str, int x, int y, uint32_t fg);
+
+/**
+ * Color utilities
+ */
+
+#define FX_ONE  ((int32_t)65536)
+#define FX_HALF ((int32_t)32768)
+
+typedef struct {
+    int32_t h;
+    int32_t s;
+    int32_t l;
+} hsl_t;
+
+hsl_t rgb2hsl(uint32_t rgb);
+uint32_t hsl2rgb(hsl_t hsl);
+
+uint32_t lighten(uint32_t rgb, int32_t amount);
+uint32_t darken(uint32_t rgb, int32_t amount);
 
 #endif // PROTO_GRAPHICS_H

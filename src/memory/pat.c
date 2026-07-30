@@ -16,4 +16,6 @@ void pat_init(void) {
     pat |=  ((uint64_t)PAT_WC << (1 * 8));
 
     wrmsr(IA32_PAT_MSR, pat);
+
+    vmm_flush_tlb();
 }

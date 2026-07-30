@@ -86,7 +86,7 @@ void ps2mouse_read() {
                 .x = abs_x,
                 .y = abs_y,
                 .vel_x = rel_x,
-                .vel_y = rel_y
+                .vel_y = -rel_y
             };
 
             ipc_dispatch("proto.mouse.move", &pkt, sizeof(mouse_move_packet_t));

@@ -8,6 +8,7 @@ add_library(proto STATIC
     src/graphics/graphics.c
     src/graphics/font.c
     src/graphics/bmp.c
+    src/graphics/color.c
 
     src/events/events.c
 )

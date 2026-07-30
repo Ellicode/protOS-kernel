@@ -45,6 +45,16 @@ void putpixel_a(fb_info_t *fb, int x, int y, uint8_t r, uint8_t g, uint8_t b, ui
     fb_ptr[idx] = (out_r << 16) | (out_g << 8) | out_b;
 }
 
+void invertpixel(fb_info_t *fb, int x, int y) {
+    if (!fb || !fb->address) { return; }
+    if (x < 0 || y < 0 || x >= (int)fb->width || y >= (int)fb->height) { return; }
+
+    volatile uint32_t *fb_ptr = (volatile uint32_t *)fb->address;
+    uint32_t idx = (uint32_t)y * (fb->pitch >> 2) + (uint32_t)x;
+
+    uint32_t p = fb_ptr[idx];          
+    fb_ptr[idx] = p ^ 0x00FFFFFF;
+}
 void draw_rect(fb_info_t *fb, int x, int y, int w, int h, uint32_t color) {
     if (fb == NULL) { return; }
 
@@ -62,9 +72,89 @@ void draw_rect(fb_info_t *fb, int x, int y, int w, int h, uint32_t color) {
     }
 }
 
+void draw_rect_o(fb_info_t *fb, int x, int y, int w, int h, uint32_t color) {
+    for (int i = x; i < x + w; i++) {
+        putpixel(fb, i, y, color);              // Top edge
+        putpixel(fb, i, y + h - 1, color);  // Bottom edge
+    }
+    // Draw left and right vertical lines
+    for (int i = y; i < y + h; i++) {
+        putpixel(fb, x, i, color);              // Left edge
+        putpixel(fb, x + w - 1, i, color);  // Right edge
+    }
+}
+
+void invert_rect_o(fb_info_t *fb, int x, int y, int w, int h) {
+    for (int i = x; i < x + w; i++) {
+        invertpixel(fb, i, y);              // Top edge
+        invertpixel(fb, i, y + h - 1);  // Bottom edge
+    }
+    // Draw left and right vertical lines
+    for (int i = y; i < y + h; i++) {
+        invertpixel(fb, x, i);              // Left edge
+        invertpixel(fb, x + w - 1, i);  // Right edge
+    }
+}
+
+void draw_box(fb_info_t *fb, int x, int y, int w, int h, uint32_t color, int border) {
+    if (!fb || !fb->address || w <= 0 || h <= 0) { return; }
+
+    draw_rect(fb, x, y, w, h, color);
+
+    if (border <= 0) { return; }
+    if (border > w / 2) { border = w / 2; }
+    if (border > h / 2) { border = h / 2; }
+    if (border <= 0) { return; }
+
+    volatile uint32_t *fb_ptr = (volatile uint32_t *)fb->address;
+    const uint32_t pitch = fb->pitch >> 2; // /4
+
+    const uint32_t light = lighten(color, FX_ONE / 4);
+    const uint32_t dark  = darken(color, FX_ONE / 4);
+
+    // Bottom bevel (dark)
+    for (int row = 0; row < border; row++) {
+        int inset = (border - 1) - row;
+        int x0 = x + inset;
+        int x1 = x + w - inset; // exclusive
+        volatile uint32_t *p = fb_ptr + (y + h - border + row) * pitch + x0;
+        for (int xx = x0; xx < x1; xx++) { *p++ = dark; }
+    }
+
+    // Top bevel (light)
+    for (int row = 0; row < border; row++) {
+        int x0 = x + row;
+        int x1 = x + w - row; // exclusive
+        volatile uint32_t *p = fb_ptr + (y + row) * pitch + x0;
+        for (int xx = x0; xx < x1; xx++) { *p++ = light; }
+    }
+
+    // Left bevel (light)
+    for (int col = 0; col < border; col++) {
+        int y0 = y + col;
+        int y1 = y + h - col; // exclusive
+        int xx = x + col;
+        for (int yy = y0; yy < y1; yy++) {
+            fb_ptr[yy * pitch + xx] = light;
+        }
+    }
+
+    // Right bevel (dark)
+    for (int col = 0; col < border; col++) {
+        int inset = (border - 1) - col;
+        int y0 = y + inset;
+        int y1 = y + h - inset; // exclusive
+        int xx = x + w - border + col;
+        for (int yy = y0; yy < y1; yy++) {
+            fb_ptr[yy * pitch + xx] = dark;
+        }
+    }
+}
+
 void draw_img(fb_info_t *fb, const uint32_t *img, int x, int y, int w, int h) {
     if (img == NULL) { 
         draw_notex(fb, x, y, w, h);
+        return;
     }
 
     for (uint32_t row = 0; row < h; row++) {
@@ -96,19 +186,21 @@ void draw_img_a(fb_info_t *fb, const uint32_t *img, int x, int y, int w, int h) 
 }
 
 void capture_rect(fb_info_t *fb, uint32_t *buf, int x, int y, int w, int h) {
-    if (fb == NULL || buf == NULL) { return; }
+    if (!fb || !buf || !fb->address || w <= 0 || h <= 0) { return; }
 
-    volatile uint32_t *fb_ptr = (uint32_t *)fb->address;
+    volatile uint32_t *fb_ptr = (volatile uint32_t *)fb->address;
+    uint32_t pitch = fb->pitch / 4;
 
-    int i = 0;
-    for (uint32_t row = y; row < (y + h); row++) {
-        for (uint32_t col = x; col < (x + w); col++) {
-            if (row < 0 || col < 0) { continue; }
-            if ((uint32_t)row >= fb->height || (uint32_t)col >= fb->width) { continue; }
+    for (int row = 0; row < h; row++) {
+        int sy = y + row;
+        for (int col = 0; col < w; col++) {
+            int sx = x + col;
 
-            buf[i] = fb_ptr[row * fb->width + col];
-            // buf[i] = (buf[i] & 0x00FFFFFF) | (0xFF << 24);
-            i++;
+            uint32_t out = 0;
+            if (sx >= 0 && sy >= 0 && sx < (int)fb->width && sy < (int)fb->height) {
+                out = fb_ptr[(uint32_t)sy * pitch + (uint32_t)sx];
+            }
+            buf[(size_t)row * (size_t)w + (size_t)col] = out;
         }
     }
 }

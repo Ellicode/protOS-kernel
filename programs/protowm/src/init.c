@@ -9,7 +9,8 @@
 char *subs[] = {
     "proto.keyboard.keydown",
     "proto.mouse.move",
-    "proto.mouse.down"
+    "proto.mouse.down",
+    "proto.mouse.up"
 };
 
 int wm_init() {

@@ -116,11 +116,11 @@ case $1 in
             -drive if=pflash,format=raw,readonly=on,file=$LOCAL_OVMF_CODE_PATH \
             -drive if=ide,format=raw,file=fat:rw:ignore-scripts/esp \
             -serial stdio \
-            -no-reboot \
-            -no-shutdown \
-            $EXTRA_QEMU_ARGS
             # -display gtk,gl=on,zoom-to-fit=on \
             # -device virtio-vga-gl \
+            # -no-reboot \
+            # -no-shutdown \
+            # $EXTRA_QEMU_ARGS
 esac
 
 echo -e "\n"
