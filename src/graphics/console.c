@@ -82,20 +82,26 @@ void render_char(int row, int col) {
         bg = tmp;
     }
 
+    uint32_t *fb_ptr = g_vga_active_framebuffer->address;
+    uint32_t fb_pitch = g_vga_active_framebuffer->pitch / 4;
+
     for (int r = 0; r < FONT_HEIGHT; r++) {
         // Force flip the array reading layout vertically
         unsigned char row_data = font[cell->ch - 32][(FONT_HEIGHT - 1) - r];
+        uint32_t *row_ptr = fb_ptr + (y + r) * fb_pitch;
+
+        // Fill the kerning gap with background (skip for the first column where x < FONT_KERNING)
+        if (col > 0) {
+            for (int k = 0; k < FONT_KERNING; k++) {
+                row_ptr[x - FONT_KERNING + k] = (uint32_t)cell->bg;
+            }
+        }
 
         for (int c = 0; c < FONT_WIDTH; c++) {
             // Read bits from left to right 
-            if (row_data & (1 << ((FONT_WIDTH - 1) - c))) {
-                putpixel(x + c, y + r, fg);
-            } else {
-                putpixel(x + c, y + r, bg);
-            }
+            row_ptr[x + c] = (row_data & (1 << ((FONT_WIDTH - 1) - c))) ? (uint32_t)fg : (uint32_t)bg;
         }
     }
-    draw_rect(x-FONT_KERNING, y, FONT_KERNING, FONT_HEIGHT, cell->bg); // fill in the gaps!
 }
 
 void put_char(int row, int col, char c) {
@@ -120,16 +126,10 @@ void _term_refresh() {
 }
 
 void scroll_terminal() {
-    // shift every row up by one
-    for (uint64_t row = 1; row < term_rows; row++) {
-        for (uint64_t col = 0; col < term_cols; col++) {
-            cell_t *src = cell_at(row, col);
-            cell_t *dst = cell_at(row - 1, col);
-            *dst = *src;
-        }
-    }
+    // shift cell data up by one row
+    memmove(&grid[0], &grid[term_cols], sizeof(cell_t) * term_cols * (term_rows - 1));
 
-    // clear the last row
+    // clear the last row in the cell buffer
     uint64_t last_row = term_rows - 1;
     for (uint64_t col = 0; col < term_cols; col++) {
         cell_t *cell = cell_at(last_row, col);
@@ -138,7 +138,18 @@ void scroll_terminal() {
         cell->bg = current_bg;
     }
 
-    _term_refresh();
+    // Scroll framebuffer pixels up by one character row using a single memmove
+    uint32_t *fb_ptr = g_vga_active_framebuffer->address;
+    uint32_t fb_pitch = g_vga_active_framebuffer->pitch / 4;
+    uint32_t scroll_rows = (uint32_t)(term_rows - 1) * FONT_HEIGHT;
+    memmove(fb_ptr,
+            fb_ptr + FONT_HEIGHT * fb_pitch,
+            sizeof(uint32_t) * fb_pitch * scroll_rows);
+
+    // Only re-render the newly cleared last row
+    for (uint64_t col = 0; col < term_cols; col++) {
+        render_char(last_row, col);
+    }
 }
 
 void set_cursor(int row, int col) {
@@ -174,13 +185,23 @@ void print_char(char c) {
             serial_write('\b');
             set_cursor(cursor_row, cursor_col-1);
         } else {
-            put_char(cursor_row, cursor_col, c);
+            // Update the cell data first, before moving the cursor.
+            // This way set_cursor's re-render of the old position draws the
+            // character correctly (non-inverted) in a single pass, avoiding
+            // the previous pattern of 3 render_char calls per typed character.
+            cell_t *cell = cell_at(cursor_row, cursor_col);
+            cell->ch = c;
+            cell->fg = current_fg;
+            cell->bg = current_bg;
+            serial_write(c);
 
-            if (cursor_col >= term_cols) {
-                set_cursor(cursor_row+1, 0);
-            } else {
-                set_cursor(cursor_row, cursor_col+1);
+            uint64_t new_col = cursor_col + 1;
+            uint64_t new_row = cursor_row;
+            if (new_col >= term_cols) {
+                new_col = 0;
+                new_row++;
             }
+            set_cursor(new_row, new_col);
         }
     } else {
         put_char(cursor_row, cursor_col, c); // we don't care about the row and col since we're outputting via serial

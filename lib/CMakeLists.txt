@@ -36,6 +36,13 @@ add_library(crt0 OBJECT
 
 target_link_libraries(crt0 PRIVATE proto)
 
+target_compile_options(crt0 PRIVATE
+    -m64
+    -ffreestanding
+    -fno-stack-protector
+    -fno-builtin
+)
+
 target_compile_options(proto PRIVATE
     -m64
     -ffreestanding
