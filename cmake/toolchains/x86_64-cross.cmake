@@ -1,16 +1,3 @@
-# Cross-compilation toolchain for building the x86_64 kernel from an arm64 host
-# (e.g. Asahi Linux Fedora Remix on Apple Silicon)
-#
-# Required packages (Fedora / Asahi Linux):
-#   sudo dnf install gcc-x86_64-linux-gnu binutils-x86_64-linux-gnu nasm
-#
-# Usage:
-#   cmake -S . -B build --toolchain cmake/toolchains/x86_64-cross.cmake
-#
-# Or via the build script (auto-detected on aarch64 hosts):
-#   ./scripts/build-and-run.sh
-
-# The kernel is a bare-metal x86_64 ELF binary — not a Linux userspace binary.
 set(CMAKE_SYSTEM_NAME      Generic)
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
 
@@ -34,3 +21,4 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)

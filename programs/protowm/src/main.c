@@ -54,7 +54,7 @@ void handle_event(ev_meta_t *meta, void *data) {
 
     } else if (strcmp(meta->name, "proto.mouse.down") == 0) {
         is_mouse_down = 1;
-        dragging_win = hovering;   // lock target at click time
+        dragging_win = hovering;
         if (dragging_win) {
             draw_img(g_fb, dragging_win->under, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
             invert_rect_o(g_fb, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
@@ -70,6 +70,8 @@ void handle_event(ev_meta_t *meta, void *data) {
         }
         is_mouse_down = 0;
         dragging_win = NULL;
+    } else if (strcmp(meta->name, "proto.keyboard.keydown") == 0) {
+        exit();
     }
 
     consume(meta);

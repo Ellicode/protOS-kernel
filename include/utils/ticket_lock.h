@@ -20,7 +20,7 @@ static inline int ticketlock_lock(ticketlock_t* lock) {
 
     uint32_t my = __atomic_fetch_add(&lock->next, 1, __ATOMIC_ACQ_REL);
     while (__atomic_load_n(&lock->owner, __ATOMIC_ACQUIRE) != my) {
-        asm ("pause");
+        __asm__ ("pause");
     }
 
     return irqs;

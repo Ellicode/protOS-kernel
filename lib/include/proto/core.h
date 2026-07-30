@@ -5,6 +5,12 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wincompatible-library-redeclaration"
+#pragma clang diagnostic ignored "-Wbuiltin-requires-header"
+#endif
+
 /*****************************************************************************
  * Error codes
  *****************************************************************************/
@@ -138,9 +144,9 @@ void* memcpy(void* __restrict, const void* __restrict, size_t);
 void* memmove(void*, const void*, size_t);
 void* memset(void*, int, size_t);
 size_t strlen(const char*);
-void strcat(char *dest, const char *src);
+char* strcat(char *dest, const char *src);
 char *strtok(char *src, const char *delim);
-char strcmp(const char * s1, const char * s2);
+int strcmp(const char * s1, const char * s2);
 char* strcpy(char* dst, const char* src);
 long strtol(const char *nptr, char **endptr, int base);
 int strncmp(const char *s1, const char *s2, size_t n);
@@ -175,5 +181,9 @@ typedef HeapItem heap_item_t;
 void heap_init();
 void *malloc(size_t size);
 int free(void *ptr);
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #endif // PROTO_CORE_H

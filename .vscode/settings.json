@@ -1,4 +1,5 @@
 {
+	"C_Cpp.codeAnalysis.clangTidy.enabled": false,
 	"C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
 		"modernize-*",
 		"cert-*",
@@ -10,8 +11,10 @@
 		"bugprone-reserved-identifier",
 		"readability-else-after-return",
 		"readability-function-cognitive-complexity",
-		"readability-named-parameter",
-		"clang-diagnostic-incompatible-library-redeclaration"
+		"readability-named-parameter"
 	],
-	"chat.disableAIFeatures": true
+	"cmake.configureSettings": {
+		"CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/cmake/toolchains/x86_64-cross.cmake"
+	}
+	// "chat.disableAIFeatures": true
 }

@@ -57,7 +57,7 @@ size_t strlen(const char* str) {
 	return len;
 }
 
-void strcat(char *dest, const char *src)
+char* strcat(char *dest, const char *src)
 {
     int dest_len = strlen(dest);
     int i = 0;
@@ -67,9 +67,10 @@ void strcat(char *dest, const char *src)
         i++;
     }
     dest[dest_len + i] = '\0';
+    return dest;
 }
 
-char strcmp(const char * s1, const char * s2) {
+int strcmp(const char * s1, const char * s2) {
     for (size_t i = 0; s1[i] != '\0' || s2[i] != '\0'; i++) {
         if (((char*)s1)[i] != ((char*)s2)[i]) {
             if (((char*)s1)[i] < ((char*)s2)[i]) {
@@ -224,7 +225,9 @@ char *strncpy(char *dst, const char *src, size_t n) {
 
         // Copy characters from src to dst until 'n' is reached or src ends
         do {
-            if ((*d++ = *s++) == '\0') {
+            char copied = *s++;
+            *d++ = copied;
+            if (copied == '\0') {
                 // If src ended early, pad the remaining 'n' bytes with zeros
                 while (--n != 0) {
                     *d++ = '\0';
@@ -351,7 +354,7 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args) {
                 }
             } 
             else if (format[i] == 'c') {
-                char c = va_arg(args, char);
+                char c = (char)va_arg(args, int);
                 char str[2] = {c, '\0'};
                 arg_str = str;
             }

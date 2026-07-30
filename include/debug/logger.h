@@ -1,6 +1,10 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#ifndef __FILE_NAME__
+#define __FILE_NAME__ __FILE__
+#endif
+
 #define k_error(msg) do {                   \
     print_f("[");                           \
     set_color(PROTO_RED, PROTO_BG);         \

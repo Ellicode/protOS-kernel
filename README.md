@@ -91,27 +91,6 @@ cmake -S . -B build
 cmake --build build
 ```
 
-### Cross-compiling from aarch64 (Asahi Linux Fedora Remix)
-
-The kernel targets x86_64. If you are building on an **aarch64 machine** (e.g. Apple Silicon running Asahi Linux Fedora Remix), install the x86_64 cross-compilation toolchain first:
-
-```sh
-sudo dnf install gcc-x86_64-linux-gnu binutils-x86_64-linux-gnu nasm
-```
-
-The build script detects the host architecture automatically and passes the right toolchain file, so the normal invocation still works:
-
-```sh
-./scripts/build-and-run.sh
-```
-
-To build manually without the script, pass the toolchain file explicitly:
-
-```sh
-cmake -S . -B build --toolchain cmake/toolchains/x86_64-cross.cmake
-cmake --build build
-```
-
 ---
 
 Made with <3 by Elli

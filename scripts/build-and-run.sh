@@ -15,7 +15,7 @@ error_exit() {
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-ALLOCATED_MEMORY=256M
+ALLOCATED_MEMORY=1G
 EXTRA_QEMU_ARGS="" # You can add extra arguments for QEMU here if needed
 
 # Foreground colors =================================================================

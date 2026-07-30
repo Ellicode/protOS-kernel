@@ -30,7 +30,6 @@
     https://git.evalyngoemer.com/evalynOS/evalynOS/src/branch/main/kernel/src/mem/freelist_pmm.c
 */
 
-#include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>

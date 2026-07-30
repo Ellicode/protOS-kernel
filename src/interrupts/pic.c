@@ -87,11 +87,11 @@ void _pic_disable(void) {
 }
 
 void pic_init() {
-    uint32_t lo;
-    uint32_t hi;
-    __asm__ volatile("rdmsr" : "=a"(lo), "=d"(hi) : "c"(0x1B));
+    uint64_t apic_base = rdmsr(0x1B);
+    uint32_t lo = (uint32_t)apic_base;
+    uint32_t hi = (uint32_t)(apic_base >> 32);
     lo &= ~(1 << 11); 
-    __asm__ volatile("wrmsr" :: "c"(0x1B), "a"(lo), "d"(hi));
+    wrmsr(0x1B, ((uint64_t)hi << 32) | lo);
 
     outb(0x22, 0x70);
     outb(0x23, 0x01);

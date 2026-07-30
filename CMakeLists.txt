@@ -1,133 +1,132 @@
-# Set the minimum required version of CMake
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_C_STANDARD 23)
 
 project(kernel
-        VERSION 0.1.0
-        DESCRIPTION "A kernel for protOS"
-        LANGUAGES C ASM_NASM
+    VERSION 0.1.0
+    DESCRIPTION "A kernel for protOS"
+    LANGUAGES C ASM_NASM
 )
 
 add_subdirectory(lib)
 add_subdirectory(programs)
 
 set(KERNEL_SOURCES
-        src/main.c
-        include/main.h
+    src/main.c
+    include/main.h
 
-        src/string.c
-        include/string.h
+    src/string.c
+    include/string.h
 
-        src/io.c
-        include/io.h
+    src/io.c
+    include/io.h
 
-        src/globals.c
-        include/globals.h
+    src/globals.c
+    include/globals.h
 
-        src/boot.c
-        include/boot.h
+    src/boot.c
+    include/boot.h
 
-        src/gdt.c
-        include/gdt.h
+    src/gdt.c
+    include/gdt.h
 
-        src/pit.c
-        include/pit.h
+    src/pit.c
+    include/pit.h
 
-        include/utils/utils.h
-        include/utils/linked_lists.h
-        include/utils/ticket_lock.h
+    include/utils/utils.h
+    include/utils/linked_lists.h
+    include/utils/ticket_lock.h
 
-        # DEBUG ================================================================
+    # DEBUG ================================================================
 
-        src/debug/errors.c
-        include/debug/errors.h
+    src/debug/errors.c
+    include/debug/errors.h
 
-        include/debug/logger.h
+    include/debug/logger.h
 
-        src/debug/serial.c
-        include/debug/serial.h
+    src/debug/serial.c
+    include/debug/serial.h
 
-        # GRAPHICS =============================================================
+    # GRAPHICS =============================================================
 
-        src/graphics/console.c
-        include/graphics/console.h
+    src/graphics/console.c
+    include/graphics/console.h
 
-        src/graphics/graphics.c
-        include/graphics/graphics.h
+    src/graphics/graphics.c
+    include/graphics/graphics.h
 
-        # INTERRUPTS ===========================================================
+    # INTERRUPTS ===========================================================
 
-        src/interrupts/idt.c
-        include/interrupts/idt.h
+    src/interrupts/idt.c
+    include/interrupts/idt.h
 
-        src/interrupts/interrupt-stub.asm
+    src/interrupts/interrupt-stub.asm
 
-        src/interrupts/pic.c
-        include/interrupts/pic.h
+    src/interrupts/pic.c
+    include/interrupts/pic.h
 
-        src/interrupts/interrupts.c
-        include/interrupts/interrupts.h
+    src/interrupts/interrupts.c
+    include/interrupts/interrupts.h
 
-        # DRIVERS ===============================================================
+    # DRIVERS ===============================================================
 
-        src/drivers/ps2/keyboard.c
-        include/drivers/ps2/keyboard.h
+    src/drivers/ps2/keyboard.c
+    include/drivers/ps2/keyboard.h
 
-        src/drivers/ps2/mouse.c
-        include/drivers/ps2/mouse.h
+    src/drivers/ps2/mouse.c
+    include/drivers/ps2/mouse.h
 
-        src/drivers/ps2/ps2.c
-        include/drivers/ps2/ps2.h
+    src/drivers/ps2/ps2.c
+    include/drivers/ps2/ps2.h
 
-        # MEMORY ================================================================
+    # MEMORY ================================================================
 
-        src/memory/vmm.c
-        include/memory/vmm.h
+    src/memory/vmm.c
+    include/memory/vmm.h
 
-        src/memory/freelist_pmm.c
-        include/memory/freelist_pmm.h
+    src/memory/freelist_pmm.c
+    include/memory/freelist_pmm.h
 
-        src/memory/heap.c
-        include/memory/heap.h
+    src/memory/heap.c
+    include/memory/heap.h
 
-        src/memory/pat.c
-        include/memory/pat.h
+    src/memory/pat.c
+    include/memory/pat.h
 
-        # USERSPACE =============================================================
+    # USERSPACE =============================================================
 
-        src/userspace/scheduler.c
-        include/userspace/scheduler.h
+    src/userspace/scheduler.c
+    include/userspace/scheduler.h
 
-        src/userspace/yield.asm
+    src/userspace/yield.asm
 
-        src/userspace/elf.c
-        include/userspace/elf.h
+    src/userspace/elf.c
+    include/userspace/elf.h
 
-        src/userspace/syscalls.c
-        include/userspace/syscalls.h 
+    src/userspace/syscalls.c
+    include/userspace/syscalls.h 
 
-        src/userspace/process.c
-        include/userspace/process.h 
+    src/userspace/process.c
+    include/userspace/process.h 
 
-        src/userspace/user_fb.c
-        include/userspace/user_fb.h
+    src/userspace/user_fb.c
+    include/userspace/user_fb.h
 
-        src/userspace/ipc.c
-        include/userspace/ipc.h
+    src/userspace/ipc.c
+    include/userspace/ipc.h
 
-        src/userspace/enter-userspace.asm
-        include/userspace/userspace.h 
+    src/userspace/enter-userspace.asm
+    include/userspace/userspace.h 
 
-        # FILESYSTEMS ===========================================================
+    # FILESYSTEMS ===========================================================
 
-        src/filesystems/vfs.c
-        include/filesystems/vfs.h
+    src/filesystems/vfs.c
+    include/filesystems/vfs.h
 
-        src/filesystems/tarfs.c
-        include/filesystems/tarfs.h
+    src/filesystems/tarfs.c
+    include/filesystems/tarfs.h
 
-        src/filesystems/devfs.c
-        include/filesystems/devfs.h
+    src/filesystems/devfs.c
+    include/filesystems/devfs.h
 )
 
 add_executable(kernel ${KERNEL_SOURCES})
@@ -147,6 +146,7 @@ target_compile_definitions(kernel PUBLIC
 
 target_compile_options(kernel PRIVATE
     $<$<COMPILE_LANGUAGE:C>:-m64>
+    $<$<COMPILE_LANGUAGE:C>:-mcmodel=kernel>
     $<$<COMPILE_LANGUAGE:C>:-ffreestanding>
     $<$<COMPILE_LANGUAGE:C>:-fno-stack-protector>
     $<$<COMPILE_LANGUAGE:C>:-mno-red-zone>
@@ -158,14 +158,14 @@ target_compile_options(kernel PRIVATE
 target_include_directories(kernel PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 target_link_options(kernel PRIVATE
-        -m64
-        -nostdlib
-        -nostartfiles
-        -nodefaultlibs
-        -no-pie
-        "-Wl,-T,${CMAKE_SOURCE_DIR}/linker.ld"
-        -Wl,--build-id=none
-        -Wl,-z,max-page-size=0x1000
+    -m64
+    -nostdlib
+    -nostartfiles
+    -nodefaultlibs
+    -no-pie
+    "-Wl,-T,${CMAKE_SOURCE_DIR}/linker.ld"
+    -Wl,--build-id=none
+    -Wl,-z,max-page-size=0x1000
 )
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include "filesystems/vfs.h"
 #include "memory/heap.h"
 #include "memory/vmm.h"
