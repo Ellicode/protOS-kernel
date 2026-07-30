@@ -53,6 +53,18 @@ if [ $DEBUG_MODE -eq 1 ]; then
     EXTRA_QEMU_ARGS="$EXTRA_QEMU_ARGS -s -S"
 fi
 
+# Cross-compilation: on aarch64 hosts (e.g. Asahi Linux on Apple Silicon) use
+# the x86_64 cross-compiler toolchain automatically.
+# Install the required packages first:
+#   sudo dnf install gcc-x86_64-linux-gnu binutils-x86_64-linux-gnu nasm
+TOOLCHAIN_ARG=""
+HOST_ARCH="$(uname -m)"
+CROSS_TOOLCHAIN="$PROJECT_ROOT/cmake/toolchains/x86_64-cross.cmake"
+if [ "$HOST_ARCH" = "aarch64" ]; then
+    echo -e "${B_BLUE} INFO ${A_RESET} Detected aarch64 host — using x86_64 cross-compilation toolchain"
+    TOOLCHAIN_ARG="--toolchain $CROSS_TOOLCHAIN"
+fi
+
 LOCAL_OVMF_CODE_PATH="ignore-scripts/ovmf/OVMF_CODE.fd"
 REMOTE_OVMF_CODE_PATH="/usr/share/edk2/x64/OVMF_CODE.4m.fd"
 BOOT_DIRECTORY="ignore-scripts/esp/"
@@ -64,7 +76,7 @@ echo -e "${B_BLUE} INFO ${A_RESET} Starting build process..."
 # rm -r build/
 
 cd "$PROJECT_ROOT" || error_exit "${B_RED} ERR! ${A_RESET} Failed to change directory"
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug $TOOLCHAIN_ARG
 cmake --build build
 
 cp build/programs/corgi/corgi initramfs/System/Programs/corgi
