@@ -66,3 +66,11 @@ void set_cursor(int row, int col) {
 void clear() {
     syscall(SYS_CLEAR, 0, 0, 0);
 }
+
+int brk(void *addr) {
+    return syscall(SYS_BRK, (uint64_t)addr, 0, 0);
+}
+
+int sbrk(size_t size) {
+    return syscall(SYS_SBRK, size, 0, 0);
+}

@@ -1,26 +1,50 @@
 #include <proto/core.h>
-#include <proto/graphics.h>
 #include <proto/events.h>
+#include <proto/graphics.h>
 
-#include "init.h"
 #include "cursor.h"
-#include "window.h"
 #include "globals.h"
+#include "init.h"
+#include "window.h"
+#include "hooks.h"
 
-window_t *hovering = NULL;
-window_t *dragging_win = NULL;
-int is_mouse_down = 0;
-int last_mouse_x = 0;
-int last_mouse_y = 0;
+window_t *hovering      = NULL;
+window_t *dragging_win  = NULL;
+int is_mouse_down       = 0;
+int last_mouse_x        = 0;
+int last_mouse_y        = 0;
+int running             = 1;
 
-static int collide_rect(int cx, int cy, int x, int y, int w, int h) {
+static int collide_point(int cx, int cy, int x, int y, int w, int h) {
     return (cx >= x && cx < x + w && cy >= y && cy < y + h);
+}
+
+static int collide_rect(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2) {
+    return (x1 < x2 + w2 &&
+            x1 + w1 > x2 &&
+            y1 < y2 + h2 &&
+            y2 + h1 > y2);
+}
+
+void redraw_rect(int x, int y, int w, int h) {
+    window_t *win = g_window_stack;
+    while (win != NULL) {
+        if (win == dragging_win) {
+            win = win->next;
+            continue;
+        }
+        if (collide_rect(x, y, w, h, win->x, win->y, win->owidth, win->oheight)) {
+            // printf("redrawing window \"%s\"\n", win->name);
+            draw_window_clipped(win, x, y, w, h);
+        }
+        win = win->next;
+    }
 }
 
 void check_cursor_collision(int x, int y) {
     window_t *win = g_window_stack;
     while (win != NULL) {
-        if (collide_rect(x, y, win->x, win->y, win->width, TITLEBAR_HEIGHT)) {
+        if (win->frameless == 0 && collide_point(x, y, win->x, win->y, win->width, TITLEBAR_HEIGHT)) {
             hovering = win;
             return;
         }
@@ -32,76 +56,82 @@ void check_cursor_collision(int x, int y) {
 void handle_event(ev_meta_t *meta, void *data) {
     if (meta == NULL) return;
 
-    memset(data, 0, 256);
     int res = receive(meta, data);
     if (res != PROTO_OK) {
         fprintf(STDERR, "[ERROR] Receive failed with code %d", res);
+        return;
     }
 
     if (strcmp(meta->name, "proto.mouse.move") == 0) {
-        mouse_move_packet_t pkt;
-        memcpy(&pkt, data, sizeof(pkt));
-
+        mouse_move_packet_t *pkt = (mouse_move_packet_t *)data;
         if (is_mouse_down && dragging_win) {
             invert_rect_o(g_fb, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
-            dragging_win->x += pkt.vel_x;
-            dragging_win->y += pkt.vel_y;
-            if (dragging_win->x < 0)
-                dragging_win->x = 0;
-            if (dragging_win->y < 0)
-                dragging_win->y = 0;
+            dragging_win->x += pkt->vel_x;
+            dragging_win->y += pkt->vel_y;
+            if (dragging_win->x < 0) dragging_win->x = 0;
+            if (dragging_win->y < 0) dragging_win->y = 0;
             if (dragging_win->x + dragging_win->owidth > g_fb->width)
                 dragging_win->x = (int)g_fb->width - dragging_win->owidth;
             if (dragging_win->y + dragging_win->oheight > g_fb->height)
                 dragging_win->y = (int)g_fb->height - dragging_win->oheight;
-            last_mouse_x = pkt.x;
-            last_mouse_y = pkt.y;
+            last_mouse_x = pkt->x;
+            last_mouse_y = pkt->y;
+            draw_cursor(pkt->x, pkt->y);
             invert_rect_o(g_fb, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
         } else {
-            check_cursor_collision(pkt.x, pkt.y);
-            draw_cursor(pkt.x, pkt.y);
+            draw_cursor(pkt->x, pkt->y);
         }
-
+        check_cursor_collision(pkt->x, pkt->y);
     } else if (strcmp(meta->name, "proto.mouse.down") == 0) {
         is_mouse_down = 1;
         dragging_win = hovering;
-        if (dragging_win) {
-            draw_img(g_fb, dragging_win->under, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
+        if (dragging_win != NULL) {
+            redraw_rect(dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
             invert_rect_o(g_fb, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
         }
     } else if (strcmp(meta->name, "proto.mouse.up") == 0) {
         if (dragging_win) {
             invert_rect_o(g_fb, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
-            // already done in draw window
-            //capture_rect(g_fb, dragging_win->under, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
-            draw_window(dragging_win, 0);
-            _draw_cursor_impl(last_mouse_x, last_mouse_y);
+            draw_window(dragging_win);
             last_mouse_x = 0;
             last_mouse_y = 0;
         }
         is_mouse_down = 0;
         dragging_win = NULL;
     } else if (strcmp(meta->name, "proto.keyboard.keydown") == 0) {
-        //exit();
-    }
+        char *c = data;
+        if (*c == 'w') {
+            window_t *test = create_window(200, 200, 100, 100, "test", 0);
+            draw_window(test);
+        } else if (*c == 'q') {
+            running = 0;
+        } else if (*c == 't') {
+            create_nonblocking_process("System/Programs/testapp", NULL, 0);
+        }
+    } else if (strcmp(meta->name, "wm.window.create") == 0) {
+        handle_create_window((win_options_t *)data, meta);
+    } else if (strcmp(meta->name, "wm.window.refresh") == 0) {
+        window_t *win = get_win_from_id(*(int *)data);
+        if (win != NULL) {
+            refresh_window(win);
+        }
+    } 
 
     consume(meta);
 }
 
 int pmain(char argv[16][64], int argc) {
     wm_init();
-    
+
     ev_meta_t *meta = malloc(sizeof(ev_meta_t));
-    char *data = malloc(256);
+    char *data = malloc(512);
 
-    draw_rect(g_fb, 1000, 700, 100, 100, 0x0000FF);
+    window_t *root = create_window(0, 0, g_fb->width, g_fb->height, "root", 1);
+    draw_rect(root->fb, 0, 0, root->fb->width, root->fb->height, BG_COLOR);
+    //bmp_draw(root->fb, g_wallpaper, 0, 0);
+    refresh_window(root);
 
-    window_t *win = create_window(100, 100, 500, 350, "A simple window");
-    draw_rect(win->fb, 0, 0, 50, 50, 0xFF0000);
-    font_print(win->fb, g_small_font, "Hello, world", 0, 75, 0xFFFFFF);
-    refresh_window(win);
-    
-    while (1) {
+    while (running) {
         handle_event(meta, data);
     }
 

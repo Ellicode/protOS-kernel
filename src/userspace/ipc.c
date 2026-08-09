@@ -9,7 +9,7 @@
 #include "utils/linked_lists.h"
 
 int ipc_send(uint64_t pid, char *message, void *data, size_t size) {
-    if (message == NULL || data == NULL) { return PROTO_ERR_INVALID_ARGUMENT; }
+    if (message == NULL) { return PROTO_ERR_INVALID_ARGUMENT; }
 
     ipc_message_t *msg = k_alloc(sizeof(ipc_message_t));
     if (msg == NULL) { return PROTO_ERR_OUT_OF_MEMORY; }

@@ -49,6 +49,7 @@ enum {
 enum {
     ISR_IRQ_PIT                     = 0,
     ISR_IRQ_KEYBOARD                = 1,
+    ISR_IRQ_COM1                    = 4,
     ISR_IRQ_MOUSE                   = 12
 };
 
@@ -67,6 +68,7 @@ extern void isr_call_14();
 
 extern void isr_call_32();
 extern void isr_call_33();
+extern void isr_call_36();
 extern void isr_call_44();
 
 extern void isr_call_128();

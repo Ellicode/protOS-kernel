@@ -5,6 +5,7 @@
 
 extern fb_info_t    *g_fb;
 extern bmp_t        *g_cursor_bmp;
+//extern bmp_t        *g_wallpaper;
 extern font_t       *g_small_font;
 
 #endif

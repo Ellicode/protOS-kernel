@@ -1,6 +1,7 @@
 #include <stdarg.h>
 
 #include "debug/logger.h"
+#include "debug/serial.h"
 #include "graphics/console.h"
 #include "interrupts/pic.h"
 #include "drivers/ps2/keyboard.h"
@@ -12,6 +13,7 @@
 #include "userspace/syscalls.h"
 #include "filesystems/devfs.h"
 #include "interrupts/panic.h"
+#include "userspace/syscalls.h"
 #include "pit.h"
 
 #include "interrupts/interrupts.h"
@@ -31,43 +33,60 @@ void* isr_exception_handlers[ISR_EXCEPTION_COUNT] = {
 void* isr_irq_handlers[ISR_IRQ_COUNT] = {
     [ISR_IRQ_PIT]                   = isr_call_32,
     [ISR_IRQ_KEYBOARD]              = isr_call_33,
+    [ISR_IRQ_COM1]                  = isr_call_36,
     [ISR_IRQ_MOUSE]                 = isr_call_44,
 };
+
+// TODO: MOVE TO ANOTHER FILE
+void handle_kbd_event(char c) {
+    devfs_node_t *stdin = g_stdin->fs_data;
+    stdin_data_t *stdin_data = stdin->extra_data;
+
+    if (stdin_data == NULL) { return; } // 3:< i gotchu
+    size_t len = strlen(stdin_data->kbd_buf);
+    ipc_dispatch("proto.keyboard.keydown", &c, 1);
+
+    if (c == '\n' || c == 0xD) {
+        if (stdin->waiters.head != NULL) {
+            queue_wake_all(&stdin->waiters);
+            print_char('\n');
+        }
+    } else if (c == '\b' || c == 0x7F) {
+        if (len > 0 && stdin->waiters.head != NULL) {               
+            stdin_data->kbd_buf[len - 1] = '\0';         
+            print_char('\b');
+        }
+    } else if (c > 0) {
+        if (stdin->waiters.head != NULL) {
+            stdin_data->kbd_buf[len] = c;
+            stdin_data->kbd_buf[len + 1] = '\0';
+            print_char(c);
+        }
+    }
+}
 
 void isr_handler(idt_frame_t* frame) {
     uint64_t vec_buffer = frame->vector; // context switches can switch to a different vector
 
     if (vec_buffer < ISR_EXCEPTION_COUNT) {
+        if (vec_buffer == ISR_EXC_PAGE_FAULT && (frame->cs & 3) == 3) {
+            print_f("[");
+            set_color(PROTO_RED, PROTO_BG);
+            print_f("FAULT");
+            set_color(PROTO_WHITE, PROTO_BG);
+            print_f("] Segmentation fault @ %x. (cs=%x)\n", frame->rip, frame->cs);
+            sys_exit();
+        }
         _panic_stub(NULL, 1, frame);
     } else if (vec_buffer == 32) {
         g_pit_ticks++;
         scheduler_tick(frame);
     } else if (vec_buffer == 33) {
         char c = ps2keyboard_read();
-        devfs_node_t *stdin = g_stdin->fs_data;
-        stdin_data_t *stdin_data = stdin->extra_data;
-
-        if (stdin_data == NULL) { return; } // 3:< i gotchu
-        size_t len = strlen(stdin_data->kbd_buf);
-        ipc_dispatch("proto.keyboard.keydown", &c, 1);
-
-        if (c == '\n') {
-            if (stdin->waiters.head != NULL) {
-                queue_wake_all(&stdin->waiters);
-                print_char('\n');
-            }
-        } else if (c == '\b') {
-            if (len > 0 && stdin->waiters.head != NULL) {
-                stdin_data->kbd_buf[len - 1] = '\0';
-                print_char('\b');
-            }
-        } else if (c > 0) {
-            if (stdin->waiters.head != NULL) {
-                stdin_data->kbd_buf[len] = c;
-                stdin_data->kbd_buf[len + 1] = '\0';
-                print_char(c);
-            }
-        }
+        handle_kbd_event(c);
+    } else if (vec_buffer == 36) {
+        char c = serial_read();
+        handle_kbd_event(c);
     } else if (vec_buffer == 44) {
         ps2mouse_read();
     } else if (vec_buffer == 0x80) {

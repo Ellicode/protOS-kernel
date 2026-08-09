@@ -10,15 +10,17 @@
 #include "userspace/user_fb.h"
 #include "memory/vmm.h"
 #include "utils/linked_lists.h"
+#include "utils/utils.h"
 #include "userspace/ipc.h"
 #include "interrupts/panic.h"
+#include <stddef.h>
+#include <stdint.h>
 
 #include "userspace/syscalls.h"
 
 void __not_implemented () {}
 
-void sys_exit()
-{
+void sys_exit() {
     if (!g_current_thread || !g_current_thread->process) {
         k_assert(PROTO_ERR_INVALID_CONTEXT);
         return; 
@@ -220,6 +222,17 @@ int sys_create_process(char *path, char argv[16][64], int argc) {
     return ret;
 }
 
+int sys_create_process_nonblocking(char *path, char argv[16][64], int argc) {    
+    if (!g_current_thread || !g_current_thread->process) {
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return PROTO_ERR_INVALID_CONTEXT; 
+    }
+
+    int ret = create_process(path, 0, NULL, argv, argc);
+    scheduler_yield();
+    return ret;
+}
+
 int sys_chdir(char *path) {
     if (!g_current_thread || !g_current_thread->process) {
         k_assert(PROTO_ERR_INVALID_CONTEXT);
@@ -311,16 +324,12 @@ int sys_wait_for_process(int pid) {
 }
 
 int sys_send(int pid, ipc_syscall_payload *msg) {
-    if (msg == NULL) { return PROTO_ERR_INVALID_ARGUMENT; }
+    if (msg == NULL || msg->message == NULL) { return PROTO_ERR_INVALID_ARGUMENT; }
+    if (msg->data == NULL && msg->size > 0) { return PROTO_ERR_INVALID_ARGUMENT; }
 
-    ipc_syscall_payload *payload = k_alloc(sizeof(ipc_syscall_payload));
-
-    strncpy(payload->message, msg->message, 255);
-    payload->data = k_alloc(msg->size);
-    memcpy(payload->data, msg->data, msg->size);
-    payload->size = msg->size;
-
-    return ipc_send(pid, payload->message, payload->data, payload->size);
+    // ipc_send copies the name and payload into kernel memory before
+    // queueing, so the user pointers can be forwarded directly.
+    return ipc_send(pid, msg->message, msg->data, msg->size);
 }
 
 int sys_getpid() {
@@ -338,6 +347,110 @@ void sys_clear() {
     set_cursor(0, 0);
 }
 
+int sys_brk(uintptr_t addr) {
+    if (!g_current_thread || !g_current_thread->process) {
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return PROTO_ERR_INVALID_CONTEXT;
+    }
+
+    process_t *process = g_current_thread->process;
+    if (addr == 0) return PROTO_ERR_INVALID_ARGUMENT;
+
+    // TODO: Implement shrink
+    if (addr > process->heap_max) {
+        uintptr_t old = (uintptr_t)process->heap_max;
+        size_t len = (size_t)(addr - old);
+
+        vmm_map_range(
+            process->cr3,
+            old,
+            len,
+            F_USER | F_WRITE | F_NX
+        );
+
+        process->heap_max = (uint64_t)addr;
+    }
+
+    return PROTO_OK;
+}
+
+int sys_sbrk(size_t size) {
+    if (!g_current_thread || !g_current_thread->process) {
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return PROTO_ERR_INVALID_CONTEXT;
+    }
+
+    if (size == 0) return PROTO_OK;
+
+    process_t *process = g_current_thread->process;
+    uintptr_t old_brk = (uintptr_t)process->heap_max;
+    uintptr_t new_brk = old_brk + (uintptr_t)size;
+
+    if (new_brk < old_brk) return PROTO_ERR_INVALID_ARGUMENT;
+
+    return sys_brk(new_brk);
+}
+
+int sys_share(int pid, void *mem, size_t size) {
+    if (!g_current_thread || !g_current_thread->process) {
+        k_assert(PROTO_ERR_INVALID_CONTEXT);
+        return -PROTO_ERR_INVALID_CONTEXT;
+    }
+
+    if (mem == NULL || size == 0) {
+        return -PROTO_ERR_INVALID_ARGUMENT;
+    }
+
+    process_t *process = g_current_thread->process;
+
+    process_t *dest_process = g_active_processes;
+    while (dest_process != NULL) {
+        if (dest_process->pid == pid) {
+            break;
+        }
+
+        dest_process = dest_process->next;
+    }
+    if (dest_process == NULL) { return -PROTO_ERR_PROCESS_NOT_FOUND; }
+
+    shared_mem_t *memobj = k_alloc(sizeof(shared_mem_t));
+    if (memobj == NULL) {
+        k_assert(PROTO_ERR_OUT_OF_MEMORY);
+        return -PROTO_ERR_OUT_OF_MEMORY;
+    }
+
+    // Share the source process's *physical* pages with the destination.
+    // Walk page by page since the physical frames may not be contiguous.
+    uintptr_t virt_start = ALIGN_DOWN((uintptr_t)mem, PAGE_SIZE);
+    size_t offset = (uintptr_t)mem - virt_start;
+    size_t num_pages = PAGE_ROUND(offset + size) / PAGE_SIZE;
+
+    for (size_t i = 0; i < num_pages; i++) {
+        uint64_t virt = virt_start + (i * PAGE_SIZE);
+        uint64_t phys = vmm_virt_to_phys(process->cr3, virt);
+
+        if (phys == 0) {
+            k_free(memobj);
+            k_assert(PROTO_ERR_INVALID_ARGUMENT);
+            return -PROTO_ERR_INVALID_ARGUMENT;
+        }
+
+        if (vmm_map_phys_range(dest_process->cr3, virt, phys, PAGE_SIZE, F_WRITE | F_USER) == NULL) {
+            k_free(memobj);
+            k_assert(PROTO_ERR_OUT_OF_MEMORY);
+            return -PROTO_ERR_OUT_OF_MEMORY;
+        }
+    }
+
+    int id = process->max_smem_id++;
+    memobj->id = id;
+    memobj->dest = pid;
+    memobj->vaddr = (uint64_t)mem;
+    LL_APPEND(memobj, process->shared_mem);
+
+    return id;
+}
+
 void *syscall_handlers[] = {
     [SYS_EXIT]              = sys_exit,
 
@@ -349,10 +462,13 @@ void *syscall_handlers[] = {
     [SYS_READ_DIR]          = sys_read_dir,
 
     [SYS_CREATE_PROCESS]    = sys_create_process,
+    [SYS_NB_CREATE_PROCESS] = sys_create_process_nonblocking,
     [SYS_FETCH_FB]          = sys_fetch_fb,
     [SYS_CHDIR]             = sys_chdir,
     [SYS_GETCWD]            = sys_getcwd,
     [SYS_GETPID]            = sys_getpid,
+    [SYS_BRK]               = sys_brk,
+    [SYS_SBRK]              = sys_sbrk,
 
     [SYS_SEND]              = sys_send,
     [SYS_RECEIVE]           = ipc_receive,
@@ -360,6 +476,8 @@ void *syscall_handlers[] = {
     [SYS_CONSUME]           = ipc_consume,
     [SYS_SUBSCRIBE]         = ipc_subscribe,
     [SYS_UNSUBSCRIBE]       = ipc_unsubscribe,
+    [SYS_SHARE]             = sys_share,
+    // [SYS_UNSHARE]           = sys_unshare,
 
     [SYS_SET_CURSOR]        = sys_set_cursor,
     [SYS_CLEAR]             = sys_clear,

@@ -1,32 +1,121 @@
 #include <proto/core.h>
 #include <proto/graphics.h>
+#include <stdint.h>
 
+#include "cursor.h"
 #include "utils.h"
 #include "window.h"
 #include "globals.h"
 
 window_t *g_window_stack;
+int max_wid = 0;
+
+void refresh_window_clipped(window_t *win, int cx, int cy, int cw, int ch) {
+    if (win->frameless) {
+        draw_img_clip(g_fb, (uint32_t *)win->fb->address, win->x, win->y, win->width, win->height, cx, cy, cw, ch);
+    } else {
+        draw_img_clip(g_fb, (uint32_t *)win->fb->address, win->x+WIN_PADDING+1, win->y+TITLEBAR_HEIGHT+WIN_PADDING+TITLEBAR_BOTTOM_PADDING+1, win->width, win->height, cx, cy, cw, ch); 
+    }
+    _draw_cursor_impl(g_prev_x, g_prev_y);
+}
 
 void refresh_window(window_t *win) {
-    draw_img(g_fb, (uint32_t *)win->fb->address, win->x+WIN_PADDING, win->y+TITLEBAR_HEIGHT, win->width, win->height);
+    refresh_window_clipped(win, 0, 0, g_fb->width, g_fb->height);
 }
 
-// TODO: refresh_window_rect
+void draw_window_clipped(window_t *win, int clip_x, int clip_y,
+                         int clip_w, int clip_h) {
+    if (!win->frameless) {
+        int content_x = win->x + 1;
+        int content_y = win->y + 1;
+        int content_w = win->owidth - 2 - SHADOW_SIZE;
+        int content_h = win->oheight - 2 - SHADOW_SIZE;
 
-void draw_window(window_t *win, int moving) {
-    capture_rect(g_fb, win->under, win->x, win->y, win->owidth, win->oheight);
+        draw_rect_clip(
+            g_fb,
+            content_x, content_y,
+            content_w,
+            TITLEBAR_HEIGHT + WIN_PADDING + TITLEBAR_BOTTOM_PADDING,
+            WIN_BACKGROUND,
+            clip_x, clip_y, clip_w, clip_h
+        );
 
-    if (moving == 1) {
-        draw_rect_o(g_fb, win->x, win->y, win->owidth, win->oheight, 0xFFFFFF);
-    } else {
-        draw_rect(g_fb, win->x, win->y, win->owidth, TITLEBAR_HEIGHT, WIN_BACKGROUND);
-        draw_box(g_fb, win->x, win->y, win->owidth, win->oheight, WIN_BACKGROUND, 2, 0);
-        font_print(g_fb, g_small_font, win->name, win->x+5, win->y+(TITLEBAR_HEIGHT-g_small_font->height)/2, WIN_FOREGROUND);
-        refresh_window(win);
+        draw_box_clip(
+            g_fb,
+            content_x, content_y,
+            content_w, content_h,
+            WIN_BACKGROUND,
+            WIN_PADDING,
+            0,
+            clip_x, clip_y, clip_w, clip_h
+        );
+
+        draw_rect_c_clip(
+            g_fb,
+            content_x + WIN_PADDING,
+            content_y + WIN_PADDING,
+            content_w - 2 * WIN_PADDING,
+            TITLEBAR_HEIGHT,
+            WIN_BACKGROUND,
+            darken(WIN_BACKGROUND, FX_ONE / 4),
+            clip_x, clip_y, clip_w, clip_h
+        );
+
+        draw_text_clip(
+            g_fb,
+            g_small_font,
+            win->name,
+            content_x + WIN_PADDING + 2,
+            content_y + WIN_PADDING +
+                (TITLEBAR_HEIGHT - g_small_font->height) / 2,
+            WIN_FOREGROUND,
+            clip_x, clip_y, clip_w, clip_h
+        );
+
+        draw_rect_o_clip(
+            g_fb,
+            win->x,
+            win->y,
+            win->owidth - SHADOW_SIZE,
+            win->oheight - SHADOW_SIZE,
+            0x000000,
+            clip_x, clip_y, clip_w, clip_h
+        );
+
+        draw_rect_c_clip(
+            g_fb,
+            win->x + SHADOW_SIZE,
+            win->y + win->oheight - SHADOW_SIZE,
+            win->owidth - SHADOW_SIZE,
+            SHADOW_SIZE,
+            0x00000000,
+            0xFF000000,
+            clip_x, clip_y, clip_w, clip_h
+        );
+
+        draw_rect_c_clip(
+            g_fb,
+            win->x + win->owidth - SHADOW_SIZE,
+            win->y + SHADOW_SIZE,
+            SHADOW_SIZE,
+            win->oheight - SHADOW_SIZE,
+            0x00000000,
+            0xFF000000,
+            clip_x, clip_y, clip_w, clip_h
+        );
     }
+
+    refresh_window_clipped(
+        win,
+        clip_x, clip_y, clip_w, clip_h
+    );
 }
 
-window_t *create_window(int x, int y, int w, int h, char *name) {
+void draw_window(window_t *win) {
+    draw_window_clipped(win, 0, 0, g_fb->width, g_fb->height);
+}
+
+window_t *create_window(int x, int y, int w, int h, char *name, int frameless) {
     window_t *win = malloc(sizeof(window_t));
     if (!win) { return NULL; }
 
@@ -34,8 +123,14 @@ window_t *create_window(int x, int y, int w, int h, char *name) {
     win->y = y;
     win->width = w;
     win->height = h;
-    win->owidth = w+2*WIN_PADDING;
-    win->oheight = h+TITLEBAR_HEIGHT+WIN_PADDING;
+    if (frameless) {
+        win->owidth = w;
+        win->oheight = h;
+    } else {
+        win->owidth = w+2*WIN_PADDING+SHADOW_SIZE+2;
+        win->oheight = h+TITLEBAR_HEIGHT+2*WIN_PADDING+TITLEBAR_BOTTOM_PADDING+SHADOW_SIZE+2;
+    }
+    win->frameless = frameless;
     strncpy(win->name, name, 255);
 
     size_t fb_size = (size_t)w * h;
@@ -59,20 +154,22 @@ window_t *create_window(int x, int y, int w, int h, char *name) {
 
     fb->address = (uint64_t)fb_data;
     win->fb     = fb;
+    win->id     = max_wid++;
 
     LL_APPEND(win, g_window_stack);
 
-    int outer_w = w + 2 * WIN_PADDING;
-    int outer_h = h + TITLEBAR_HEIGHT + WIN_PADDING;
-
-    win->under = malloc((size_t)outer_w * (size_t)outer_h * sizeof(uint32_t));
-    if (!win->under) {
-        return NULL;
-    }
-
-    capture_rect(g_fb, win->under, x, y, outer_w, outer_h);
-
-    draw_window(win, 0);
+    draw_window(win);
 
     return win;
+}
+
+window_t *get_win_from_id(int id) {
+    window_t *win = g_window_stack;
+    while (win != NULL) {
+        if (win->id == id) {
+            return win;
+        }
+        win = win->next;
+    }
+    return NULL;
 }

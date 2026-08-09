@@ -6,9 +6,13 @@ add_library(proto STATIC
     src/core/process.c
 
     src/graphics/graphics.c
-    src/graphics/font.c
     src/graphics/bmp.c
     src/graphics/color.c
+    src/graphics/putpixel.c
+    src/graphics/draw_text.c
+    src/graphics/draw_img.c
+    src/graphics/draw_rect.c
+    src/graphics/draw_box.c
 
     src/events/events.c
 )

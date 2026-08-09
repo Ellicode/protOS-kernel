@@ -147,6 +147,7 @@ target_compile_definitions(kernel PUBLIC
 )
 
 target_compile_options(kernel PRIVATE
+    $<$<COMPILE_LANGUAGE:C>:-mcmodel=kernel>
     $<$<COMPILE_LANGUAGE:C>:-m64>
     $<$<COMPILE_LANGUAGE:C>:-ffreestanding>
     $<$<COMPILE_LANGUAGE:C>:-fno-stack-protector>

@@ -1,5 +1,6 @@
 #include <stddef.h>
 
+#include "userspace/process.h"
 #include "utils/ticket_lock.h"
 #include "debug/logger.h"
 #include "graphics/console.h"
@@ -157,14 +158,14 @@ thread_t* create_user_thread(process_t *process, uint64_t entry_point) {
 
     thread_t *thread = k_alloc(sizeof(thread_t));  
     if (thread == NULL) {
-        k_error("Could not allocate thread struct!\n");
+        k_error("could not allocate thread struct!\n");
         ticketlock_unlock(&threads_lock, lock1r);
         return NULL;
     }
 
     uint64_t stack = (uint64_t)vmm_map_range(process->cr3, USER_STACK_BASE, USER_STACK_SIZE, F_PRESENT | F_USER | F_WRITE);
     if (stack == 0) {
-        k_error("Could not allocate stack for user thread!\n");
+        k_error("could not allocate stack for user thread!\n");
         ticketlock_unlock(&threads_lock, lock1r);
         return NULL;
     }
@@ -197,7 +198,6 @@ void exit_thread(thread_t* thread) {
 
     if (thread->process) {
         LL_UNLINK(thread->process, g_active_processes);
-
         k_free(thread->process->kernel_stack);
         k_free(thread->process);
     }

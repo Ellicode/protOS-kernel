@@ -2,9 +2,11 @@
 set -e
 
 DEBUG_MODE=0
+NO_DISPLAY=0
 for arg in "$@"; do
     case $arg in
-        --debug) DEBUG_MODE=1 ;;
+        --debug|-d)     DEBUG_MODE=1 ;;
+        --nodisplay|-n) NO_DISPLAY=1 ;;
     esac
 done
 
@@ -17,7 +19,11 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 ALLOCATED_MEMORY=1G
 EXTRA_QEMU_ARGS="" # You can add extra arguments for QEMU here if needed
-
+if [ $NO_DISPLAY -eq 1 ]; then 
+    DISPLAY="-display none"
+else
+    DISPLAY="-display sdl"
+fi
 # Foreground colors =================================================================
 T_BLACK='\033[0;30m'
 T_RED='\033[0;31m'
@@ -86,6 +92,7 @@ cp build/programs/protowm/protowm initramfs/System/Programs/protowm
 cp build/programs/edit/edit initramfs/System/Programs/edit
 cp build/programs/panic/panic initramfs/System/Programs/panic
 cp build/programs/read/read initramfs/System/Programs/read
+cp build/programs/testapp/testapp initramfs/System/Programs/testapp
 
 mkdir -p ignore-scripts
 
@@ -128,11 +135,13 @@ case $1 in
             -drive if=pflash,format=raw,readonly=on,file=$LOCAL_OVMF_CODE_PATH \
             -drive if=ide,format=raw,file=fat:rw:ignore-scripts/esp \
             -serial stdio \
-            -display gtk,zoom-to-fit=on \
+            -vga cirrus \
+            -display sdl \
+            $DISPLAY \
+            $EXTRA_QEMU_ARGS \
             # -device virtio-vga-gl \
             # -no-reboot \
             # -no-shutdown \
-            # $EXTRA_QEMU_ARGS
 esac
 
 echo -e "\n"

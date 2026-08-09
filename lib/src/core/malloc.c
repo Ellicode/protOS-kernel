@@ -49,13 +49,16 @@ void *malloc(size_t size) {
     
     if (heap_size < HEAP_MAX_SIZE) {
         heap_item_t *last = heap_base;
-        while (last->next != NULL) {
-            last = last->next;
-        }
+        while (last->next) last = last->next;
 
         uint64_t grow_size = size + sizeof(HeapItem);
 
-        heap_item_t *new_block = (heap_item_t*)(HEAP_VIRTUAL_START + heap_size);
+        // map first
+        if (sbrk(grow_size) != PROTO_OK) {
+            return NULL;
+        }
+
+        heap_item_t *new_block = (heap_item_t *)((uint8_t *)HEAP_VIRTUAL_START + heap_size);
         new_block->size  = grow_size - sizeof(HeapItem);
         new_block->flags = H_FREE;
         new_block->prev  = last;
@@ -63,8 +66,11 @@ void *malloc(size_t size) {
         last->next = new_block;
 
         heap_size += grow_size;
-    }
 
+        // retry now that a new free block exists
+        return malloc(size);
+    }
+    
     return NULL;
 }
 
@@ -96,4 +102,6 @@ int free(void *ptr) {
             block->next->prev = block->prev;
         }
     }
+
+    return PROTO_OK;
 }

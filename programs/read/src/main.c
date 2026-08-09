@@ -93,6 +93,7 @@ int pmain(char argv[16][64], int argc) {
                 printf("%3d ", buf[(file_meta->size / ROW_WIDTH) * ROW_WIDTH + i]);
             }
             printf("\n");
+            break;
         case READ_HEX_CHAR:
             int full_rows = file_meta->size / ROW_WIDTH;
             int rem = file_meta->size % ROW_WIDTH;
@@ -127,6 +128,7 @@ int pmain(char argv[16][64], int argc) {
                 }
                 printf("\n");
             }
+            break;
         default:
             break;
     }

@@ -10,7 +10,9 @@ char *subs[] = {
     "proto.keyboard.keydown",
     "proto.mouse.move",
     "proto.mouse.down",
-    "proto.mouse.up"
+    "proto.mouse.up",
+    "wm.window.create",
+    "wm.window.refresh"
 };
 
 int wm_init() {
@@ -30,7 +32,12 @@ int wm_init() {
     g_cursor_bmp = bmp_load(CURSOR_PATH);
     if (g_cursor_bmp == NULL) {
         printf("[WARN] Failed to load cursor bitmap\n");
-    }    
+    }
+
+    //g_wallpaper = bmp_load("/System/Assets/Images/xp.bmp");
+    //if (g_wallpaper == NULL) {
+    //    printf("[WARN] Failed to load wallpaper\n");
+    //}
 
     for (int i = 0; i < (sizeof(subs) / sizeof(subs[0])); i++) {
         if (subscribe(subs[i]) != PROTO_OK) {
@@ -40,9 +47,7 @@ int wm_init() {
         }   
     }
 
-    g_small_font = font_load("/System/Assets/Fonts/npsmall8.fmp");
-
-    draw_rect(g_fb, 0, 0, g_fb->width, g_fb->height, BG_COLOR);
+    g_small_font = font_load("/System/Assets/Fonts/ter-u12n.fmp");
 
     init_cursor();
     

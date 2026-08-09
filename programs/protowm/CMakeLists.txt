@@ -5,6 +5,7 @@ add_executable(protowm
     src/cursor.c
     src/globals.c
     src/window.c
+    src/hooks.c
 )
 
 target_include_directories(protowm PRIVATE include)

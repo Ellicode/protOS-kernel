@@ -57,10 +57,13 @@ enum {
     SYS_READ_DIR,
 
     SYS_CREATE_PROCESS,
+    SYS_NB_CREATE_PROCESS,
     SYS_FETCH_FB,
     SYS_CHDIR,
     SYS_GETCWD,
     SYS_GETPID,
+    SYS_BRK,
+    SYS_SBRK,
 
     SYS_SEND,
     SYS_RECEIVE,
@@ -68,6 +71,8 @@ enum {
     SYS_CONSUME,
     SYS_SUBSCRIBE,
     SYS_UNSUBSCRIBE,
+    SYS_SHARE,
+    SYS_UNSHARE,
 
     SYS_SET_CURSOR,
     SYS_CLEAR,
@@ -131,13 +136,18 @@ void fprintf(uint64_t fd, const char *format, ...);
 void set_cursor(int row, int col);
 void clear();
 
+int brk(void *addr);
+int sbrk(size_t size);
+
 /*****************************************************************************
  * Process management
  *****************************************************************************/
 
 int create_process(const char *elf, char argv[16][64], int argc);
+int create_nonblocking_process(const char *elf, char argv[16][64], int argc);
 void exit();
 int getpid();
+int share(int pid, void *mem, size_t size);
 
 /*****************************************************************************
  * String operations

@@ -86,30 +86,120 @@ static int font_find_glyph_index(const font_t *fnt, uint32_t cp) {
     return -1;
 }
 
-void font_putc(fb_info_t *fb, font_t *fnt, char ch, int x, int y, uint32_t fg) {
-    uint32_t cp = (uint8_t)ch;   // avoid negative char values
-    int gi = font_find_glyph_index(fnt, cp);
-    if (gi < 0) return;          // or fallback to '?' / .notdef
+void draw_char_clip(
+    fb_info_t *fb,
+    font_t *fnt,
+    char ch,
+    int x,
+    int y,
+    uint32_t fg,
+    int cx,
+    int cy,
+    int cw,
+    int chh
+) {
+    if (!fb || !fb->address || !fnt || !fnt->data)
+        return;
 
-    char *bmp = fnt->data[gi];   // width*height bytes, each byte is 0 or 1
-    for (int row = 0; row < fnt->height; row++) {
-        for (int col = 0; col < fnt->width; col++) {
-            if (bmp[(size_t)row * (size_t)fnt->width + (size_t)col]) {
-                putpixel(fb, x + col, y + row, fg);
-            }
+    uint32_t cp = (uint8_t)ch;
+    int gi = font_find_glyph_index(fnt, cp);
+
+    if (gi < 0)
+        return;
+
+    int rx, ry, rw, rh;
+
+    if (!clip_rect(
+        fb,
+        x, y,
+        fnt->width,
+        fnt->height,
+        cx, cy, cw, chh,
+        &rx, &ry, &rw, &rh
+    )) {
+        return;
+    }
+
+    const char *bmp = fnt->data[gi];
+
+    int src_x = rx - x;
+    int src_y = ry - y;
+
+    uint32_t *fb_ptr = (uint32_t *)fb->address;
+    size_t pitch = fb->pitch / sizeof(uint32_t);
+
+    for (int row = 0; row < rh; row++) {
+        const char *src =
+            bmp + (size_t)(src_y + row) * fnt->width + src_x;
+
+        uint32_t *dst =
+            fb_ptr + (size_t)(ry + row) * pitch + rx;
+
+        for (int col = 0; col < rw; col++) {
+            if (src[col])
+                dst[col] = fg;
         }
     }
 }
 
-void font_print(fb_info_t *fb, font_t *fnt, char *str, int x, int y, uint32_t fg) {
+void draw_char(fb_info_t *fb, font_t *fnt, char ch, int x, int y, uint32_t fg) {
+    draw_char_clip(
+        fb, fnt, ch,
+        x, y,
+        fg,
+        0, 0,
+        fb->width, fb->height
+    );
+}
+
+
+void draw_text_clip(
+    fb_info_t *fb,
+    font_t *fnt,
+    char *str,
+    int x,
+    int y,
+    uint32_t fg,
+    int cx,
+    int cy,
+    int cw,
+    int chh
+) {
+    if (!fb || !fnt || !str)
+        return;
+
     int pen_x = x;
+
     for (size_t i = 0; str[i] != '\0'; i++) {
         if (str[i] == '\n') {
             pen_x = x;
             y += fnt->height + 1;
             continue;
         }
-        font_putc(fb, fnt, str[i], pen_x, y, fg);
+
+        draw_char_clip(
+            fb,
+            fnt,
+            str[i],
+            pen_x,
+            y,
+            fg,
+            cx,
+            cy,
+            cw,
+            chh
+        );
+
         pen_x += fnt->width + 1;
     }
+};
+
+void draw_text(fb_info_t *fb, font_t *fnt, char *str, int x, int y, uint32_t fg) {
+    draw_text_clip(
+        fb, fnt, str,
+        x, y,
+        fg,
+        0, 0,
+        fb->width, fb->height
+    );
 }

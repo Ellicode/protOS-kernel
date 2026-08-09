@@ -58,7 +58,7 @@ _after that i can finally work on stuff_
 
 ## Policy against AI-generated content
 
-AI-generated code is not accepted within the OS. The challenge of this project is to learn, not to ship as fast as possible, so please don't.
+The challenge of this project is to learn, not to ship as fast as possible, so please don't commit code that is 100% AI generated. AI should be used as a tool and not a way to replace us.
 
 ## Contributing
 

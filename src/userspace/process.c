@@ -50,7 +50,7 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
         pml4,
         USER_HEAP_BASE,
         USER_HEAP_MIN_SIZE,
-        F_USER | F_WRITE
+        F_USER | F_WRITE | F_NX
     );
     
     uint64_t entry = elf_load(buffer, pml4);
@@ -74,6 +74,8 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
     process->kernel_stack = k_alloc(KERNEL_STACK_SIZE);
     process->cr3 = pml4;
     process->msg_queue.waiters = k_alloc(sizeof(wait_queue_t));
+    process->heap_max = USER_HEAP_BASE + HEAP_MIN_SIZE;
+    process->max_smem_id = 0;
 
     if (pid != NULL) {
         *pid = process->pid;
@@ -118,3 +120,5 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
     }
     return PROTO_OK;
 }
+
+
