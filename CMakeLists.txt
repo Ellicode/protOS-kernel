@@ -149,6 +149,7 @@ target_compile_definitions(kernel PUBLIC
 target_compile_options(kernel PRIVATE
     $<$<COMPILE_LANGUAGE:C>:-mcmodel=kernel>
     $<$<COMPILE_LANGUAGE:C>:-m64>
+    $<$<COMPILE_LANGUAGE:C>:-march=x86-64>
     $<$<COMPILE_LANGUAGE:C>:-ffreestanding>
     $<$<COMPILE_LANGUAGE:C>:-fno-stack-protector>
     $<$<COMPILE_LANGUAGE:C>:-mno-red-zone>
@@ -156,6 +157,7 @@ target_compile_options(kernel PRIVATE
     $<$<COMPILE_LANGUAGE:C>:-Wall>
     $<$<COMPILE_LANGUAGE:C>:-Wextra>
     $<$<COMPILE_LANGUAGE:C>:-g>
+    $<$<COMPILE_LANGUAGE:C>:-O3>
 )
 
 target_include_directories(kernel PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")

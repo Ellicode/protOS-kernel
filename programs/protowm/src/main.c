@@ -7,6 +7,7 @@
 #include "init.h"
 #include "window.h"
 #include "hooks.h"
+#include "utils.h"
 
 window_t *hovering      = NULL;
 window_t *dragging_win  = NULL;
@@ -14,17 +15,6 @@ int is_mouse_down       = 0;
 int last_mouse_x        = 0;
 int last_mouse_y        = 0;
 int running             = 1;
-
-static int collide_point(int cx, int cy, int x, int y, int w, int h) {
-    return (cx >= x && cx < x + w && cy >= y && cy < y + h);
-}
-
-static int collide_rect(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2) {
-    return (x1 < x2 + w2 &&
-            x1 + w1 > x2 &&
-            y1 < y2 + h2 &&
-            y2 + h1 > y2);
-}
 
 void redraw_rect(int x, int y, int w, int h) {
     window_t *win = g_window_stack;
@@ -93,6 +83,8 @@ void handle_event(ev_meta_t *meta, void *data) {
         if (dragging_win) {
             invert_rect_o(g_fb, dragging_win->x, dragging_win->y, dragging_win->owidth, dragging_win->oheight);
             draw_window(dragging_win);
+            LL_UNLINK(dragging_win, g_window_stack);
+            LL_APPEND(dragging_win, g_window_stack);
             last_mouse_x = 0;
             last_mouse_y = 0;
         }

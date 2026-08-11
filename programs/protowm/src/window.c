@@ -16,7 +16,10 @@ void refresh_window_clipped(window_t *win, int cx, int cy, int cw, int ch) {
     } else {
         draw_img_clip(g_fb, (uint32_t *)win->fb->address, win->x+WIN_PADDING+1, win->y+TITLEBAR_HEIGHT+WIN_PADDING+TITLEBAR_BOTTOM_PADDING+1, win->width, win->height, cx, cy, cw, ch); 
     }
-    _draw_cursor_impl(g_prev_x, g_prev_y);
+
+    if (collide_point(g_prev_x, g_prev_y, win->x, win->y, win->width, win->height)) {
+        _draw_cursor_impl(g_prev_x, g_prev_y); // Redraw cursor if it's under the window!
+    }
 }
 
 void refresh_window(window_t *win) {

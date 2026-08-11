@@ -18,7 +18,7 @@ int pmain(char argv[16][64], int argc) {
         .name = "/System/Programs/testapp"
     };
     dispatch("wm.window.create", &config, sizeof(win_options_t));
-    font_t *fnt = font_load("System/Assets/Fonts/ter-u16v.fmp");
+    font_t *fnt = font_load("System/Assets/Fonts/ter-u12n.fmp");
     while (running) {
         int res = receive(meta, data);
         if (res != PROTO_OK) {

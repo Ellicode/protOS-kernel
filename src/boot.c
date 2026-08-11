@@ -18,6 +18,7 @@
 #include "pit.h"
 #include "gdt.h"
 #include "globals.h"
+#include "utils/sse.h"
 
 #include "boot.h"
 
@@ -31,6 +32,9 @@ int k_init(
     // Triple line break to avoid overlapping issues with the QEMU logs :3
     print("\n\n\n");
     k_info("Starting boot sequence...\n");
+
+    enable_sse();
+    enable_x87();
 
     g_lim_memmap = memmap;
     g_lim_hhdm = hhdm;
