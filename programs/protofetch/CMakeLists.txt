@@ -12,9 +12,10 @@ target_compile_definitions(protofetch PRIVATE
 target_link_libraries(protofetch PRIVATE proto)
 
 target_compile_options(protofetch PRIVATE
-    -m64
     -ffreestanding
     -fno-stack-protector
+    -march=x86-64
+    -O2
 )
 
 target_link_options(protofetch PRIVATE

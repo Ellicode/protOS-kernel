@@ -12,9 +12,10 @@ target_compile_definitions(testapp PRIVATE
 target_link_libraries(testapp PRIVATE proto)
 
 target_compile_options(testapp PRIVATE
-    -m64
     -ffreestanding
     -fno-stack-protector
+    -march=x86-64
+    -O1
 )
 
 target_link_options(testapp PRIVATE

@@ -157,7 +157,7 @@ target_compile_options(kernel PRIVATE
     $<$<COMPILE_LANGUAGE:C>:-Wall>
     $<$<COMPILE_LANGUAGE:C>:-Wextra>
     $<$<COMPILE_LANGUAGE:C>:-g>
-    $<$<COMPILE_LANGUAGE:C>:-O3>
+    $<$<COMPILE_LANGUAGE:C>:-O2>
 )
 
 target_include_directories(kernel PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")

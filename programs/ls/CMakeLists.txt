@@ -12,9 +12,10 @@ target_compile_definitions(ls PRIVATE
 target_link_libraries(ls PRIVATE proto)
 
 target_compile_options(ls PRIVATE
-    -m64
     -ffreestanding
     -fno-stack-protector
+    -march=x86-64
+    -O2
 )
 
 target_link_options(ls PRIVATE

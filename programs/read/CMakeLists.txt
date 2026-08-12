@@ -12,9 +12,10 @@ target_compile_definitions(read PRIVATE
 target_link_libraries(read PRIVATE proto)
 
 target_compile_options(read PRIVATE
-    -m64
     -ffreestanding
     -fno-stack-protector
+    -march=x86-64
+    -O2
 )
 
 target_link_options(read PRIVATE

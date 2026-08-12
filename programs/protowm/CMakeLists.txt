@@ -17,9 +17,10 @@ target_compile_definitions(protowm PRIVATE
 target_link_libraries(protowm PRIVATE proto)
 
 target_compile_options(protowm PRIVATE
-    -m64
     -ffreestanding
     -fno-stack-protector
+    -march=x86-64
+    -O2
 )
 
 target_link_options(protowm PRIVATE

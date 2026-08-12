@@ -19,13 +19,21 @@ void draw_rect_clip(
 
     uint32_t *fb_ptr = (uint32_t *)fb->address;
     size_t pitch = fb->pitch / sizeof(uint32_t);
+    uint64_t color64 = ((uint64_t)color << 32) | color;
+    int pairs = rw / 2;
+    int has_odd_tail = rw & 1;
 
     for (int row = 0; row < rh; row++) {
         uint32_t *dst =
             fb_ptr + (size_t)(ry + row) * pitch + rx;
 
-        for (int col = 0; col < rw; col++) {
-            dst[col] = color;
+        uint64_t *dst64 = (uint64_t *)dst;
+        for (int col = 0; col < pairs; col++) {
+            dst64[col] = color64;
+        }
+
+        if (has_odd_tail) {
+            dst[rw - 1] = color;
         }
     }
 }

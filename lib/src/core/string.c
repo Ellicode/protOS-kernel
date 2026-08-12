@@ -32,21 +32,69 @@ int memcmp(const void* aptr, const void* bptr, size_t size) {
 }
 
 void* memset(void* bufptr, int value, size_t size) {
-	unsigned char* buf = (unsigned char*) bufptr;
-	for (size_t i = 0; i < size; i++) {
-		buf[i] = (unsigned char) value;
+    unsigned char *buf = (unsigned char *)bufptr;
+    unsigned char byte = (unsigned char)value;
+
+    if (size == 0) {
+        return bufptr;
     }
-	return bufptr;
+
+    while ((((uintptr_t)buf) & (sizeof(uint64_t) - 1)) != 0 && size > 0) {
+        *buf++ = byte;
+        size--;
+    }
+
+    uint64_t pattern = (uint64_t)byte;
+    pattern |= pattern << 8;
+    pattern |= pattern << 16;
+    pattern |= pattern << 32;
+
+    uint64_t *buf64 = (uint64_t *)buf;
+    while (size >= sizeof(uint64_t)) {
+        *buf64++ = pattern;
+        size -= sizeof(uint64_t);
+    }
+
+    buf = (unsigned char *)buf64;
+    while (size > 0) {
+        *buf++ = byte;
+        size--;
+    }
+
+    return bufptr;
 }
 
 
 void* memcpy(void* restrict dstptr, const void* restrict srcptr, size_t size) {
-	unsigned char* dst = (unsigned char*) dstptr;
-	const unsigned char* src = (const unsigned char*) srcptr;
-	for (size_t i = 0; i < size; i++) {
-		dst[i] = src[i];
+    unsigned char *dst = (unsigned char *)dstptr;
+    const unsigned char *src = (const unsigned char *)srcptr;
+
+    if (size == 0 || dst == src) {
+        return dstptr;
     }
-	return dstptr;
+
+    while ((((uintptr_t)dst) & (sizeof(uint64_t) - 1)) != 0 && size > 0) {
+        *dst++ = *src++;
+        size--;
+    }
+
+    if ((((uintptr_t)src) & (sizeof(uint64_t) - 1)) == 0) {
+        uint64_t *dst64 = (uint64_t *)dst;
+        const uint64_t *src64 = (const uint64_t *)src;
+        while (size >= sizeof(uint64_t)) {
+            *dst64++ = *src64++;
+            size -= sizeof(uint64_t);
+        }
+        dst = (unsigned char *)dst64;
+        src = (const unsigned char *)src64;
+    }
+
+    while (size > 0) {
+        *dst++ = *src++;
+        size--;
+    }
+
+    return dstptr;
 }
 
 size_t strlen(const char* str) {

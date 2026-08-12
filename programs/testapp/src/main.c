@@ -8,7 +8,7 @@ int running = 1;
 
 int pmain(char argv[16][64], int argc) {
     ev_meta_t *meta = malloc(sizeof(ev_meta_t));
-    char *data = malloc(256);
+    char *data = malloc(512);
 
     win_options_t config = (win_options_t) {
         .x = 100,

@@ -6,10 +6,11 @@
 #include "../limine/limine.h"
 #include "graphics/graphics.h"
 
+#include "fonts/ter-u12n.h"
 // #include "fonts/ter-u14b.h"
-#include "fonts/niji-pixel-bold-16.h"
+// #include "fonts/niji-pixel-bold-16.h"
 // #include "fonts/niji-pixel-regular-16.h"
-
+//
 // PASTEL ============================
 // enum ProtoColors {
 //     PROTO_RED     = 0xFF6467,
@@ -25,7 +26,6 @@
 // };
 
 // VIBRANT ============================
-/*
 enum ProtoColors {
     PROTO_RED     = 0xef4444,
     PROTO_GREEN   = 0x22c55e,
@@ -38,9 +38,9 @@ enum ProtoColors {
     PROTO_BLACK   = 0x000000,
     PROTO_BG      = 0x000000,
 };
-*/
 
 // MOCHA ============================
+/*
 enum ProtoColors {
     PROTO_RED     = 0xf38ba8,
     PROTO_GREEN   = 0xa6e3a1,
@@ -53,6 +53,7 @@ enum ProtoColors {
     PROTO_BLACK   = 0x1e1e2e,
     PROTO_BG      = 0x1e1e2e,
 };
+*/
 
 // OLDSKOOL ============================
 // enum ProtoColors {

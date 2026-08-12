@@ -15,9 +15,10 @@ target_compile_definitions(corgi PRIVATE
 target_link_libraries(corgi PRIVATE proto)
 
 target_compile_options(corgi PRIVATE
-    -m64
     -ffreestanding
     -fno-stack-protector
+    -march=x86-64
+    -O2
 )
 
 target_link_options(corgi PRIVATE

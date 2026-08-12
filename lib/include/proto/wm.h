@@ -16,11 +16,11 @@ typedef struct win_options_t {
     int w;  int h;
     char    name[255];
     int     frameless;
-} win_options_t;
+} __attribute__((packed)) win_options_t;
 
 typedef struct win_response_t {
     int id;
     fb_info_t *fb_addr;
-} win_response_t;
+} __attribute__((packed)) win_response_t;
 
 #endif
