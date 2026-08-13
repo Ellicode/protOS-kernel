@@ -27,19 +27,35 @@ void draw_img_clip(
     int src_x = rx - x;
     int src_y = ry - y;
 
-    uint32_t *fb_ptr = (uint32_t *)fb->address;
-
     size_t fb_pitch = fb->pitch / sizeof(uint32_t);
-    size_t copy_bytes = (size_t)rw * sizeof(uint32_t);
+
+    uint32_t *dst =
+        (uint32_t *)fb->address + (size_t)ry * fb_pitch + rx;
+    const uint32_t *src =
+        img + (size_t)src_y * w + src_x;
+
+    size_t pairs = (size_t)rw >> 1;
+    int has_odd_tail = rw & 1;
 
     for (int row = 0; row < rh; row++) {
-        uint32_t *dst =
-            fb_ptr + (size_t)(ry + row) * fb_pitch + rx;
+        uint64_t *dst64 = (uint64_t *)dst;
+        const uint64_t *src64 = (const uint64_t *)src;
 
-        const uint32_t *src =
-            img + (size_t)(src_y + row) * w + src_x;
+        size_t col = 0;
+        for (; col + 1 < pairs; col += 2) {
+            dst64[col]     = src64[col];
+            dst64[col + 1] = src64[col + 1];
+        }
+        for (; col < pairs; col++) {
+            dst64[col] = src64[col];
+        }
 
-        memcpy(dst, src, copy_bytes);
+        if (has_odd_tail) {
+            dst[rw - 1] = src[rw - 1];
+        }
+
+        dst += fb_pitch;
+        src += w;
     }
 }
 

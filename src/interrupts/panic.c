@@ -3,7 +3,7 @@
 #include "interrupts/interrupts.h"
 #include "graphics/console.h"
 #include "utils/utils.h"
-
+#include "debug/backtrace.h"
 char* panic_messages[ISR_EXCEPTION_COUNT] = {
     [ISR_EXC_DIVISION_ERROR]        = "Division Error",
     [ISR_EXC_INVALID_OPCODE]        = "Invalid Opcode",
@@ -33,11 +33,13 @@ void _panic_stub(char *ename, int is_frame, idt_frame_t *frame) {
     fill_screen(0x0000FF);
     set_color(PROTO_WHITE, 0x0000FF);
 
-    print_f("\n\n                                                             '^'");
+    print_f("\n\n");
+    for (int i = 0; i < (g_term_cols-3)/2; i++) { print_f(" "); }
+    print_f("'^'");
 
-    print_f("\n\n    The system has been halted by a unexpected error. More debug informations can be found below.\n\n");
+    print_f("\n\n    The system has been halted by a unexpected error. More debug information can be found below.\n\n");
    
-    print_f("    Error Name:    %s\n", p_msg == 0x0 ? "???" : p_msg);
+    print_f("    Error Name:    %s\n", p_msg == NULL ? "???" : p_msg);
     
     if (is_frame == 1) {
         print_f("    Error Code:    %x\n", frame->error_code);
@@ -46,11 +48,15 @@ void _panic_stub(char *ename, int is_frame, idt_frame_t *frame) {
         print_f("    CR2:           %x\n", cr2);
         print_f("    CS:            %x\n", frame->cs);
         print_f("    RSP:           %x\n", frame->rsp);
-        print_f("    RF:            %x\n", frame->rflags);
+        print_f("    RF:            %x\n\n", frame->rflags);
+
+        print_f("    Backtrace:\n\n");
+
+        unwind_stack(__builtin_frame_address(0));
     }
     print_f("\n    Feel free to file a bug report with the bug tracker link below:\n");
     print_f("    https://github.com/Ellicode/protOS-kernel/issues\n\n");
-    print_f("    ProtOS will now stop. Please reboot your computer manually by holding the power button. We apologize for the inconvenience.\n");
+    print_f("    ProtOS will now stop. Please reboot your computer manually by holding the power button.");
 
     draw_glyph(GLYPH_KPANIC, g_framebuffer->width-70, g_framebuffer->height-70);
 

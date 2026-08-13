@@ -2,6 +2,7 @@
 #include "memory/freelist_pmm.h"
 #include "memory/pat.h"
 #include "graphics/console.h"
+#include "debug/errors.h"
 #include "debug/logger.h"
 #include "globals.h"
 #include "string.h"
@@ -160,6 +161,68 @@ void *vmm_map_phys_range(uint64_t cr3, uint64_t virt_start, uint64_t phys_start,
     ticketlock_unlock(&vmm_lock, lock1r);
 
     return (void *)virt_start;
+}
+
+static uint64_t *_walk_to_pt(pt_entry_t *pml4, uint64_t vpage, int create, uint64_t flags) {
+    VirtualAddress v = { .value = vpage << 12 };
+
+    if (create) {
+        uint64_t *pdpt = _get_or_create(&pml4[v.pml4],         flags);
+        uint64_t *pd   = _get_or_create(&pdpt[v.page_dir_ptr], flags);
+        return _get_or_create(&pd[v.page_dir],                 flags);
+    }
+
+    PageTableEntry pml4e = { .value = pml4[v.pml4] };
+    if (!pml4e.present) { return NULL; }
+    uint64_t *pdpt = (uint64_t *)((pml4e.addr << 12) + g_lim_hhdm->offset);
+
+    PageTableEntry pdpte = { .value = pdpt[v.page_dir_ptr] };
+    if (!pdpte.present) { return NULL; }
+    uint64_t *pd = (uint64_t *)((pdpte.addr << 12) + g_lim_hhdm->offset);
+
+    PageTableEntry pde = { .value = pd[v.page_dir] };
+    if (!pde.present) { return NULL; }
+    return (uint64_t *)((pde.addr << 12) + g_lim_hhdm->offset);
+}
+
+int vmm_share_range(uint64_t dest_cr3, uint64_t src_cr3, uint64_t virt_start, size_t size, uint64_t flags) {
+    pt_entry_t *dest_pml4 = (pt_entry_t *)(dest_cr3 + g_lim_hhdm->offset);
+    pt_entry_t *src_pml4  = (pt_entry_t *)(src_cr3  + g_lim_hhdm->offset);
+
+    size_t num_pages = PAGE_ROUND(size) / PAGE_SIZE;
+    uint64_t vpage   = virt_start >> 12;
+
+    int lock1r = ticketlock_lock(&vmm_lock);
+ 
+    uint64_t *src_pt = NULL, *dst_pt = NULL;
+    uint64_t src_tbl = UINT64_MAX, dst_tbl = UINT64_MAX;
+
+    int res = PROTO_OK;
+
+    for (size_t i = 0; i < num_pages; i++, vpage++) {
+        uint64_t tbl = vpage >> 9;
+        uint64_t idx = vpage & 511;
+
+        if (tbl != src_tbl) {
+            src_pt  = _walk_to_pt(src_pml4, vpage, 0, 0);
+            src_tbl = tbl;
+        }
+        if (src_pt == NULL) { res = -PROTO_ERR_INVALID_ARGUMENT; break; }
+
+        PageTableEntry src_e = { .value = src_pt[idx] };
+        if (!src_e.present) { res = -PROTO_ERR_INVALID_ARGUMENT; break; }
+
+        if (tbl != dst_tbl) {
+            dst_pt  = _walk_to_pt(dest_pml4, vpage, 1, flags);
+            dst_tbl = tbl;
+        }
+
+        dst_pt[idx] = ((uint64_t)src_e.addr << 12) | flags | F_PRESENT;
+    }
+
+    ticketlock_unlock(&vmm_lock, lock1r);
+
+    return res;
 }
 
 void vmm_flush_tlb() {

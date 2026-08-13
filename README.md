@@ -38,7 +38,6 @@ ProtOS is yet another hobby kernel made by an incompetent web developer wanting 
 
 **MEMORY MANAGEMENT**
 
-- [x] Bitmap PMM <span style="float:right">([`pmm.c`](src/memory/pmm.c))</span>
 - [x] Freelist PMM <span style="float:right">([`freelist_pmm.c`](src/memory/freelist_pmm.c))</span>
 - [x] Page tables setup & VMM <span style="float:right">([`vmm.c`](src/memory/vmm.c))</span>
 - [x] Linked-List kernel heap <span style="float:right">([`heap.c`](src/memory/heap.c))</span>
@@ -53,6 +52,14 @@ ProtOS is yet another hobby kernel made by an incompetent web developer wanting 
 - [x] Scheduler <span style="float:right">([`heap.c`](src/userspace/scheduler.c))</span>
 - [x] ELF Loading
 - [x] Syscalls
+
+**UI AND UTILITES**
+
+- [x] Simple shell (corgi)
+- [ ] Terminal text editor (edit)
+- [x] File list (ls)
+- [x] Fastfetch clone
+- [x] Simple window manager (protowm)
 
 _after that i can finally work on stuff_
 

@@ -19,6 +19,8 @@ typedef uint32_t msr_id_t;
 
 void outb(port_t port, uint8_t value);
 uint8_t inb(port_t port);
+void outl(port_t port, uint32_t value); 
+uint32_t inl(port_t port);
 void io_wait();
 
 void hcf();

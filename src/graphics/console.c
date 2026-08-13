@@ -148,6 +148,13 @@ void scroll_terminal() {
             fb_ptr + FONT_HEIGHT * fb_pitch,
             sizeof(uint32_t) * fb_pitch * scroll_rows);
 
+    // The pixel scroll also shifts the inverted cursor block up one row,
+    // leaving a stale cursor block behind. Re-render that cell from the
+    // (already shifted) grid so it is drawn with normal colors.
+    if (g_cursor_row > 0) {
+        render_char(g_cursor_row - 1, g_cursor_col);
+    }
+
     // Only re-render the newly cleared last row
     for (int col = 0; col < g_term_cols; col++) {
         render_char(last_row, col);

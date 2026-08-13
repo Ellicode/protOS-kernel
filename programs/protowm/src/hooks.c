@@ -29,4 +29,3 @@ void handle_create_window(win_options_t *config, ev_meta_t *meta) {
     
     send(meta->sender, "wm.window.created", &res, sizeof(res));
 }
-

@@ -22,6 +22,7 @@
 #include "userspace/scheduler.h"
 #include "userspace/userspace.h"
 #include "userspace/process.h"
+#include "pci.h"
 
 // MARK: Limine requests
 
@@ -52,10 +53,12 @@ __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t 
 // MARK: Methods
 
 void k_main() {
+    pci_scan_devices();
+
     // Clear the buffer and homes the cursor to the origin [0, 0]
-    term_clear_buffer();
-    fill_screen(PROTO_BG);
-    set_cursor(0, 0);
+    // term_clear_buffer();
+    // fill_screen(PROTO_BG);
+    // set_cursor(0, 0);
 
     // TODO: Add a proper init system instead of loading the shell executable
     create_process("/System/Programs/corgi", 1, NULL, NULL, 0);

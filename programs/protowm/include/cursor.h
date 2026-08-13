@@ -1,8 +1,8 @@
 #ifndef CURSOR_H
 #define CURSOR_H
 
-#define CURSOR_WIDTH    32
-#define CURSOR_HEIGHT   32
+#define CURSOR_WIDTH    16
+#define CURSOR_HEIGHT   16
 
 extern int g_prev_x;
 extern int g_prev_y;

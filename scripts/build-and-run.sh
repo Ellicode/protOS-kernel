@@ -135,10 +135,9 @@ case $1 in
             -drive if=pflash,format=raw,readonly=on,file=$LOCAL_OVMF_CODE_PATH \
             -drive if=ide,format=raw,file=fat:rw:ignore-scripts/esp \
             -serial stdio \
-            -vga cirrus \
-            -display sdl \
             $DISPLAY \
             $EXTRA_QEMU_ARGS \
+            # -vga cirrus \
             # -device virtio-vga-gl \
             # -no-reboot \
             # -no-shutdown \

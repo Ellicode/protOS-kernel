@@ -47,6 +47,7 @@ typedef struct process_t {
     ipc_queue_t         msg_queue;
     shared_mem_t        *shared_mem;
     int                 max_smem_id;
+    uint64_t            instances;
 
     struct process_t    *next;
     struct process_t    *prev;

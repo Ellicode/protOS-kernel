@@ -2,6 +2,7 @@
 
 #include "globals.h"
 #include "debug/logger.h"
+#include "graphics/console.h"
 #include "memory/heap.h"
 #include "glyphs/kpanic.h"
 #include "string.h"
@@ -14,6 +15,10 @@ void graphics_init(struct limine_framebuffer *framebuffer)
 {
     g_framebuffer = framebuffer;
     fill_screen(PROTO_BG);
+    k_debug("Limine framebuffer info:");
+    #if PROTO_DEBUG 
+        print_f("width=%d, height=%d, bpp=%d\n", framebuffer->width, framebuffer->height, framebuffer->bpp);
+    #endif
 }
 
 void putpixel(uint32_t x, uint32_t y, color_t color)

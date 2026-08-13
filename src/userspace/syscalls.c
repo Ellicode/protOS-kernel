@@ -196,6 +196,7 @@ int sys_close(uint64_t fd) {
     }
 
     file_descriptor_t *fd_pointer = proc->fd_table[fd];
+    proc->fd_table[fd] = NULL;
 
     if (fd_pointer == NULL) {
         k_assert(PROTO_ERR_INVALID_FD);
@@ -419,27 +420,21 @@ int sys_share(int pid, void *mem, size_t size) {
         return -PROTO_ERR_OUT_OF_MEMORY;
     }
 
-    // Share the source process's *physical* pages with the destination.
-    // Walk page by page since the physical frames may not be contiguous.
     uintptr_t virt_start = ALIGN_DOWN((uintptr_t)mem, PAGE_SIZE);
     size_t offset = (uintptr_t)mem - virt_start;
-    size_t num_pages = PAGE_ROUND(offset + size) / PAGE_SIZE;
 
-    for (size_t i = 0; i < num_pages; i++) {
-        uint64_t virt = virt_start + (i * PAGE_SIZE);
-        uint64_t phys = vmm_virt_to_phys(process->cr3, virt);
+    int res = vmm_share_range(
+        dest_process->cr3,
+        process->cr3,
+        virt_start,
+        offset + size,
+        F_WRITE | F_USER
+    );
 
-        if (phys == 0) {
-            k_free(memobj);
-            k_assert(PROTO_ERR_INVALID_ARGUMENT);
-            return -PROTO_ERR_INVALID_ARGUMENT;
-        }
-
-        if (vmm_map_phys_range(dest_process->cr3, virt, phys, PAGE_SIZE, F_WRITE | F_USER) == NULL) {
-            k_free(memobj);
-            k_assert(PROTO_ERR_OUT_OF_MEMORY);
-            return -PROTO_ERR_OUT_OF_MEMORY;
-        }
+    if (res != PROTO_OK) {
+        k_free(memobj);
+        k_assert(-res);
+        return res;
     }
 
     int id = process->max_smem_id++;

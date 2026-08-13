@@ -71,7 +71,7 @@ void destroy_thread(thread_t *t) {
     LL_UNLINK(t, g_threads);
     k_free(t);
 
-    if (proc) {
+   if (proc && __atomic_sub_fetch(&proc->instances, 1, __ATOMIC_ACQUIRE) == 0) { 
         LL_UNLINK(proc, g_active_processes);
         destroy_addr_space(proc->cr3);   // otherwise there would be a huge 5mb memory leak
         k_free(proc->kernel_stack);
@@ -94,7 +94,7 @@ void scheduler_tick(idt_frame_t* ctx) {
         thread_t *temp = next;
         next = next->next;
 
-        if (temp->state == THREAD_STOPPED) {
+        if (temp->state == THREAD_STOPPED && temp != g_current_thread) { 
             destroy_thread(temp);
         }
 
@@ -178,6 +178,7 @@ thread_t* create_user_thread(process_t *process, uint64_t entry_point) {
     thread->context.rsp     = (stack + USER_STACK_SIZE) & ~0xFULL;
     thread->context.rflags  = 0x202;
     thread->process         = process;
+    __atomic_add_fetch(&process->instances, 1, __ATOMIC_RELEASE);
     thread->state           = THREAD_RUNNING;
 
     LL_APPEND(thread, g_threads);

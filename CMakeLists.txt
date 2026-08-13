@@ -12,7 +12,6 @@ add_subdirectory(programs)
 
 set(KERNEL_SOURCES
     src/main.c
-    include/main.h
 
     src/string.c
     include/string.h
@@ -35,6 +34,9 @@ set(KERNEL_SOURCES
     include/utils/linked_lists.h
     include/utils/ticket_lock.h
 
+    src/pci.c
+    include/pci.h
+
     # DEBUG ================================================================
 
     src/debug/errors.c
@@ -44,6 +46,9 @@ set(KERNEL_SOURCES
 
     src/debug/serial.c
     include/debug/serial.h
+
+    src/debug/backtrace.c
+    include/debug/backtrace.h
 
     # GRAPHICS =============================================================
 

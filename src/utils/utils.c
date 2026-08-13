@@ -36,6 +36,31 @@ uint8_t inb(port_t port) {
 }
 
 /**
+ * Send a 32 bit integer of data to a specific hardware I/O port
+ * 
+ * @param port  The port to output data to
+ * @param value The value to output
+ */
+void outl(port_t port, uint32_t value) {
+    __asm__ volatile("outl %0, %w1" : : "a"(value), "Nd"(port));
+}
+
+/**
+ * Reads a 32 bit integer from a specific hardware I/O port
+ * 
+ * @param port  The port to read data from
+ * 
+ * @return      8 bit value from the port
+ */
+uint32_t inl(port_t port) {
+    uint32_t ret;
+    __asm__ volatile ("inl %w1, %0"
+                   : "=a"(ret)
+                   : "Nd"(port));
+    return ret;
+}
+
+/**
  * Small delay to wait for X operation to complete
  */
 void io_wait() {

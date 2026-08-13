@@ -124,9 +124,9 @@ int k_init(
 
     k_info("Welcome to ");
     set_color(PROTO_BG, PROTO_BLUE);
-    print_f("ProtOS ");
+    print_f("ProtOS");
     set_color(PROTO_WHITE, PROTO_BG);
-    print_f(":3\n");
+    print_f(" :3\n");
 
     return PROTO_OK;
 }

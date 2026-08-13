@@ -24,7 +24,6 @@ void redraw_rect(int x, int y, int w, int h) {
             continue;
         }
         if (collide_rect(x, y, w, h, win->x, win->y, win->owidth, win->oheight)) {
-            // printf("redrawing window \"%s\"\n", win->name);
             draw_window_clipped(win, x, y, w, h);
         }
         win = win->next;
