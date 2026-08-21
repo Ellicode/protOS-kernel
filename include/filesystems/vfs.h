@@ -99,6 +99,7 @@ struct file_descriptor_t {
     uint64_t            curr_offset;
     fd_flags_t          flags;
     void                *extra_data;
+    int                 refcount;
 };
 
 struct dentry_t {

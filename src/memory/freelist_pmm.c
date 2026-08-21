@@ -112,10 +112,10 @@ void* fpmm_allocate_page() {
     freelist_pmm_node_t* node = freelist_pmm_head;
     freelist_pmm_head = node->next;
     uint64_t phys = (uint64_t)((uintptr_t)node - g_lim_hhdm->offset);
-
+    memset(node, 0, PAGE_SIZE);
+    
     ticketlock_unlock(&freelist_pmm_lock, lock1r);
 
-    memset(node, 0, PAGE_SIZE);
     return (void *)phys;
 }
 

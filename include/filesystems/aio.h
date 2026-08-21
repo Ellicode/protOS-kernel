@@ -19,5 +19,6 @@ enum {
 
 int aio_enqueue(file_descriptor_t *fd, int mode);
 int aio_notify(file_descriptor_t *fd, int mode);
+void aio_remove(int pid, file_descriptor_t *fd);
 
 #endif // ASYNC_IO

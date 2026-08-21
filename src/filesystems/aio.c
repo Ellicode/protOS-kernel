@@ -46,3 +46,15 @@ int aio_notify(file_descriptor_t *fd, int mode) {
 
     return notified ? PROTO_OK : PROTO_ERR_UNKNOWN;
 }
+
+void aio_remove(int pid, file_descriptor_t *fd) {
+    aio_op_t *op = aio_op_queue;
+    while (op != NULL) {
+        aio_op_t *next = op->next;
+        if (op->pid == pid && op->fd == fd) {
+            LL_UNLINK(op, aio_op_queue);
+            k_free(op);
+        }
+        op = next;
+    }
+}

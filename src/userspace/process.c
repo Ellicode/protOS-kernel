@@ -90,6 +90,11 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
     } else {
         if (g_current_thread->process != NULL) {
             memcpy((void *)process->fd_table, (void *)g_current_thread->process->fd_table, sizeof(g_current_thread->process->fd_table));
+            for (int i = 0; i < PROCESS_MAX_FDS; i++) {
+                if (process->fd_table[i] != NULL) {
+                    process->fd_table[i]->refcount++;
+                }
+            }
         } else {
             print_f("no current process :<");
         }
@@ -120,4 +125,15 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
     return PROTO_OK;
 }
 
+void process_close_fds(process_t *proc) {
+    if (proc == NULL) { return; }
 
+    for (int i = 0; i < PROCESS_MAX_FDS; i++) {
+        file_descriptor_t *fd = proc->fd_table[i];
+        if (fd != NULL) {
+            proc->fd_table[i] = NULL;
+            aio_remove(proc->pid, fd);
+            vfs_close(fd);
+        }
+    }
+}

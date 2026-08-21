@@ -13,11 +13,11 @@ font_t *fnt;
 int win_id = -1;
 char buf[255];
 char write_buf[255];
+char pty_path[12];
 
 int create_pty() {
     int fd = open("/dev/ptymx", "rwa");
     if (fd < PROTO_OK) { return -PROTO_ERR_UNKNOWN; }
-    char *pty_path = malloc(12);
     int res = read(fd, pty_path, 0);
     setiofd(pty_path);
     create_nonblocking_process("/system/bin/corgi", NULL, 0);
@@ -61,6 +61,8 @@ int pmain(char argv[16][64], int argc) {
             win_response_t *win_res = (win_response_t *)data;
             win_id = win_res->id;
             terminal_init(win_res->fb_addr, fnt);
+            print(pty_path);
+            print_char('\n');
         } else if (strcmp(meta->name, "wm.keyboard.keydown") == 0) {
             keyboard_event_t *ev = (keyboard_event_t *)data;
             size_t len = strlen(write_buf);
@@ -89,7 +91,7 @@ int pmain(char argv[16][64], int argc) {
             }
             refresh_window(win_id);
         }
-        
+
         consume(meta);
     }
 

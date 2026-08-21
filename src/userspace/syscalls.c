@@ -2,6 +2,7 @@
 #include "debug/logger.h"
 #include "debug/errors.h"
 #include "filesystems/vfs.h"
+#include "filesystems/aio.h"
 #include "graphics/console.h"
 #include "memory/heap.h"
 #include "globals.h"
@@ -205,6 +206,8 @@ int sys_close(uint64_t fd) {
         k_assert(PROTO_ERR_INVALID_FD);
         return PROTO_ERR_INVALID_FD; 
     }
+
+    aio_remove(proc->pid, fd_pointer);
 
     return vfs_close(fd_pointer);
 }

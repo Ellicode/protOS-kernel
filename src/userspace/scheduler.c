@@ -13,7 +13,6 @@
 #include "gdt.h"
 
 #include "userspace/scheduler.h"
-
 thread_t* g_threads         = NULL;
 thread_t* g_current_thread  = NULL;
 ticketlock_t threads_lock   = {0};
@@ -73,6 +72,7 @@ void destroy_thread(thread_t *t) {
 
    if (proc && __atomic_sub_fetch(&proc->instances, 1, __ATOMIC_ACQUIRE) == 0) { 
         LL_UNLINK(proc, g_active_processes);
+        process_close_fds(proc);
         destroy_addr_space(proc->cr3);   // otherwise there would be a huge 5mb memory leak
         k_free(proc->kernel_stack);
         k_free(proc->msg_queue.waiters);

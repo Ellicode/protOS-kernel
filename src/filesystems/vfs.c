@@ -91,6 +91,7 @@ file_descriptor_t *vfs_open(inode_t *cwd, char *path, uint8_t flags) {
     fd->flags = flags;
     fd->inode = inode;
     fd->curr_offset = 0;
+    fd->refcount = 1;
 
     if (inode->parent_sb->ops->open != NULL) {
         int result = inode->parent_sb->ops->open(fd);
@@ -209,6 +210,15 @@ int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer) {
 }
 
 int vfs_close(file_descriptor_t *fd) {
+    if (fd == NULL) {
+        return PROTO_OK;
+    }
+
+    fd->refcount--;
+    if (fd->refcount > 0) {
+        return PROTO_OK;
+    }
+
     k_free(fd);
     return PROTO_OK;
 }

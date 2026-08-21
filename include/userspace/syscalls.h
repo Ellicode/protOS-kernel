@@ -1,4 +1,5 @@
 #include "interrupts/interrupts.h"
+#include "userspace/process.h"
 
 #ifndef SYSCALLS_H
 #define SYSCALLS_H

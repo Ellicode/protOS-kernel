@@ -4,7 +4,7 @@
 #include "tty.h"
 
 size_t tty_write(struct tty_data_t *tty, const char *buffer) {
-    print_f(buffer);
+    print(buffer);
     return strlen(buffer);
 }
 
