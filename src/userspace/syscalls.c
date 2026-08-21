@@ -60,10 +60,13 @@ int sys_open(char *path, char *flags) {
         switch (flag_str)
         {
             case 'r':
-                flags_int |= 1;
+                flags_int |= FD_READ;
                 break;
             case 'w':
-                flags_int |= 2;
+                flags_int |= FD_WRITE;
+                break;
+            case 'a':
+                flags_int |= FD_ASYNC;
                 break;
             default:
                 break;
@@ -467,6 +470,7 @@ void *syscall_handlers[] = {
 
     [SYS_SEND]              = sys_send,
     [SYS_RECEIVE]           = ipc_receive,
+    [SYS_NB_RECEIVE]        = ipc_receive_nb,
     [SYS_DISPATCH]          = ipc_dispatch,
     [SYS_CONSUME]           = ipc_consume,
     [SYS_SUBSCRIBE]         = ipc_subscribe,

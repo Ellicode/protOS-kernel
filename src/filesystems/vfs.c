@@ -5,6 +5,7 @@
 #include "string.h"
 #include "filesystems/tarfs.h"
 #include "filesystems/devfs.h"
+#include "filesystems/aio.h"
 
 #include "filesystems/vfs.h"
 
@@ -77,7 +78,7 @@ inode_t *vfs_lookup(inode_t *cwd, char *path) {
 file_descriptor_t *vfs_open(inode_t *cwd, char *path, uint8_t flags) {
     inode_t *inode = vfs_lookup(cwd, path);
     if (inode == NULL) {
-        // k_error("Cannot open: lookup failed\n");
+        k_error("Cannot open: lookup failed\n");
         return NULL;
     }
 
@@ -90,6 +91,14 @@ file_descriptor_t *vfs_open(inode_t *cwd, char *path, uint8_t flags) {
     fd->flags = flags;
     fd->inode = inode;
     fd->curr_offset = 0;
+
+    if (inode->parent_sb->ops->open != NULL) {
+        int result = inode->parent_sb->ops->open(fd);
+        if (result != PROTO_OK) {
+            k_free(fd);
+            return NULL;
+        }
+    }
 
     return fd;
 }
@@ -120,7 +129,7 @@ int vfs_read(file_descriptor_t *fd, size_t size, void *buffer) {
         fd->curr_offset = inode->size;
     }
 
-    int ret = inode->parent_sb->ops->read(inode, size, fd->curr_offset, buffer);
+    int ret = inode->parent_sb->ops->read(fd, size, buffer);
     if (ret > 0) { fd->curr_offset += ret; }
 
     return ret;
@@ -133,7 +142,7 @@ int vfs_read_dir(file_descriptor_t *fd, dentry_t *entries, int *num_entries) {
         return PROTO_ERR_INVALID_ARGUMENT;
     }
 
-    if (!inode->parent_sb->ops || !inode->parent_sb->ops->read) {
+    if (!inode->parent_sb->ops || !inode->parent_sb->ops->read_dir) {
         k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
         return PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
@@ -148,7 +157,7 @@ int vfs_read_dir(file_descriptor_t *fd, dentry_t *entries, int *num_entries) {
         return PROTO_ERR_FILE_UNAUTHORIZED_OP;
     }
 
-    return inode->parent_sb->ops->read_dir(inode, entries, num_entries);
+    return inode->parent_sb->ops->read_dir(fd, entries, num_entries);
 }
 
 int vfs_stat(file_descriptor_t *fd, dentry_t *buffer) {
@@ -163,7 +172,7 @@ int vfs_stat(file_descriptor_t *fd, dentry_t *buffer) {
         return PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
     
-    return inode->parent_sb->ops->stat(inode, buffer);
+    return inode->parent_sb->ops->stat(fd, buffer);
 }
 
 int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer) {
@@ -193,7 +202,7 @@ int vfs_write(file_descriptor_t *fd, size_t size, const void *buffer) {
         fd->curr_offset = inode->size;
     }
 
-    int ret = inode->parent_sb->ops->write(inode, size, fd->curr_offset, buffer);
+    int ret = inode->parent_sb->ops->write(fd, size, buffer);
     if (ret > 0) { fd->curr_offset += ret; }
 
     return ret;
@@ -222,5 +231,5 @@ int vfs_mount(superblock_t *sb, char *path) {
 void vfs_init() {
     rootfs = tarfs_init();
     superblock_t *devfs = devfs_init();
-    vfs_mount(devfs, "/Devices");
+    vfs_mount(devfs, "/dev");
 }

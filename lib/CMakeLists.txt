@@ -1,20 +1,24 @@
 add_library(proto STATIC
-    src/core/malloc.c
-    src/core/io.c
-    src/core/syscall.c
-    src/core/string.c
-    src/core/process.c
+    src/proto/core/malloc.c
+    src/proto/core/io.c
+    src/proto/core/syscall.c
+    src/proto/core/string.c
+    src/proto/core/process.c
 
-    src/graphics/graphics.c
-    src/graphics/bmp.c
-    src/graphics/color.c
-    src/graphics/putpixel.c
-    src/graphics/draw_text.c
-    src/graphics/draw_img.c
-    src/graphics/draw_rect.c
-    src/graphics/draw_box.c
+    src/proto/graphics/graphics.c
+    src/proto/graphics/bmp.c
+    src/proto/graphics/color.c
+    src/proto/graphics/putpixel.c
+    src/proto/graphics/draw_text.c
+    src/proto/graphics/draw_img.c
+    src/proto/graphics/draw_rect.c
+    src/proto/graphics/draw_box.c
 
-    src/events/events.c
+    src/proto/events/events.c
+    
+    # WM
+
+    src/wm/wm.c
 )
 
 target_include_directories(proto PUBLIC

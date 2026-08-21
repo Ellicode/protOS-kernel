@@ -38,21 +38,19 @@ struct inode_t
 struct vfs_ops_t
 {
     int (*read)(
-        inode_t *inode,
+        file_descriptor_t *fd,
         uint64_t size,
-        uint64_t offset,
         void *buffer
     );
 
     int (*write)(
-        inode_t *inode,
+        file_descriptor_t *fd,
         uint64_t size,
-        uint64_t offset,
         const void *buffer
     );
 
     int (*stat)(
-        inode_t *inode,
+        file_descriptor_t *fd,
         dentry_t *buffer
     );
 
@@ -75,25 +73,32 @@ struct vfs_ops_t
     );
 
     int (*read_dir)(
-        inode_t *dir,
+        file_descriptor_t *fd,
         dentry_t *entries,
         int *num_entries
+    );
+
+    int (*open)(
+        file_descriptor_t *fd
     );
 };
 
 typedef union {
     struct {
-        uint8_t read               :  1;
-        uint8_t write              :  1;
+        uint8_t read                : 1;
+        uint8_t write               : 1;
+        uint8_t async               : 1;
     } __attribute__((packed));
     uint8_t value;
 } fd_flags;
 typedef uint8_t fd_flags_t;
 
+
 struct file_descriptor_t {
     inode_t             *inode;
     uint64_t            curr_offset;
     fd_flags_t          flags;
+    void                *extra_data;
 };
 
 struct dentry_t {
@@ -109,8 +114,9 @@ struct superblock_t {
     inode_t             *root;
 };
 
-#define FD_READ  0x01
-#define FD_WRITE 0x02
+#define FD_READ  (1 << 0)
+#define FD_WRITE (1 << 1)
+#define FD_ASYNC (1 << 2)
 
 #define PROTO_EOF 0
 

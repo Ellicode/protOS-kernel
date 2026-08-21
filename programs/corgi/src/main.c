@@ -42,12 +42,12 @@ int pmain(char argv[16][64], int argc)
                 clear();
             } else {
                 char path[256];
-                snprintf(path, 256, "/System/Programs/%s", _argv[0]);
+                snprintf(path, 256, "/system/bin/%s", _argv[0]);
                 int pid;
                 int ret = create_process(path, _argv, _argc);
 
                 if (ret == PROTO_ERR_FILE_NOT_FOUND) {
-                    fprintf(STDERR, "[ERROR] Cannot find command \"%s\"\n", _argv[0]);
+                    fprintf(STDOUT, "[ERROR] Cannot find command \"%s\"\n", _argv[0]);
                 }
             }
         }

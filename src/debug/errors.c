@@ -22,6 +22,7 @@ int status_types[] = {
     [PROTO_ERR_ELF_UNSUPPORTED]         = PROTO_STATUS_ERROR,
     [PROTO_ERR_ELF_CORRUPTED]           = PROTO_STATUS_ERROR,
     [PROTO_ERR_ELF_CANNOT_LOAD]         = PROTO_STATUS_ERROR,
+    [PROTO_ERR_WOULD_BLOCK]             = PROTO_STATUS_ERROR,
 };
 
 char *status_messages[] = {
@@ -48,6 +49,7 @@ char *status_messages[] = {
     [PROTO_ERR_ELF_CANNOT_LOAD]         = "Cannot load ELF executable",
 
     [PROTO_ERR_PROCESS_NOT_FOUND]       = "Process not found",
+    [PROTO_ERR_WOULD_BLOCK]             = "Operation would block",
 };
 
 char *status_hints[] = {
@@ -74,4 +76,5 @@ char *status_hints[] = {
     [PROTO_ERR_ELF_CANNOT_LOAD]         = NULL,
 
     [PROTO_ERR_PROCESS_NOT_FOUND]       = NULL,
+    [PROTO_ERR_WOULD_BLOCK]             = "Try again later or use a blocking call instead!",
 };

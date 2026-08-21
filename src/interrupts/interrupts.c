@@ -39,27 +39,22 @@ void* isr_irq_handlers[ISR_IRQ_COUNT] = {
 
 // TODO: MOVE TO ANOTHER FILE
 void handle_kbd_event(char c) {
-    devfs_node_t *stdin = g_stdin->fs_data;
-    stdin_data_t *stdin_data = stdin->extra_data;
-
-    if (stdin_data == NULL) { return; } // 3:< i gotchu
-    size_t len = strlen(stdin_data->kbd_buf);
-    ipc_dispatch("proto.keyboard.keydown", &c, 1);
-
+    if (g_console == NULL) { print_f("oh no"); return; } // 3:< i gotchu
+    size_t len = strlen(g_console->buffer);
     if (c == '\n' || c == 0xD) {
-        if (stdin->waiters.head != NULL) {
-            queue_wake_all(&stdin->waiters);
+        if (g_console->read_waiters.head != NULL) {
+            queue_wake_all(&g_console->read_waiters);
             print_char('\n');
         }
     } else if (c == '\b' || c == 0x7F) {
-        if (len > 0 && stdin->waiters.head != NULL) {               
-            stdin_data->kbd_buf[len - 1] = '\0';         
+        if (len > 0 && g_console->read_waiters.head != NULL) {               
+            g_console->buffer[len - 1] = '\0';         
             print_char('\b');
         }
     } else if (c > 0) {
-        if (stdin->waiters.head != NULL) {
-            stdin_data->kbd_buf[len] = c;
-            stdin_data->kbd_buf[len + 1] = '\0';
+        if (g_console->read_waiters.head != NULL) {
+            g_console->buffer[len] = c;
+            g_console->buffer[len + 1] = '\0';
             print_char(c);
         }
     }
@@ -92,7 +87,7 @@ void isr_handler(idt_frame_t* frame) {
     } else if (vec_buffer == 0x80) {
         syscall_handler(frame);
     } else {
-        k_debug("BEEP! Interrupt received!");
+        k_debug("BEEP! Unknown Interrupt received!");
         #if (PROTO_DEBUG == 1)
             print_f(" %d, error=%x, rip=%x\n", vec_buffer, frame->error_code, frame->rip);
         #endif

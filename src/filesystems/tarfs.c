@@ -73,7 +73,9 @@ int tarfs_lookup(inode_t *dir, char *name, inode_t **result) {
     return PROTO_OK;
 }
 
-int tarfs_stat(inode_t *inode, dentry_t *buffer) {
+int tarfs_stat(file_descriptor_t *fd, dentry_t *buffer) {
+    inode_t *inode = fd->inode;
+
     if (inode == NULL) {
         k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return PROTO_ERR_INVALID_ARGUMENT;
@@ -90,7 +92,8 @@ int tarfs_stat(inode_t *inode, dentry_t *buffer) {
     return PROTO_OK;
 }
 
-int tarfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
+int tarfs_read(file_descriptor_t *fd, uint64_t size, void *buffer) {
+    inode_t *inode = fd->inode;
     if (inode == NULL) {
         k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return -PROTO_ERR_INVALID_ARGUMENT;
@@ -101,24 +104,24 @@ int tarfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
         k_assert(PROTO_ERR_UNKNOWN);
         return -PROTO_ERR_UNKNOWN;
     }
-    if (offset >= node->size) { return PROTO_EOF; }
-    
-    uint64_t remaining = node->size - offset;
+    if (fd->curr_offset >= node->size) { return PROTO_EOF; }
+
+    uint64_t remaining = node->size - fd->curr_offset;
     uint64_t to_read = (size < remaining) ? size : remaining;
 
-    void *data = (void *)(node->offset + offset);
+    void *data = (void *)(node->offset + fd->curr_offset);
     memcpy(buffer, data, to_read);
 
     return to_read;
 }
 
-int tarfs_read_dir(inode_t *dir, dentry_t *entries, int *num_entries) {
-    if (dir == NULL) {
+int tarfs_read_dir(file_descriptor_t *fd, dentry_t *entries, int *num_entries) {
+    if (fd->inode == NULL) {
         k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return PROTO_ERR_INVALID_ARGUMENT;
     }
 
-    ustar_node_t *node = (ustar_node_t *)dir->fs_data;
+    ustar_node_t *node = (ustar_node_t *)fd->inode->fs_data;
     if (node == NULL) {
         k_assert(PROTO_ERR_UNKNOWN);
         return PROTO_ERR_UNKNOWN;

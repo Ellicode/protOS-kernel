@@ -1,11 +1,11 @@
 #include <stdarg.h>
 #include <proto/core.h>
 
-int read(uint64_t fd, size_t size, void *buffer) {
+int read(uint64_t fd, void *buffer, size_t size) {
     return syscall(SYS_READ, fd, (uint64_t)size, (uint64_t)buffer);
 };
 
-int write(uint64_t fd, size_t size, const void *buffer) {
+int write(uint64_t fd, const void *buffer, size_t size) {
     return syscall(SYS_WRITE, fd, (uint64_t)size, (uint64_t)buffer);
 }
 
@@ -38,16 +38,17 @@ int panic(char *ename) {
 }
 
 int input(char *buffer) {
-    return read(0, 0, buffer);
+    size_t read_bytes = read(0, buffer, 1024);
+    buffer[read_bytes] = 0;
+    return read_bytes;
 }
-
 void printf(const char *format, ...) {
     va_list args;
     va_start(args, format);
     char buffer[1024];
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
-    write(STDOUT, 0, buffer);
+    write(STDOUT, buffer, strlen(buffer));
 }
 
 void fprintf(uint64_t fd, const char *format, ...) {
@@ -56,7 +57,7 @@ void fprintf(uint64_t fd, const char *format, ...) {
     char buffer[1024];
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
-    write(fd, 0, buffer);
+    write(fd, buffer, strlen(buffer));
 }
 
 void set_cursor(int row, int col) {
@@ -73,4 +74,14 @@ int brk(void *addr) {
 
 int sbrk(size_t size) {
     return syscall(SYS_SBRK, size, 0, 0);
+}
+
+int setiofd(char *path) {
+    close(STDIN);
+    close(STDOUT);
+    int stdin = open(path, "r");
+    if (stdin < PROTO_OK) { return PROTO_ERR_UNKNOWN; }
+    int stdout = open(path, "w");
+    if (stdout < PROTO_OK) { return PROTO_ERR_UNKNOWN; }
+    return PROTO_OK;
 }

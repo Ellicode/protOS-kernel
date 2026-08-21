@@ -161,14 +161,14 @@ void draw_char(fb_info_t *fb, font_t *fnt, char c, int x, int y, uint32_t fg);
 void draw_char_clip(
     fb_info_t *fb,
     font_t *fnt,
-    char ch,
+    char c,
     int x,
     int y,
     uint32_t fg,
     int cx,
     int cy,
     int cw,
-    int chh
+    int ch
 );
 
 void draw_text(fb_info_t *fb, font_t *fnt, char *str, int x, int y, uint32_t fg);

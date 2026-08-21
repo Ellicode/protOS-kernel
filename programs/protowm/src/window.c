@@ -22,7 +22,7 @@ void refresh_window_clipped(window_t *win, int cx, int cy, int cw, int ch) {
     }
 }
 
-void refresh_window(window_t *win) {
+void _refresh_window(window_t *win) {
     refresh_window_clipped(win, 0, 0, g_fb->width, g_fb->height);
 }
 
@@ -118,7 +118,7 @@ void draw_window(window_t *win) {
     draw_window_clipped(win, 0, 0, g_fb->width, g_fb->height);
 }
 
-window_t *create_window(int x, int y, int w, int h, char *name, int frameless) {
+window_t *_create_window(int x, int y, int w, int h, char *name, int frameless) {
     window_t *win = malloc(sizeof(window_t));
     if (!win) { return NULL; }
 

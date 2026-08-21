@@ -24,6 +24,7 @@ enum {
 
     SYS_SEND,
     SYS_RECEIVE,
+    SYS_NB_RECEIVE,
     SYS_DISPATCH,
     SYS_CONSUME,
     SYS_SUBSCRIBE,

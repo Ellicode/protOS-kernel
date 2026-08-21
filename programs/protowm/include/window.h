@@ -32,8 +32,8 @@ typedef struct window_t {
 extern window_t *g_window_stack;
 
 void draw_window(window_t *win);
-void refresh_window(window_t *win);
-window_t *create_window(int x, int y, int w, int h, char *name, int frameless);
+void _refresh_window(window_t *win);
+window_t *_create_window(int x, int y, int w, int h, char *name, int frameless);
 void draw_window_clipped(window_t *win, int cx, int cy, int cw, int ch); 
 window_t *get_win_from_id(int id);
 

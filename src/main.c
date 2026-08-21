@@ -43,6 +43,10 @@ __attribute__((used, section(".limine_requests"))) static volatile struct limine
     .id = LIMINE_EXECUTABLE_ADDRESS_REQUEST_ID,
     .revision = 0};
 
+__attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_file_request kernel_request = {
+    .id = LIMINE_EXECUTABLE_FILE_REQUEST_ID,
+    .revision = 0};
+
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_module_request module_request = {
     .id = LIMINE_MODULE_REQUEST_ID,
     .revision = 0};
@@ -55,13 +59,15 @@ __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t 
 void k_main() {
     pci_scan_devices();
 
+    // *(volatile unsigned char*)0 = 42;
+
     // Clear the buffer and homes the cursor to the origin [0, 0]
     // term_clear_buffer();
     // fill_screen(PROTO_BG);
     // set_cursor(0, 0);
 
     // TODO: Add a proper init system instead of loading the shell executable
-    create_process("/System/Programs/corgi", 1, NULL, NULL, 0);
+    create_process("/system/bin/corgi", 1, NULL, NULL, 0);
 
     // Enable interrupts
     enable_interrupts();
@@ -88,9 +94,10 @@ void k_early_main() {
     struct limine_hhdm_response *hhdm = hhdm_request.response;
     struct limine_executable_address_response *kaddr = address_request.response;
     struct limine_module_response *modules = module_request.response;
+    struct limine_executable_file_response *kfile = kernel_request.response;
 
     // Run init script
-    if (k_init(framebuffer, memmap, hhdm, kaddr, modules) == PROTO_OK) {
+    if (k_init(framebuffer, memmap, hhdm, modules, kaddr, kfile) == PROTO_OK) {
         k_main();
     } else {
         panic("Init script returned non-zero status code.");

@@ -3,14 +3,15 @@
 
 #include <stdbool.h>
 
-#include "../limine/limine.h"
 #include "graphics/graphics.h"
+#include "filesystems/devfs.h"
 
-#include "fonts/ter-u12n.h"
+// #include "fonts/ter-u12n.h"
 // #include "fonts/ter-u14b.h"
+#include "fonts/ter-u16n.h"
 // #include "fonts/niji-pixel-bold-16.h"
 // #include "fonts/niji-pixel-regular-16.h"
-//
+
 // PASTEL ============================
 /*
 enum ProtoColors {
@@ -104,5 +105,8 @@ void print_char(char c);
 void print(const char *str);
 void print_f(const char *format, ...);
 void set_color(color_t fg, color_t bg);
+
+size_t tty_write(struct tty_data_t *tty, const char *buffer);
+size_t tty_read(struct tty_data_t *tty, char *buffer);
 
 #endif // CONSOLE_H

@@ -3,7 +3,7 @@
 
 int pmain(char argv[16][64], int argc) {
     ev_meta_t *ev_meta = malloc(sizeof(ev_meta_t));
-    char *ev_data = malloc(1);
+    keyboard_event_t *ev_data = malloc(sizeof(keyboard_event_t));
 
     subscribe("proto.keyboard.keydown");
 
@@ -11,9 +11,10 @@ int pmain(char argv[16][64], int argc) {
     {
         int res = receive(ev_meta, ev_data);
         if (ev_data != NULL && res == PROTO_OK) {
-            char c = *ev_data;
-            if (c == 'q') { break; }
-            printf("%c", *ev_data);
+            if (ev_data->keycode == KBD_Q) { break; }
+            if (ev_data->character > 0) {
+                printf("%c", ev_data->character);
+            }
         }
         consume(ev_meta);
     }

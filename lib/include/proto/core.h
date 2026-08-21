@@ -40,6 +40,8 @@ enum status_code_t {
     PROTO_ERR_ELF_CANNOT_LOAD           = 34,
 
     PROTO_ERR_PROCESS_NOT_FOUND         = 41,
+
+    PROTO_ERR_WOULD_BLOCK               = 50,
 };
 
 /*****************************************************************************
@@ -67,6 +69,7 @@ enum {
 
     SYS_SEND,
     SYS_RECEIVE,
+    SYS_NB_RECEIVE,
     SYS_DISPATCH,
     SYS_CONSUME,
     SYS_SUBSCRIBE,
@@ -85,7 +88,6 @@ enum {
 enum {
     STDIN,
     STDOUT,
-    STDERR
 };
 
 typedef struct about_data_t {
@@ -106,8 +108,8 @@ uint64_t syscall(uint64_t num, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 typedef struct dentry_t dentry_t;
 
 enum {
-    INODE_FILE = 0,
-    INODE_FOLDER = 1,
+    INODE_FILE,
+    INODE_FOLDER,
 };
 typedef uint8_t inode_type_t;
 
@@ -119,8 +121,8 @@ struct dentry_t {
 };
 
 
-int read(uint64_t fd, size_t size, void *buffer);
-int write(uint64_t fd, size_t size, const void *buffer);
+int read(uint64_t fd, void *buffer, size_t size);
+int write(uint64_t fd, const void *buffer, size_t size);
 int open(const char *path, const char *flags);
 int close(uint64_t fd);
 int chdir(const char *path);
@@ -138,6 +140,7 @@ void clear();
 
 int brk(void *addr);
 int sbrk(size_t size);
+int setiofd(char *path);
 
 /*****************************************************************************
  * Process management

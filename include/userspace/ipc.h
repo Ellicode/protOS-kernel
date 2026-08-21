@@ -50,8 +50,9 @@ typedef struct ipc_syscall_payload {
     size_t          size;
 } ipc_syscall_payload;
 
-int ipc_send(uint64_t pid, char *message, void *data, size_t size);
+int ipc_send(int pid, char *message, void *data, size_t size);
 int ipc_receive(ipc_meta_t *meta, void *data);
+int ipc_receive_nb(ipc_meta_t *meta, void *data);
 int ipc_dispatch(char *message, void *data, size_t size);
 int ipc_consume(ipc_meta_t *meta);
 int ipc_subscribe(char *topic);

@@ -38,13 +38,13 @@ int pmain(char argv[16][64], int argc) {
     }
 
     if (cwd_fd < PROTO_OK) {
-        fprintf(STDERR, "[ERROR] No such directory.\n");
+        fprintf(STDOUT, "[ERROR] No such directory.\n");
         return 1;
     }
 
     int read_status = read_dir(cwd_fd, entries, &num_entries);
     if (read_status != PROTO_OK) {
-        fprintf(STDERR, "[ERROR] Cannot read directory (status %d)\n", read_status);
+        fprintf(STDOUT, "[ERROR] Cannot read directory (status %d)\n", read_status);
         return 1;
     }
 

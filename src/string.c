@@ -415,7 +415,7 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args) {
             }
 
             char *arg_str = NULL;
-            char static_buf[19]; // Fallback if conversion strings aren't thread-safe
+            // char static_buf[19]; // Fallback if conversion strings aren't thread-safe
 
             if (format[i] == 'd') {
                 int value = va_arg(args, int);

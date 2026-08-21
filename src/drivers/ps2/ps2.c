@@ -35,10 +35,12 @@ void ps2_init() {
     }
 
     ps2_write_cmd(0x20);
+    ps2_wait_read();
     unsigned char status = ps2_read_data();
 
     status |= (1 << 0);   // Enable Keyboard Interrupts
-    status |= (1 << 1);  // Enable Mouse Interrupts
+    status |= (1 << 1);   // Enable Mouse Interrupts
+    status &= ~(1 << 6); // no translation aaa
 
     ps2_write_cmd(0x60);
     ps2_write_data(status);

@@ -85,14 +85,16 @@ cd "$PROJECT_ROOT" || error_exit "${B_RED} ERR! ${A_RESET} Failed to change dire
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug $TOOLCHAIN_ARG
 cmake --build build
 
-cp build/programs/corgi/corgi initramfs/System/Programs/corgi
-cp build/programs/protofetch/protofetch initramfs/System/Programs/protofetch
-cp build/programs/ls/ls initramfs/System/Programs/ls
-cp build/programs/protowm/protowm initramfs/System/Programs/protowm
-cp build/programs/edit/edit initramfs/System/Programs/edit
-cp build/programs/panic/panic initramfs/System/Programs/panic
-cp build/programs/read/read initramfs/System/Programs/read
-cp build/programs/testapp/testapp initramfs/System/Programs/testapp
+cp build/programs/corgi/corgi initramfs/system/bin/corgi
+cp build/programs/protofetch/protofetch initramfs/system/bin/protofetch
+cp build/programs/ls/ls initramfs/system/bin/ls
+cp build/programs/protowm/protowm initramfs/system/bin/protowm
+cp build/programs/edit/edit initramfs/system/bin/edit
+cp build/programs/panic/panic initramfs/system/bin/panic
+cp build/programs/read/read initramfs/system/bin/read
+
+mkdir -p initramfs/system/apps/Terminal
+cp build/programs/terminal/terminal initramfs/system/apps/Terminal/terminal
 
 mkdir -p ignore-scripts
 
@@ -135,8 +137,8 @@ case $1 in
             -drive if=pflash,format=raw,readonly=on,file=$LOCAL_OVMF_CODE_PATH \
             -drive if=ide,format=raw,file=fat:rw:ignore-scripts/esp \
             -serial stdio \
-            $DISPLAY \
             $EXTRA_QEMU_ARGS \
+            $DISPLAY \
             # -vga cirrus \
             # -device virtio-vga-gl \
             # -no-reboot \

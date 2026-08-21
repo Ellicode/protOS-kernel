@@ -47,7 +47,7 @@ void handle_event(ev_meta_t *meta, void *data) {
 
     int res = receive(meta, data);
     if (res != PROTO_OK) {
-        fprintf(STDERR, "[ERROR] Receive failed with code %d", res);
+        fprintf(STDOUT, "[ERROR] Receive failed with code %d", res);
         return;
     }
 
@@ -90,21 +90,26 @@ void handle_event(ev_meta_t *meta, void *data) {
         is_mouse_down = 0;
         dragging_win = NULL;
     } else if (strcmp(meta->name, "proto.keyboard.keydown") == 0) {
-        char *c = data;
-        if (*c == 'w') {
-            window_t *test = create_window(200, 200, 100, 100, "test", 0);
-            draw_window(test);
-        } else if (*c == 'q') {
-            running = 0;
-        } else if (*c == 't') {
-            create_nonblocking_process("System/Programs/testapp", NULL, 0);
+        keyboard_event_t *ev = (keyboard_event_t *)data;
+        if (ev->keycode == KBD_Q && ev->modifiers & (1 << 1)) {
+            exit();
+        } else if (ev->keycode == KBD_T && ev->modifiers & (1 << 1)) {
+            create_nonblocking_process("/system/apps/Terminal/terminal", NULL, 0);
+        } else {
+            keyboard_event_t fwd_ev = { 0 };
+            memcpy(&fwd_ev, ev, sizeof(keyboard_event_t));
+            window_t *win = g_window_stack;
+            while (win->next != NULL) {
+                win = win->next;
+            }
+            send(win->pid, "wm.keyboard.keydown", &fwd_ev, meta->size);
         }
     } else if (strcmp(meta->name, "wm.window.create") == 0) {
         handle_create_window((win_options_t *)data, meta);
     } else if (strcmp(meta->name, "wm.window.refresh") == 0) {
         window_t *win = get_win_from_id(*(int *)data);
         if (win != NULL) {
-            refresh_window(win);
+            _refresh_window(win);
         }
     } 
 
@@ -117,10 +122,10 @@ int pmain(char argv[16][64], int argc) {
     ev_meta_t *meta = malloc(sizeof(ev_meta_t));
     char *data = malloc(512);
 
-    window_t *root = create_window(0, 0, g_fb->width, g_fb->height, "root", 1);
+    window_t *root = _create_window(0, 0, g_fb->width, g_fb->height, "root", 1);
     draw_rect(root->fb, 0, 0, root->fb->width, root->fb->height, BG_COLOR);
     //bmp_draw(root->fb, g_wallpaper, 0, 0);
-    refresh_window(root);
+    _refresh_window(root);
 
     while (running) {
         handle_event(meta, data);

@@ -8,5 +8,4 @@ ignore-scripts/esp/boot/initramfs.tar
 ignore-scripts/esp/kernel.elf
 ignore-scripts/esp/NvVars
 
-initramfs/System/Programs/
-initramfs/System/Programs/*
+initramfs/system/bin/*

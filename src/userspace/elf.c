@@ -50,34 +50,40 @@ void load_phdr(elf_header_t* ehdr, elf_program_header_t* phdr, uint64_t load_bas
     }
 }
 
-uint64_t elf_load(char *data, uint64_t cr3)
-{
-    elf_header_t *ehdr = (elf_header_t *)data;
+int elf_read(uint64_t addr, elf_t *elf) {
+    elf_header_t *ehdr = (elf_header_t *)addr;
 
-    if (ehdr->e_ident[0] != 0x7F ||
-        ehdr->e_ident[1] != 'E'  ||
-        ehdr->e_ident[2] != 'L'  ||
-        ehdr->e_ident[3] != 'F')
-    {
+    if (strncmp(ehdr->e_ident, "\x7FELF", 4) == 0) {
         k_assert(PROTO_ERR_ELF_INVALID_HDR);
         return PROTO_ERR_ELF_INVALID_HDR;
     }
 
-    if (ehdr->e_machine != EM_X86_64)
-    {
+    if (ehdr->e_machine != EM_X86_64) {
         k_assert(PROTO_ERR_ELF_UNSUPPORTED);
         return PROTO_ERR_ELF_UNSUPPORTED;
     }
 
-    uint64_t load_base = (ehdr->e_type == ET_DYN) ? USER_LOAD_BASE : 0;
-
     elf_program_header_t *phdrs = (elf_program_header_t*)((uintptr_t)ehdr + ehdr->e_phoff);
+    elf_section_header_t *shdrs = (elf_section_header_t*)((uintptr_t)ehdr + ehdr->e_shoff);
 
-    for (uint64_t i = 0; i < ehdr->e_phnum; i++)
-    {
-        elf_program_header_t phdr = phdrs[i];
-        load_phdr(ehdr, &phdr, load_base, cr3);
+    elf->header = ehdr;
+    elf->phdrs = phdrs;
+    elf->shdrs = shdrs;
+
+    return PROTO_OK;
+}
+
+uint64_t elf_load(uint64_t addr, uint64_t cr3) {
+    elf_t elf = (elf_t) { 0 };
+    int res = elf_read(addr, &elf);
+    if (res != PROTO_OK) { return res; }
+
+    uint64_t load_base = (elf.header->e_type == ET_DYN) ? USER_LOAD_BASE : 0;
+
+    for (uint64_t i = 0; i < elf.header->e_phnum; i++) {
+        elf_program_header_t phdr = elf.phdrs[i];
+        load_phdr(elf.header, &phdr, load_base, cr3);
     }
 
-    return (ehdr->e_entry + load_base);
+    return (elf.header->e_entry + load_base);
 }

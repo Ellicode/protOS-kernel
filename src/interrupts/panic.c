@@ -4,6 +4,8 @@
 #include "graphics/console.h"
 #include "utils/utils.h"
 #include "debug/backtrace.h"
+#include "debug/symbols.h"
+
 char* panic_messages[ISR_EXCEPTION_COUNT] = {
     [ISR_EXC_DIVISION_ERROR]        = "Division Error",
     [ISR_EXC_INVALID_OPCODE]        = "Invalid Opcode",
@@ -26,7 +28,7 @@ void _panic_stub(char *ename, int is_frame, idt_frame_t *frame) {
     }
 
     uint64_t cr2;
-    asm __volatile__ ("movq %%cr2, %0": "=R"(cr2)); 
+    __asm__ volatile ("movq %%cr2, %0": "=R"(cr2)); 
 
     set_cursor(0, 0);
     term_clear_buffer();
@@ -43,7 +45,7 @@ void _panic_stub(char *ename, int is_frame, idt_frame_t *frame) {
     
     if (is_frame == 1) {
         print_f("    Error Code:    %x\n", frame->error_code);
-        print_f("    Address (RIP): %x\n\n", frame->rip);
+        print_f("    Address (RIP): %x <%s>\n\n", frame->rip, get_symbol(frame->rip));
 
         print_f("    CR2:           %x\n", cr2);
         print_f("    CS:            %x\n", frame->cs);

@@ -26,7 +26,7 @@ char *hex8_to_string_noprefix(uint64_t value)
 
 int pmain(char argv[16][64], int argc) {
     if (argc < 2) {
-        fprintf(STDERR, "[ERROR] Too few arguments! Usage: `read {path} {-x|-d|-c|-xc}`\n");
+        fprintf(STDOUT, "[ERROR] Too few arguments! Usage: `read {path} {-x|-d|-c|-xc}`\n");
         return 1;
     }
 
@@ -40,7 +40,7 @@ int pmain(char argv[16][64], int argc) {
         else if (strcmp(mode_arg, "-d") == 0) { mode = READ_DECIMAL; }
         else if (strcmp(mode_arg, "-xc") == 0) { mode = READ_HEX_CHAR; }
         else {
-            fprintf(STDERR, "[ERROR] Unknown mode \"%s\".\n");
+            fprintf(STDOUT, "[ERROR] Unknown mode \"%s\".\n");
             return 1;
         }
     } else {
@@ -49,19 +49,19 @@ int pmain(char argv[16][64], int argc) {
 
     int fd = open(path, "r");
     if (fd < PROTO_OK) {
-        fprintf(STDERR, "[ERROR] Could not open file.\n");
+        fprintf(STDOUT, "[ERROR] Could not open file.\n");
         return 1;
     }
     dentry_t *file_meta = malloc(sizeof(dentry_t));
     int stat_res = stat(fd, file_meta);
     if (stat_res != PROTO_OK) {
-        fprintf(STDERR, "[ERROR] Could stat file data.\n");
+        fprintf(STDOUT, "[ERROR] Could stat file data.\n");
         return 1;
     }
     char *buf = malloc(file_meta->size);
-    int read_res = read(fd, file_meta->size, buf);
+    int read_res = read(fd, buf, file_meta->size);
     if (read_res < PROTO_OK) {
-        fprintf(STDERR, "[ERROR] Could read file data.\n");
+        fprintf(STDOUT, "[ERROR] Could read file data.\n");
         return 1;
     }
 
@@ -71,32 +71,32 @@ int pmain(char argv[16][64], int argc) {
             printf("%s\n", buf);
             break;
         case READ_HEX:
-            for (int r = 0; r < file_meta->size / ROW_WIDTH; r++) {
+            for (int r = 0; r < read_res / ROW_WIDTH; r++) {
                 for (int c = 0; c < ROW_WIDTH; c++) {
                     printf("%s ", hex8_to_string_noprefix(buf[r * ROW_WIDTH + c]));
                 }
                 printf("\n");
             }
-            for (int i = 0; i < file_meta->size % ROW_WIDTH; i++) {
-                printf("%s ", hex8_to_string_noprefix(buf[(file_meta->size / ROW_WIDTH) * ROW_WIDTH + i]));
+            for (int i = 0; i < read_res % ROW_WIDTH; i++) {
+                printf("%s ", hex8_to_string_noprefix(buf[(read_res / ROW_WIDTH) * ROW_WIDTH + i]));
             }
             printf("\n");
             break;
         case READ_DECIMAL:
-            for (int r = 0; r < file_meta->size / ROW_WIDTH; r++) {
+            for (int r = 0; r < read_res / ROW_WIDTH; r++) {
                 for (int c = 0; c < ROW_WIDTH; c++) {
                     printf("%3d ", buf[r * ROW_WIDTH + c]);
                 }
                 printf("\n");
             }
-            for (int i = 0; i < file_meta->size % ROW_WIDTH; i++) {
-                printf("%3d ", buf[(file_meta->size / ROW_WIDTH) * ROW_WIDTH + i]);
+            for (int i = 0; i < read_res % ROW_WIDTH; i++) {
+                printf("%3d ", buf[(read_res / ROW_WIDTH) * ROW_WIDTH + i]);
             }
             printf("\n");
             break;
         case READ_HEX_CHAR:
-            int full_rows = file_meta->size / ROW_WIDTH;
-            int rem = file_meta->size % ROW_WIDTH;
+            int full_rows = read_res / ROW_WIDTH;
+            int rem = read_res % ROW_WIDTH;
             for (int r = 0; r < full_rows; r++) {
                 for (int c = 0; c < ROW_WIDTH; c++) {
                     printf("%s ", hex8_to_string_noprefix((uint8_t)buf[r * ROW_WIDTH + c]));

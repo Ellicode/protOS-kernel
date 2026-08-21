@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <proto/keyboard.h>
 
 typedef struct ipc_syscall_payload {
     char            *message;
@@ -20,6 +21,7 @@ typedef struct ev_meta_t {
 
 int send(uint64_t pid, char *message, void *data, size_t size);
 int receive(ev_meta_t *meta, void *data);
+int receive_nb(ev_meta_t *meta, void *data);
 int consume(ev_meta_t *meta);
 int dispatch(char *message, void *data, size_t size);
 int subscribe(char *topic);

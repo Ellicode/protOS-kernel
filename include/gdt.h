@@ -32,7 +32,7 @@ typedef enum {
     GDT_ACCESSED                = 1,
 
     GDT_OFF                     = 0,
-};
+} gdt_entry_flags_t;
 
 typedef union {
     struct {

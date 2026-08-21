@@ -26,12 +26,12 @@ int format_size(int size, char **suffix) {
 }
 
 int pmain(char argv[16][64], int argc) {
-    int about_fd = open("/Devices/about", "r");
+    int about_fd = open("/dev/about", "r");
     about_data_t *about = malloc(sizeof(about_data_t));
-    int about_status = read(about_fd, 0, about);
+    int about_status = read(about_fd, about, 0);
 
     if (about_status < PROTO_OK) {
-        fprintf(STDERR, "[ERROR] Could not open required devices (status=%d)\n", about_status);
+        fprintf(STDOUT, "[ERROR] Could not open required devices (status=%d)\n", about_status);
         return 1;
     }
     
@@ -62,9 +62,6 @@ int pmain(char argv[16][64], int argc) {
 
                 printf(ANSI_BLUE "Memory" ANSI_RESET": %d%s / %d%s (%d%% used - %d bytes)", used, used_suffix, size, size_suffix, percentage, about->mem_used);
                 break;
-
-            // ...
-
             case PROTOFETCH_ROWS - 1:
                 printf(ANSI_RED SWATCH_SYMBOL ANSI_GREEN SWATCH_SYMBOL ANSI_YELLOW SWATCH_SYMBOL ANSI_BLUE SWATCH_SYMBOL ANSI_MAGENTA SWATCH_SYMBOL ANSI_CYAN SWATCH_SYMBOL ANSI_RESET SWATCH_SYMBOL);
             default:

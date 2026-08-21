@@ -32,6 +32,8 @@ enum status_code_t {
     PROTO_ERR_ELF_CANNOT_LOAD           = 34,
 
     PROTO_ERR_PROCESS_NOT_FOUND         = 41,
+
+    PROTO_ERR_WOULD_BLOCK               = 50,
 };
 
 enum status_type_t {

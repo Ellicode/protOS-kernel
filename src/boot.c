@@ -19,6 +19,7 @@
 #include "gdt.h"
 #include "globals.h"
 #include "utils/sse.h"
+#include "debug/symbols.h"
 
 #include "boot.h"
 
@@ -26,8 +27,9 @@ int k_init(
     struct limine_framebuffer *fb, 
     struct limine_memmap_response *memmap,
     struct limine_hhdm_response *hhdm,
+    struct limine_module_response *modules,
     struct limine_executable_address_response *kaddr,
-    struct limine_module_response *modules
+    struct limine_executable_file_response *kfile
 ) {
     // Triple line break to avoid overlapping issues with the QEMU logs :3
     print("\n\n\n");
@@ -36,10 +38,11 @@ int k_init(
     enable_sse();
     enable_x87();
 
-    g_lim_memmap = memmap;
-    g_lim_hhdm = hhdm;
-    g_lim_kaddr = kaddr;
-    g_lim_modules = modules;
+    g_lim_memmap    = memmap;
+    g_lim_hhdm      = hhdm;
+    g_lim_modules   = modules;
+    g_lim_kaddr     = kaddr;    
+    g_lim_kfile     = kfile;
 
     if (serial_init() != PROTO_OK) {
         k_assert(PROTO_ERR_INIT_FAILED);
@@ -67,8 +70,7 @@ int k_init(
 
     idt_init();
     k_success("Initialized IDT.\n");
-
-    
+        
     if (fpmm_init() != PROTO_OK) {
         k_assert(PROTO_ERR_INIT_FAILED);
         return PROTO_ERR_INIT_FAILED;
@@ -103,6 +105,8 @@ int k_init(
 
     scheduler_init();
     k_success("Initialized Scheduler\n");
+
+    load_symbols();
 
     // // Reclaim bootloader reclaimable regions
     // uint64_t space_reclaimed = 0;

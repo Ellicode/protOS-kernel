@@ -15,6 +15,10 @@ int receive(ev_meta_t *meta, void *data) {
     return syscall(SYS_RECEIVE, (uint64_t)meta, (uint64_t)data, 0);
 }
 
+int receive_nb(ev_meta_t *meta, void *data) {
+    return syscall(SYS_NB_RECEIVE, (uint64_t)meta, (uint64_t)data, 0);
+}
+
 int consume(ev_meta_t *meta) {
     return syscall(SYS_CONSUME, (uint64_t)meta, 0, 0);
 }

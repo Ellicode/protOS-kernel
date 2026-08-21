@@ -1,4 +1,5 @@
 #include "userspace/process.h"
+#include "userspace/ipc.h"
 #include "drivers/ps2/ps2.h"
 #include "interrupts/pic.h"
 #include "graphics/console.h"

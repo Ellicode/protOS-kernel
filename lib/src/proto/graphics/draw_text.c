@@ -4,7 +4,7 @@
 static int read_exact(int fd, void *dst, size_t n) {
     size_t got = 0;
     while (got < n) {
-        int r = read(fd, n - got, (char *)dst + got);
+        int r = read(fd, (char *)dst + got, n - got);
         if (r <= 0) { return -1; }
         got += (size_t)r;
     }
@@ -89,19 +89,19 @@ static int font_find_glyph_index(const font_t *fnt, uint32_t cp) {
 void draw_char_clip(
     fb_info_t *fb,
     font_t *fnt,
-    char ch,
+    char c,
     int x,
     int y,
     uint32_t fg,
     int cx,
     int cy,
     int cw,
-    int chh
+    int ch
 ) {
     if (!fb || !fb->address || !fnt || !fnt->data)
         return;
 
-    uint32_t cp = (uint8_t)ch;
+    uint32_t cp = (uint8_t)c;
     int gi = font_find_glyph_index(fnt, cp);
 
     if (gi < 0)
@@ -114,7 +114,7 @@ void draw_char_clip(
         x, y,
         fnt->width,
         fnt->height,
-        cx, cy, cw, chh,
+        cx, cy, cw, ch,
         &rx, &ry, &rw, &rh
     )) {
         return;

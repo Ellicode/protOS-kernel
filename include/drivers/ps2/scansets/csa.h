@@ -1,6 +1,13 @@
 #ifndef PS2_SCANCODES_CSA_H
 #define PS2_SCANCODES_CSA_H
 
+/*
+ * NOTE: This scancode-based CSA layout is no longer used by the keyboard
+ * driver.  The layout has been moved into src/drivers/ps2/keycodes.c as the
+ * kbd_keycode_to_char / kbd_keycode_to_char_shift / kbd_keycode_to_char_altgr
+ * tables, which are indexed by the OS-wide kbd_keycode_t enum.
+ */
+
 static const unsigned char ascii_no_shift[256] = {
     [0x29] = '/',                                               // / \ |
     [0x02] = '1', [0x03] = '2', [0x04] = '3', [0x05] = '4',

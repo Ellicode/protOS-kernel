@@ -7,7 +7,7 @@
 void handle_create_window(win_options_t *config, ev_meta_t *meta) {
     if (config == NULL || meta == NULL) { return; }
     
-    window_t *win = create_window(
+    window_t *win = _create_window(
         config->x, config->y,
         config->w, config->h,
         config->name,

@@ -8,7 +8,7 @@
 #include "string.h"
 #include "utils/linked_lists.h"
 
-int ipc_send(uint64_t pid, char *message, void *data, size_t size) {
+int ipc_send(int pid, char *message, void *data, size_t size) {
     if (message == NULL) { return PROTO_ERR_INVALID_ARGUMENT; }
 
     ipc_message_t *msg = k_alloc(sizeof(ipc_message_t));
@@ -73,6 +73,30 @@ int ipc_receive(ipc_meta_t *meta, void *data) {
     return PROTO_OK;
 }
 
+int ipc_receive_nb(ipc_meta_t *meta, void *data) {
+    if (meta == NULL || data == NULL) { return PROTO_ERR_INVALID_ARGUMENT; }
+    if (!g_current_thread || !g_current_thread->process) { return PROTO_ERR_INVALID_CONTEXT; }
+
+    ipc_queue_t *q = &g_current_thread->process->msg_queue;
+
+    if (q->messages == NULL) {
+        return PROTO_ERR_WOULD_BLOCK;
+    }
+
+    ipc_message_t *top_msg = q->messages;
+    LL_UNLINK(top_msg, q->messages);
+
+    meta->sender    = top_msg->sender;
+    meta->size      = top_msg->size;
+    meta->msg       = top_msg;
+
+    strcpy(meta->name, top_msg->name);
+
+    memcpy(data, top_msg->data, top_msg->size);
+
+    return PROTO_OK;
+}
+
 int ipc_consume(ipc_meta_t *meta) {
     k_free(meta->msg);
     k_free(meta->msg->data);
@@ -87,7 +111,6 @@ int ipc_dispatch(char *message, void *data, size_t size) {
 
     while (proc != NULL)
     {
-        int is_subscribed = 0;
         ipc_sub_t *sub = proc->msg_queue.subscriptions;
 
         while (sub != NULL) {

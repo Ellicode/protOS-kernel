@@ -42,7 +42,7 @@ const color_t ANSI_PALETTE[16] = {
 cell_t *grid;
 
 void term_clear_buffer() {
-    for (uint64_t i = 0; i < g_term_rows * g_term_cols; i++) {
+    for (int i = 0; i < g_term_rows * g_term_cols; i++) {
         grid[i].ch = ' ';
         grid[i].fg = g_current_fg;
         grid[i].bg = g_current_bg;

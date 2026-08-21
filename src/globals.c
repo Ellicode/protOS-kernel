@@ -12,8 +12,9 @@
 
 struct limine_hhdm_response                 *g_lim_hhdm;
 struct limine_memmap_response               *g_lim_memmap;
-struct limine_executable_address_response   *g_lim_kaddr;
 struct limine_module_response               *g_lim_modules;
+struct limine_executable_address_response   *g_lim_kaddr;
+struct limine_executable_file_response      *g_lim_kfile;
 
 // METHODS 
 

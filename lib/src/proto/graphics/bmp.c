@@ -9,7 +9,7 @@ bmp_t *bmp_load(const char *path) {
     if (fd < 0) { return NULL; }
 
     uint8_t file_hdr[14];
-    if (read(fd, 14, file_hdr) < 0) { close(fd); return NULL; }
+    if (read(fd, file_hdr, 14) < 0) { close(fd); return NULL; }
     if (file_hdr[0] != 'B' || file_hdr[1] != 'M') { close(fd); return NULL; }
 
     uint32_t pixel_offset =
@@ -19,7 +19,7 @@ bmp_t *bmp_load(const char *path) {
         ((uint32_t)file_hdr[13] << 24);
 
     uint8_t dib_size_buf[4];
-    if (read(fd, 4, dib_size_buf)  < 0) { close(fd); return NULL; }
+    if (read(fd, dib_size_buf, 4)  < 0) { close(fd); return NULL; }
     uint32_t dib_size =
         (uint32_t)dib_size_buf[0] |
         ((uint32_t)dib_size_buf[1] << 8) |
@@ -29,7 +29,7 @@ bmp_t *bmp_load(const char *path) {
     if (dib_size < 40) { close(fd); return NULL; }
 
     uint8_t dib_rest[36];
-    if (read(fd, 36, dib_rest) < 0) { close(fd); return NULL; }
+    if (read(fd, dib_rest, 36) < 0) { close(fd); return NULL; }
 
     int32_t width =
         (int32_t)((uint32_t)dib_rest[0] |
@@ -71,7 +71,7 @@ bmp_t *bmp_load(const char *path) {
     uint8_t skipbuf[128];
     while (to_skip) {
         uint32_t chunk = (to_skip < sizeof(skipbuf)) ? to_skip : (uint32_t)sizeof(skipbuf);
-        int n = read(fd, chunk, skipbuf);
+        int n = read(fd, skipbuf, chunk);
         if (n != (int)chunk) { close(fd); return NULL; }
         to_skip -= chunk;
     }
@@ -90,7 +90,7 @@ bmp_t *bmp_load(const char *path) {
     if (!row) { free(bmp->data); free(bmp); close(fd); return NULL; }
 
     for (uint32_t r = 0; r < bmp->height; r++) {
-        if (read(fd, row_padded, row) != (int)row_padded) {
+        if (read(fd, row, row_padded) != (int)row_padded) {
             free(row); free(bmp->data); free(bmp); close(fd); return NULL;
         }
 

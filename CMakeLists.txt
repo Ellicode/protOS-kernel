@@ -36,6 +36,9 @@ set(KERNEL_SOURCES
 
     src/pci.c
     include/pci.h
+    
+    src/tty.c
+    include/tty.h
 
     # DEBUG ================================================================
 
@@ -49,6 +52,9 @@ set(KERNEL_SOURCES
 
     src/debug/backtrace.c
     include/debug/backtrace.h
+
+    src/debug/symbols.c
+    include/debug/symbols.h
 
     # GRAPHICS =============================================================
 
@@ -78,6 +84,9 @@ set(KERNEL_SOURCES
 
     src/drivers/ps2/keyboard.c
     include/drivers/ps2/keyboard.h
+
+    src/drivers/ps2/keycodes.c
+    include/drivers/ps2/keycodes.h
 
     src/drivers/ps2/mouse.c
     include/drivers/ps2/mouse.h
@@ -134,6 +143,9 @@ set(KERNEL_SOURCES
 
     src/filesystems/devfs.c
     include/filesystems/devfs.h
+
+    src/filesystems/aio.c
+    include/filesystems/aio.h
 )
 
 add_executable(kernel ${KERNEL_SOURCES})

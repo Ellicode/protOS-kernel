@@ -195,7 +195,7 @@ void k_free(void *ptr) {
     heap_item_t *block = (heap_item_t*)((uint8_t*)ptr - sizeof(HeapItem));
 
     if (block->flags & H_FREE) {
-        k_warning("k_free: double free detected");
+        k_warning("k_free: double free detected\n");
         ticketlock_unlock(&heap_lock, lock1r);
         return;
     }

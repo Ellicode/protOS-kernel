@@ -7,16 +7,18 @@
 #include "debug/errors.h"
 #include "globals.h"
 #include "string.h"
+#include "filesystems/vfs.h"
+#include "filesystems/aio.h"
 
 #include "filesystems/devfs.h"
 
 superblock_t *devfs_superblock;
-uint64_t devfs_next_id = 1;
+int devfs_next_id = 1;
+int pty_next_id = 1;
 devfs_node_t *devfs_root;
+inode_t *pty_dir;
 
-inode_t *g_stdin;
-inode_t *g_stdout;
-inode_t *g_stderr;
+tty_data_t *g_console;
 
 int devfs_lookup(inode_t *dir, char *name, inode_t **result) {
     devfs_node_t *node = dir->fs_data;
@@ -43,7 +45,7 @@ int devfs_lookup(inode_t *dir, char *name, inode_t **result) {
 
     if (current == NULL) {
         *result = NULL;
-        k_assert(PROTO_ERR_FILE_NOT_FOUND);
+        // k_assert(PROTO_ERR_FILE_NOT_FOUND);
         return PROTO_ERR_FILE_NOT_FOUND;
     }
 
@@ -69,8 +71,10 @@ int devfs_create(inode_t *dir, char *name, inode_t **result) {
 
     node->next              = parent_node->child;
     parent_node->child      = node;
-    (*result) = &node->inode;
-
+    if (result != NULL) {
+        (*result) = &node->inode;
+    }
+    
     return PROTO_OK;
 }
 
@@ -99,12 +103,35 @@ int devfs_create_dir(inode_t *dir, char *name, inode_t **result) {
     
     node->next              = parent_node->child;
     parent_node->child      = node;
-    (*result) = &node->inode;
+
+    if (result != NULL) {
+        (*result) = &node->inode;
+    }
 
     return PROTO_OK;
 }
 
-int devfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
+int devfs_read_wait(file_descriptor_t *fd, wait_queue_t *wq) {
+    if (fd->flags & FD_ASYNC) {
+        aio_enqueue(fd, AIO_OP_READ);
+        return -PROTO_ERR_WOULD_BLOCK;
+    } else {
+        queue_sleep(wq, g_current_thread);
+        return PROTO_OK;
+    }
+}
+
+int devfs_wake_all(file_descriptor_t *fd, wait_queue_t *wq) {
+    if (fd != NULL && (fd->flags & FD_ASYNC)) {
+        return aio_notify(fd, AIO_OP_READ);
+    } else {
+        queue_wake_all(wq);
+        return PROTO_OK;
+    }
+}
+
+int devfs_read(file_descriptor_t *fd, uint64_t size, void *buffer) {
+    inode_t *inode = fd->inode;
     if (inode == NULL) {
         k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return -PROTO_ERR_INVALID_ARGUMENT;
@@ -118,22 +145,41 @@ int devfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
 
     switch (node->dev_type)
     {
-        case DEV_STDIN:
-            stdin_data_t *stdin_data = node->extra_data;
-            queue_sleep(&node->waiters, g_current_thread);
-            strcpy(buffer, stdin_data->kbd_buf);
-            memset(stdin_data->kbd_buf, 0, sizeof(stdin_data->kbd_buf)); // clean junk ew
-            return size;
-        case DEV_STATIC:
-            if (offset >= node->size) { return PROTO_EOF; }
-            
-            uint64_t remaining = node->size - offset;
-            uint64_t to_read = (size < remaining) ? size : remaining;
+        case DEV_PTY_MASTER:
+            pty_master_data_t *master_data = fd->extra_data;
+            pty_data_t *pty_slave = master_data->pty;
 
-            void *data = (void *)(node->extra_data + offset);
-            memcpy(buffer, data, to_read);
-            
-            return to_read;
+            if (master_data->did_read == 0) {
+                master_data->did_read = 1;
+                snprintf(buffer, 12, "/dev/pty/%d", pty_slave->id);
+                return strlen(buffer);
+            } else {
+                if (circ_buffer_is_empty(&pty_slave->output_buffer)) {
+                    int res = devfs_read_wait(fd, &pty_slave->master_read_waiters);
+                    if (res != PROTO_OK) { return res; }
+                }
+                return circ_buffer_read(&pty_slave->output_buffer, buffer, size);
+            }
+        case DEV_TTY:
+            tty_data_t *tty_data = (tty_data_t *)node->extra_data;
+            if (tty_data == NULL) {
+                k_assert(PROTO_ERR_UNKNOWN);
+                return -PROTO_ERR_UNKNOWN;
+            }
+
+            return tty_data->read(tty_data, buffer);
+        case DEV_PTY_SLAVE:
+            pty_data_t *pty_data = (pty_data_t *)node->extra_data;
+            if (pty_data == NULL) {
+                k_assert(PROTO_ERR_UNKNOWN);
+                return -PROTO_ERR_UNKNOWN;
+            }
+            if (circ_buffer_is_empty(&pty_data->input_buffer)) {
+                int res = devfs_read_wait(fd, &pty_data->read_waiters);
+                if (res != PROTO_OK) { return res; }
+            }
+
+            return circ_buffer_read(&pty_data->input_buffer, buffer, size);
         case DEV_ABOUT:
             int memsz = getmemsz();
             int memused = getmemused();
@@ -156,12 +202,15 @@ int devfs_read(inode_t *inode, uint64_t size, uint64_t offset, void *buffer) {
     return -PROTO_ERR_UNKNOWN;
 }
 
-int devfs_stat(inode_t *inode, dentry_t *buffer) {
+int devfs_stat(file_descriptor_t *fd, dentry_t *buffer) {
+    inode_t *inode = fd->inode;
+
     if (inode == NULL) {
         k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return PROTO_ERR_INVALID_ARGUMENT;
     }
-    devfs_node_t *node = (devfs_node_t *)inode->fs_data;
+
+    devfs_node_t *node = inode->fs_data;
     if (node == NULL) {
         k_assert(PROTO_ERR_UNKNOWN);
         return PROTO_ERR_UNKNOWN;
@@ -173,7 +222,8 @@ int devfs_stat(inode_t *inode, dentry_t *buffer) {
     return PROTO_OK;
 }
 
-int devfs_write(inode_t *inode, uint64_t size, uint64_t offset, const void *buffer) {
+int devfs_write(file_descriptor_t *fd, uint64_t size, const void *buffer) {
+    inode_t *inode = fd->inode;
     if (inode == NULL) {
         k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return -PROTO_ERR_INVALID_ARGUMENT;
@@ -186,27 +236,45 @@ int devfs_write(inode_t *inode, uint64_t size, uint64_t offset, const void *buff
 
     switch (node->dev_type)
     {
-        case DEV_STDOUT:
-            print(buffer);
-            return size;
-        case DEV_STDERR:
-            set_color(PROTO_RED, PROTO_BG);
-            print(buffer);
-            set_color(PROTO_WHITE, PROTO_BG);
-            return size;
+        case DEV_TTY:
+            tty_data_t *tty_data = (tty_data_t *)node->extra_data;
+            if (tty_data == NULL) {
+                k_assert(PROTO_ERR_UNKNOWN);
+                return -PROTO_ERR_UNKNOWN;
+            }
+            
+            return tty_data->write(tty_data, buffer);
+        case DEV_PTY_SLAVE:
+            pty_data_t *pty_data = (pty_data_t *)node->extra_data;
+            if (pty_data == NULL) {
+                k_assert(PROTO_ERR_UNKNOWN);
+                return -PROTO_ERR_UNKNOWN;
+            }
+            int sz = circ_buffer_write(&pty_data->output_buffer, buffer, size);
+            devfs_wake_all(pty_data->master_fd, &pty_data->master_read_waiters);
+            return sz;
+        case DEV_PTY_MASTER:
+            pty_master_data_t *master_data = fd->extra_data;
+            pty_data_t *pty_slave = master_data->pty;
+
+            int sz2 = circ_buffer_write(&pty_slave->input_buffer, buffer, size);
+            devfs_wake_all(pty_slave->slave_fd, &pty_slave->read_waiters);
+
+            return sz2;
         default: // No match
             k_assert(PROTO_ERR_FILE_UNSUPPORTED_OP);
             return -PROTO_ERR_FILE_UNSUPPORTED_OP;
     }
 }
 
-int devfs_read_dir(inode_t *dir, dentry_t *entries, int *num_entries) {
-    if (dir == NULL) {
+int devfs_read_dir(file_descriptor_t *fd, dentry_t *entries, int *num_entries) {
+    inode_t *inode = fd->inode;
+    if (inode == NULL) {
         k_assert(PROTO_ERR_INVALID_ARGUMENT);
         return PROTO_ERR_INVALID_ARGUMENT;
     }
 
-    devfs_node_t *node = (devfs_node_t *)dir->fs_data;
+    devfs_node_t *node = (devfs_node_t *)inode->fs_data;
     if (node == NULL) {
         k_assert(PROTO_ERR_UNKNOWN);
         return PROTO_ERR_UNKNOWN;
@@ -230,6 +298,54 @@ int devfs_read_dir(inode_t *dir, dentry_t *entries, int *num_entries) {
     return PROTO_OK;
 }
 
+int devfs_open(file_descriptor_t *fd) {
+    devfs_node_t *node = (devfs_node_t *)fd->inode->fs_data;
+
+    switch (node->dev_type)
+    {
+        case DEV_PTY_MASTER:
+            inode_t *pty_inode;
+            devfs_create(pty_dir, int_to_string(pty_next_id), &pty_inode);
+            devfs_node_t *pty_data = pty_inode->fs_data;
+
+            pty_data->dev_type = DEV_PTY_SLAVE;
+            pty_data->extra_data = k_alloc(sizeof(pty_data_t));
+
+            char *ibuffer = k_alloc(4096);
+            char *obuffer = k_alloc(4096);
+
+            if (ibuffer == NULL || obuffer == NULL) {
+                k_assert(PROTO_ERR_OUT_OF_MEMORY);
+                return PROTO_ERR_OUT_OF_MEMORY;
+            }
+            pty_data_t *pty = (pty_data_t *)pty_data->extra_data;
+
+            circ_buffer_init(&pty->input_buffer, ibuffer, 4096);
+            circ_buffer_init(&pty->output_buffer, obuffer, 4096);
+            pty->id = pty_next_id;
+            pty->master_fd = fd;
+
+            pty_master_data_t *master_data = k_alloc(sizeof(pty_master_data_t));
+            master_data->pty = pty_data->extra_data;
+            master_data->did_read = 0;
+
+            fd->extra_data = master_data;
+            queue_wake_all(&pty->master_read_waiters);
+
+            pty_next_id++;
+            return PROTO_OK;
+        case DEV_PTY_SLAVE:
+            pty_data_t *slave_pty = (pty_data_t *)node->extra_data;
+            if (slave_pty != NULL) {
+                slave_pty->slave_fd = fd;
+            }
+            return PROTO_OK;
+        default: // No match
+            return PROTO_OK;
+    }
+    return PROTO_OK;
+}
+
 superblock_t *devfs_init() {
     devfs_root                          = k_alloc(sizeof(devfs_node_t));
     devfs_root->type                    = INODE_FOLDER;
@@ -246,33 +362,33 @@ superblock_t *devfs_init() {
     devfs_superblock->ops->write        = devfs_write;
     devfs_superblock->ops->read         = devfs_read;
     devfs_superblock->ops->stat         = devfs_stat;
+    devfs_superblock->ops->open         = devfs_open;
     devfs_superblock->fs_type           = FS_DEVFS;
     devfs_superblock->root              = &devfs_root->inode;
 
     devfs_root->inode.parent_sb         = devfs_superblock;
 
-    devfs_create(devfs_superblock->root, "stdin", &g_stdin);
-    devfs_node_t *stdin_data = g_stdin->fs_data;
-    stdin_data->dev_type = DEV_STDIN;
-    stdin_data->waiters.lock = k_alloc(sizeof(ticketlock_t));
-    stdin_data->extra_data = k_alloc(sizeof(stdin_data_t));
-    stdin_data->size = 0;
-
-    devfs_create(devfs_superblock->root, "stdout", &g_stdout);
-    devfs_node_t *stdout_data = g_stdout->fs_data;
-    stdout_data->dev_type = DEV_STDOUT;
-    stdout_data->size = 0;
-
-    devfs_create(devfs_superblock->root, "stderr", &g_stderr);
-    devfs_node_t *stderr_data = g_stderr->fs_data;
-    stderr_data->dev_type = DEV_STDERR;
-    stderr_data->size = 0;
-
     inode_t *about;
     devfs_create(devfs_superblock->root, "about", &about);
     devfs_node_t *about_data = about->fs_data;
     about_data->dev_type = DEV_ABOUT;
-    about_data->size = 0;
+    about_data->size = sizeof(about_data_t);
+
+    inode_t *console;
+    devfs_create(devfs_superblock->root, "console", &console);
+    devfs_node_t *console_data = console->fs_data;
+    console_data->dev_type = DEV_TTY;
+    console_data->extra_data = k_alloc(sizeof(tty_data_t));
+    ((tty_data_t *)console_data->extra_data)->write = tty_write;
+    ((tty_data_t *)console_data->extra_data)->read  = tty_read;
+    g_console = console_data->extra_data;
+
+    inode_t *ptymx;
+    devfs_create(devfs_superblock->root, "ptymx", &ptymx);
+    devfs_node_t *ptymx_data = ptymx->fs_data;
+    ptymx_data->dev_type = DEV_PTY_MASTER;
+
+    devfs_create_dir(devfs_superblock->root, "pty", &pty_dir);
 
     return devfs_superblock;
 }

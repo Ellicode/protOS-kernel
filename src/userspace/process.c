@@ -27,7 +27,7 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
     }
 
     size_t size = f->inode->size;
-    char *buffer = k_alloc(size);
+    void *buffer = k_alloc(size);
     if (buffer == NULL) {
         vfs_close(f);
         k_assert(PROTO_ERR_OUT_OF_MEMORY);
@@ -53,7 +53,7 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
         F_USER | F_WRITE | F_NX
     );
     
-    uint64_t entry = elf_load(buffer, pml4);
+    uint64_t entry = elf_load((uint64_t)buffer, pml4);
     k_free(buffer);
 
     if (entry == 1) {
@@ -81,18 +81,17 @@ int create_process(char *elf_path, uint8_t is_root, int *pid, char argv[16][64],
         *pid = process->pid;
     }
     
-    if (is_root) {
-        file_descriptor_t *stdin = vfs_open(process->cwd, "/Devices/stdin", FD_READ);
+    if (is_root == 1) {
+        file_descriptor_t *stdin = vfs_open(process->cwd, "/dev/console", FD_READ);
         process->fd_table[0] = stdin;
         
-        file_descriptor_t *stdout = vfs_open(process->cwd, "/Devices/stdout", FD_WRITE);
+        file_descriptor_t *stdout = vfs_open(process->cwd, "/dev/console", FD_WRITE);
         process->fd_table[1] = stdout;
-
-        file_descriptor_t *stderr = vfs_open(process->cwd, "/Devices/stderr", FD_WRITE);
-        process->fd_table[2] = stderr;
     } else {
         if (g_current_thread->process != NULL) {
             memcpy((void *)process->fd_table, (void *)g_current_thread->process->fd_table, sizeof(g_current_thread->process->fd_table));
+        } else {
+            print_f("no current process :<");
         }
     }
 
